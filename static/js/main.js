@@ -466,7 +466,7 @@ require([
   }
   const giveRetrospectiveRetryButton = riverid => {
     clearChartDivs({chartTypes: "historical"})
-    chartRetro.innerHTML = `<button class="btn btn-warning" onclick="window.getRetrospectiveData(${riverid})">${text.inputs.forecast}</button>`
+    chartRetro.innerHTML = `<button class="btn btn-warning" onclick="window.getRetrospectiveData(${riverid})">${text.inputs.retro}</button>`
   }
   const updateDownloadLinks = type => {
     if (type === "clear") {
@@ -490,19 +490,6 @@ require([
     hashParams.set('zoom', view.zoom.toFixed(2))
     hashParams.set('definition', definitionExpression)
     window.location.hash = hashParams.toString()
-  }
-  const updateAppFromHash = () => {
-    const hashParams = new URLSearchParams(window.location.hash.slice(1))
-    let lon = !isNaN(parseFloat(hashParams.get('lon'))) ? parseFloat(hashParams.get('lon')) : view.center.longitude
-    let lat = !isNaN(parseFloat(hashParams.get('lat'))) ? parseFloat(hashParams.get('lat')) : view.center.latitude
-    let zoom = !isNaN(parseFloat(hashParams.get('zoom'))) ? parseFloat(hashParams.get('zoom')) : view.zoom
-    lon = lon.toFixed(2)
-    lat = lat.toFixed(2)
-    zoom = zoom.toFixed(2)
-    view.center = [lon, lat]
-    view.zoom = zoom
-    if (hashParams.get('definition') === definitionExpression) return
-    updateLayerDefinitions(hashParams.get('definition'))
   }
   const setHashDefinition = definition => {
     const hashParams = new URLSearchParams(window.location.hash.slice(1))
@@ -541,7 +528,6 @@ require([
       })
   })
   view.watch('extent', () => updateHash())
-  window.addEventListener('hashchange', () => updateAppFromHash())
 
 //////////////////////////////////////////////////////////////////////// Export alternatives
   window.setRiverId = setRiverId
