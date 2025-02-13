@@ -278,6 +278,14 @@ require([
         .catch(() => reject())
     })
   }
+  const fetchReturnPeriodsPromise = riverid => {
+    return new Promise((resolve, reject) => {
+      fetch(`${REST_ENDPOINT}/returnperiods/${riverid}/?format=json`)
+        .then(response => response.json())
+        .then(response => resolve(response))
+        .catch(() => reject())
+    })
+  }
   const fetchRetroPromise = riverid => {
     return new Promise((resolve, reject) => {
       fetch(`${REST_ENDPOINT}/retrospective/${riverid}/?format=json`)
@@ -286,43 +294,84 @@ require([
         .catch(() => reject())
     })
   }
-  const plotForecast = (response, riverid) => {
+  const returnPeriodShapes = ({rp, x0, x1, maxFlow}) => {
+    const returnPeriodColors = {
+      '2': 'rgb(254, 240, 1)',
+      '5': 'rgb(253, 154, 1)',
+      '10': 'rgb(255, 56, 5)',
+      '25': 'rgb(255, 0, 0)',
+      '50': 'rgb(128, 0, 106)',
+      '100': 'rgb(128, 0, 246)',
+    }
+    const box = (y0, y1, name) => {
+      return {
+        x: [x0, x1, x1, x0],
+        y: [y0, y0, y1, y1],
+        fillcolor: returnPeriodColors[name],
+        fill: 'toself',
+        line: {width: 0},
+        mode: 'lines',
+        opacity: 0.5,
+        legendgroup: 'returnperiods',
+        legendgrouptitle: {text: `Return Periods m³/s`},
+        showlegend: true,
+        // visible: maxFlow > rp.return_periods[name],
+        visible: true,
+        name: `${name}: ${rp.return_periods[name].toFixed(2)} m³/s`,
+      }
+    }
+    return Object
+      .keys(rp.return_periods)
+      .map((key, index, array) => {
+        const y0 = rp.return_periods[key]
+        const y1 = index === array.length - 1 ? rp.return_periods[key] * 1.1 : rp.return_periods[array[index + 1]]
+        return box(y0, y1, key)
+      })
+      .concat([{legendgroup: 'returnperiods', legendgrouptitle: {text: `Return Periods m³/s`}}])
+  }
+  const plotForecast = ({forecast, rp, riverid}) => {
     chartForecast.innerHTML = ""
+    const maxForecast = Math.max(...forecast.flow_median)
+    const returnPeriods = returnPeriodShapes({rp, x0: forecast.datetime[0], x1: forecast.datetime[forecast.datetime.length - 1], maxFlow: maxForecast})
     Plotly.newPlot(
       chartForecast,
       [
         {
-          x: response.datetime.concat(response.datetime.slice().toReversed()),
-          y: response.flow_uncertainty_lower.concat(response.flow_uncertainty_upper.slice().toReversed()),
+          x: forecast.datetime.concat(forecast.datetime.slice().toReversed()),
+          y: forecast.flow_uncertainty_lower.concat(forecast.flow_uncertainty_upper.slice().toReversed()),
           name: `${text.plots.fcLineUncertainty}`,
           fill: 'toself',
           fillcolor: 'rgba(44,182,255,0.6)',
           line: {color: 'rgba(0,0,0,0)'}
         },
         {
-          x: response.datetime,
-          y: response.flow_uncertainty_lower,
+          x: forecast.datetime,
+          y: forecast.flow_uncertainty_lower,
           line: {color: 'rgb(0,166,255)'},
           showlegend: false,
+          name: '',
         },
         {
-          x: response.datetime,
-          y: response.flow_uncertainty_upper,
+          x: forecast.datetime,
+          y: forecast.flow_uncertainty_upper,
           line: {color: 'rgb(0,166,255)'},
           showlegend: false,
+          name: '',
         },
         {
-          x: response.datetime,
-          y: response.flow_median,
+          x: forecast.datetime,
+          y: forecast.flow_median,
           name: `${text.plots.fcLineMedian}`,
           line: {color: 'black'}
         },
+        ...returnPeriods,
       ],
       {
         title: `${text.plots.fcTitle} ${riverid}`,
         xaxis: {title: `${text.plots.fcXaxis} (UTC +00:00)`},
         yaxis: {title: `${text.plots.fcYaxis} (m³/s)`},
         legend: {'orientation': 'h'},
+        hovermode: 'x',
       }
     )
   }
@@ -388,9 +437,9 @@ require([
     if (!riverId) return
     updateStatusIcons({forecast: "load"})
     chartForecast.innerHTML = `<img alt="loading signal" src=${LOADING_GIF}>`
-    fetchForecastPromise(riverId)
-      .then(response => {
-        plotForecast(response, riverId)
+    Promise.all([fetchForecastPromise(riverId), fetchReturnPeriodsPromise(riverId)])
+      .then(responses => {
+        plotForecast({forecast: responses[0], rp: responses[1], riverid: riverId})
         updateStatusIcons({forecast: "ready"})
       })
       .catch(() => {
