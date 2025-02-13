@@ -109,7 +109,7 @@ html, body {
     margin: 10px 0;
     width: 100%;
     max-width: 1200px;
-    max-height: max(5in, 600px);
+    max-height: max(6in, 750px);
 }
 
 .controls-box {
