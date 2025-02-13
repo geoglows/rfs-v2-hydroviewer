@@ -286,6 +286,14 @@ require([
         .catch(() => reject())
     })
   }
+  const fetchForecastRecordPromise = riverid => {
+    return new Promise((resolve, reject) => {
+      fetch(`${REST_ENDPOINT}/forecastrecords/${riverid}/?format=json`)
+        .then(response => response.json())
+        .then(response => resolve(response))
+        .catch(() => reject())
+    })
+  }
   const fetchRetroPromise = riverid => {
     return new Promise((resolve, reject) => {
       fetch(`${REST_ENDPOINT}/retrospective/${riverid}/?format=json`)
@@ -314,7 +322,7 @@ require([
         mode: 'lines',
         opacity: 0.5,
         legendgroup: 'returnperiods',
-        legendgrouptitle: {text: `Return Periods m³/s`},
+        legendgrouptitle: {text: `Return Periods m³/s`}, // todo translations
         showlegend: true,
         visible: visible,
         name: `${name}: ${rp.return_periods[name].toFixed(2)} m³/s`,
@@ -329,13 +337,19 @@ require([
       })
       .concat([{legendgroup: 'returnperiods', legendgrouptitle: {text: `Return Periods m³/s`}}])
   }
-  const plotForecast = ({forecast, rp, riverid}) => {
+  const plotForecast = ({record, forecast, rp, riverid}) => {
     chartForecast.innerHTML = ""
     const maxForecast = Math.max(...forecast.flow_median)
     const returnPeriods = returnPeriodShapes({rp, x0: forecast.datetime[0], x1: forecast.datetime[forecast.datetime.length - 1], maxFlow: maxForecast})
     Plotly.newPlot(
       chartForecast,
       [
+        {
+          x: record.datetime,
+          y: record.average_flow,
+          line: {color: 'rgb(0,0,0)'},
+          name: 'Previous Forecast',  // todo translations
+        },
         {
           x: forecast.datetime.concat(forecast.datetime.slice().toReversed()),
           y: forecast.flow_uncertainty_lower.concat(forecast.flow_uncertainty_upper.slice().toReversed()),
@@ -349,14 +363,14 @@ require([
           y: forecast.flow_uncertainty_lower,
           line: {color: 'rgb(0,166,255)'},
           showlegend: false,
-          name: '',
+          name: '',  // todo translations
         },
         {
           x: forecast.datetime,
           y: forecast.flow_uncertainty_upper,
           line: {color: 'rgb(0,166,255)'},
           showlegend: false,
-          name: '',
+          name: '',  // todo translations
         },
         {
           x: forecast.datetime,
@@ -436,9 +450,9 @@ require([
     if (!riverId) return
     updateStatusIcons({forecast: "load"})
     chartForecast.innerHTML = `<img alt="loading signal" src=${LOADING_GIF}>`
-    Promise.all([fetchForecastPromise(riverId), fetchReturnPeriodsPromise(riverId)])
+    Promise.all([fetchForecastRecordPromise(riverId), fetchForecastPromise(riverId), fetchReturnPeriodsPromise(riverId)])
       .then(responses => {
-        plotForecast({forecast: responses[0], rp: responses[1], riverid: riverId})
+        plotForecast({record: responses[0], forecast: responses[1], rp: responses[2], riverid: riverId})
         updateStatusIcons({forecast: "ready"})
       })
       .catch(() => {
