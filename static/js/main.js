@@ -18,7 +18,7 @@ require([
 
 //////////////////////////////////////////////////////////////////////// Constants Variables
   const REST_ENDPOINT = 'https://geoglows.ecmwf.int/api/v2'
-  const ESRI_LAYER_URL = 'https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer'
+  const RFS_LAYER_URL = 'https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer'
   const MIN_QUERY_ZOOM = 11
   const LOADING_GIF = '../static/img/loading.gif'
   const riverCountriesJSON = '../static/json/riverCountries.json'
