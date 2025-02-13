@@ -303,6 +303,7 @@ require([
       '50': 'rgb(128, 0, 106)',
       '100': 'rgb(128, 0, 246)',
     }
+    const visible = maxFlow > rp.return_periods['2'] ? true : 'legendonly'
     const box = (y0, y1, name) => {
       return {
         x: [x0, x1, x1, x0],
@@ -315,8 +316,7 @@ require([
         legendgroup: 'returnperiods',
         legendgrouptitle: {text: `Return Periods m³/s`},
         showlegend: true,
-        // visible: maxFlow > rp.return_periods[name],
-        visible: true,
+        visible: visible,
         name: `${name}: ${rp.return_periods[name].toFixed(2)} m³/s`,
       }
     }
@@ -324,7 +324,7 @@ require([
       .keys(rp.return_periods)
       .map((key, index, array) => {
         const y0 = rp.return_periods[key]
-        const y1 = index === array.length - 1 ? rp.return_periods[key] * 1.1 : rp.return_periods[array[index + 1]]
+        const y1 = index === array.length - 1 ? Math.max(rp.return_periods[key] * 1.15, maxFlow * 1.15) : rp.return_periods[array[index + 1]]
         return box(y0, y1, key)
       })
       .concat([{legendgroup: 'returnperiods', legendgrouptitle: {text: `Return Periods m³/s`}}])
@@ -371,7 +371,6 @@ require([
         xaxis: {title: `${text.plots.fcXaxis} (UTC +00:00)`},
         yaxis: {title: `${text.plots.fcYaxis} (m³/s)`},
         legend: {'orientation': 'h'},
-        hovermode: 'x',
       }
     )
   }
