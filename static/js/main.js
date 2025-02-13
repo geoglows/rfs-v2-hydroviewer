@@ -91,7 +91,7 @@ require([
 
 ////////////////////////////////////////////////////////////////////////  Create Layer, Map, View
   const rfsLayer = new MapImageLayer({
-    url: ESRI_LAYER_URL,
+    url: RFS_LAYER_URL,
     title: "GEOGLOWS River Forecast System v2",
     sublayers: [{
       id: 0,
