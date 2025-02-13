@@ -12,8 +12,9 @@ require([
   "esri/widgets/Legend",
   "esri/widgets/Expand",
   "esri/widgets/LayerList",
+  "esri/core/reactiveUtils",
   "esri/intl",
-], (WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, FeatureLayer, Home, BasemapGallery, ScaleBar, Legend, Expand, LayerList, intl) => {
+], (WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, FeatureLayer, Home, BasemapGallery, ScaleBar, Legend, Expand, LayerList, reactiveUtils, intl) => {
   'use strict'
 
 //////////////////////////////////////////////////////////////////////// Constants Variables
@@ -575,7 +576,8 @@ require([
         fetchData(riverId)
       })
   })
-  view.watch('extent', () => updateHash())
+  // view.watch('extent', () => updateHash())
+  reactiveUtils.when(() => view.stationary === true, () => updateHash())
 
 //////////////////////////////////////////////////////////////////////// Export alternatives
   window.setRiverId = setRiverId
