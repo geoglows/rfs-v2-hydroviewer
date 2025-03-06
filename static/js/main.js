@@ -1,4 +1,20 @@
-require((WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, FeatureLayer, Home, BasemapGallery, ScaleBar, Legend, Expand, LayerList, reactiveUtils, intl) => {
+require([
+  "esri/WebMap",
+  "esri/views/MapView",
+  "esri/layers/MapImageLayer",
+  "esri/layers/ImageryLayer",
+  "esri/layers/TileLayer",
+  "esri/layers/WebTileLayer",
+  "esri/layers/FeatureLayer",
+  "esri/widgets/Home",
+  "esri/widgets/BasemapGallery",
+  "esri/widgets/ScaleBar",
+  "esri/widgets/Legend",
+  "esri/widgets/Expand",
+  "esri/widgets/LayerList",
+  "esri/core/reactiveUtils",
+  "esri/intl",
+], (WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, FeatureLayer, Home, BasemapGallery, ScaleBar, Legend, Expand, LayerList, reactiveUtils, intl) => {
   'use strict'
 
 //////////////////////////////////////////////////////////////////////// Constants Variables
@@ -27,6 +43,10 @@ require((WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, 
     definition: hashParams.get('definition') || "",
   }
 
+  const percentiles = Array.from({length: 26}, (_, i) => i * 5)
+  const defaultDateRange = ['2015-01-01', new Date().toISOString().split("T")[0]]
+  const secondsPerYear = 60 * 60 * 24 * 365.25
+
 //////////////////////////////////////////////////////////////////////// Element Selectors
   const checkboxLoadForecast = document.getElementById('auto-load-forecasts')
   const checkboxLoadRetro = document.getElementById('auto-load-retrospective')
@@ -50,12 +70,13 @@ require((WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, 
   let river = {
     id: null,
     name: null,
-    forecast: {
-      date: null,
-      data: null,
-    },
+    forecast: null,
     retro: null,
-    monthlyTimeseries: null,
+    monthlyAverages: null,
+    yearlyVolumes: null,
+    monthlyAverageTimeseries: null,
+    monthlyFdc: null,
+    totalFdc: null,
   }
 
   // set the default date to 12 hours before now UTC time
@@ -283,11 +304,15 @@ require((WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, 
     })
   }
   const fetchRetroPromise = riverid => {
+    // return new Promise((resolve, reject) => {
+    //   fetch(`${REST_ENDPOINT}/retrospective/${riverid}/?format=json`)
+    //     .then(response => response.json())
+    //     .then(response => resolve(response))
+    //     .catch(() => reject())
+    // })
     return new Promise((resolve, reject) => {
-      fetch(`${REST_ENDPOINT}/retrospective/${riverid}/?format=json`)
-        .then(response => response.json())
-        .then(response => resolve(response))
-        .catch(() => reject())
+      river = JSON.parse(localStorage.getItem('river'))
+      return resolve(river.retro)
     })
   }
 
@@ -371,15 +396,66 @@ require((WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, 
       }
     )
   }
-  const plotRetro = response => {
-    const defaultDateRange = ['2015-01-01', new Date().toISOString().split("T")[0]]
+  const plotRetroReport = retro => {
     chartRetro.innerHTML = ``
+
+    let monthlyAverages = []
+    let yearlyVolumes = []
+    let monthlyAverageTimeseries = {}
+    let monthlyFdc = {}
+    let monthlyStatusValues = {
+      'Very Wet': [],
+      'Wet': [],
+      'Normal': [],
+      'Dry': [],
+      'Very Dry': [],
+    }
+    let monthlyStatusColors = {
+      'Very Wet': 'rgb(0,85,131)',
+      'Wet': 'rgb(0,198,255)',
+      'Normal': 'rgb(193,193,193)',
+      'Dry': 'rgb(250,151,148)',
+      'Very Dry': 'rgb(255, 0, 0)',
+    }
+    const statusPercentiles = [0, 13, 28, 72, 87]
+
+    let monthlyValues = retro.datetime.reduce((acc, currentValue, currentIndex) => {
+      const date = new Date(currentValue)
+      const datestring = date.toISOString().slice(0, 7)
+      if (!acc[datestring]) acc[datestring] = []
+      acc[datestring].push(retro[river.id][currentIndex])
+      return acc
+    }, {})
+
+    const sorted = retro[river.id].toSorted((a, b) => a - b)
+    const totalFdc = percentiles.toReversed().map(p => sorted[Math.floor(sorted.length * (p / 100))])
+    const months = Array.from({length: 12}).map((_, idx) => (idx + 1).toString().padStart(2, '0'))
+    const years = Array.from(new Set(Object.keys(monthlyValues).map(k => k.split('-')[0]))).sort((a, b) => a - b)
+
+    Object
+      .keys(monthlyValues)
+      .forEach(k => monthlyAverageTimeseries[k] = monthlyValues[k].reduce((a, b) => a + b, 0) / monthlyValues[k].length)
+    months
+      .forEach(month => {
+        const values = Object.keys(monthlyValues).filter(k => k.endsWith(`-${month}`)).map(k => monthlyValues[k]).flat().sort((a, b) => b - a)
+        statusPercentiles.forEach((percentile, idx) => {
+          monthlyStatusValues[Object.keys(monthlyStatusValues)[idx]].push(values[Math.floor(values.length * percentile / 100)])
+        })
+        monthlyAverages.push({month, value: values.reduce((a, b) => a + b, 0) / values.length})
+        monthlyFdc[month] = percentiles.toReversed().map(p => values[Math.floor(values.length * p / 100)])
+      })
+    years
+      .forEach(year => {
+        const yearValues = Object.keys(monthlyAverageTimeseries).filter(k => k.startsWith(`${year}-`)).map(k => monthlyAverageTimeseries[k])
+        if (yearValues.length === 12) yearlyVolumes.push({year, value: yearValues.reduce((a, b) => a + b, 0) / 12 * secondsPerYear / 1e6})
+      })
+
     Plotly.newPlot(
       chartRetro,
       [
         {
-          x: response.datetime,
-          y: response[river.id],
+          x: retro.datetime,
+          y: retro[river.id],
         }
       ],
       {
@@ -418,7 +494,7 @@ require((WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, 
               },
               {
                 label: `${text.words.all}`,
-                count: response.datetime.length,
+                count: retro.datetime.length,
                 step: 'day',
               }
             ]
@@ -427,43 +503,154 @@ require((WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, 
         }
       }
     )
-  }
 
-  const groupByYearMonth = (data) => {
-    const monthlyValues = data.datetime.reduce((acc, currentValue, currentIndex) => {
-      const date = new Date(currentValue)
-      const datestring = date.toISOString().slice(0, 7)
-      if (!acc[datestring]) acc[datestring] = []
-      acc[datestring].push(data[river.id][currentIndex])
-      return acc
-    }, {})
-    const monthlyTimeSeries = Object.keys(monthlyValues).map(k => {
-      return {
-        [k]: monthlyValues[k].reduce((a, b) => a + b, 0) / monthlyValues[k].length
+    Plotly.newPlot(
+      document.getElementById('yearlyStatusPlot'),
+      [
+        {
+          x: months.concat(...months.toReversed()),
+          y: monthlyStatusValues['Very Wet'].concat(monthlyStatusValues['Very Dry'].toReversed()),
+          type: 'line',
+          fill: 'toself',
+          name: 'Very Wet',
+          fillcolor: monthlyStatusColors['Very Wet'],
+        },
+        {
+          x: months.concat(...months.toReversed()),
+          y: monthlyStatusValues['Wet'].concat(monthlyStatusValues['Normal'].toReversed()),
+          type: 'line',
+          fill: 'toself',
+          name: 'Wet',
+          fillcolor: monthlyStatusColors['Wet'],
+        },
+        {
+          x: months.concat(...months.toReversed()),
+          y: monthlyStatusValues['Normal'].concat(monthlyStatusValues['Dry'].toReversed()),
+          type: 'line',
+          fill: 'toself',
+          name: 'Normal',
+          fillcolor: monthlyStatusColors['Normal'],
+        },
+        {
+          x: months.concat(...months.toReversed()),
+          y: monthlyStatusValues['Dry'].concat(monthlyStatusValues['Very Dry'].toReversed()),
+          type: 'line',
+          fill: 'toself',
+          name: 'Dry',
+          fillcolor: monthlyStatusColors['Dry'],
+        },
+        {
+          x: months.concat(...months.toReversed()),
+          y: monthlyStatusValues['Very Dry'].concat(Array.from({length: 12}).fill(0)),
+          type: 'line',
+          fill: 'toself',
+          name: 'Very Dry',
+          fillcolor: monthlyStatusColors['Very Dry'],
+        },
+        ...years.toReversed().map((year, idx) => {
+          const values = Object
+            .keys(monthlyAverageTimeseries)
+            .filter(k => k.startsWith(`${year}-`))
+            .map(k => monthlyAverageTimeseries[k])
+            .flat()
+          return {
+            x: months,
+            y: values,
+            name: `Year ${year}`,
+            visible: idx === 0 ? true : 'legendonly',
+            marker: {color: 'black'}
+          }
+        })
+      ],
+      {
+        title: 'Annual Status by Month',
+        xaxis: {title: 'Month'},
+        yaxis: {title: 'Flow (m³/s)'},
       }
-    })
-    // for each month, get the year-month keys which are for that month, and compute the average
-    const monthlyAverages = Array(12).map((_, idx) => {
-      const key = (idx + 1).toString().padStart(2, '0')
-      let values = []
-      Object.keys(monthlyTimeSeries).filter(k => k.endsWith(`-${key}`)).forEach(k => values.push(monthlyTimeSeries[k]))
-      values = values.flat()
-      return {month: idx + 1, average: values.reduce((a, b) => a + b, 0) / values.length}
-    })
-    // get a list of unique years from the keys and then select all
-    const yearlyAverages = Set(...Object.keys(monthlyTimeSeries)
-      .map(k => k.split('-')[0])
     )
-      .sort((a, b) => a - b)
-      .map(year => {
-        return Object
-          .keys(monthlyTimeSeries)
-          .filter(k => k.startsWith(`${year}-`))
-          .map(k => monthlyTimeSeries[k])
-          .flat()
-      })
-      .map(array => array.reduce((a, b) => a + b, 0) / array.length)
-    return {monthlyAverages, yearlyAverages, monthlyTimeSeries}
+
+    Plotly.newPlot(
+      document.getElementById("monthlyAvgTimeseriesPlot"),
+      [
+        {
+          x: Object.keys(monthlyAverageTimeseries),
+          y: Object.values(monthlyAverageTimeseries),
+          type: 'line',
+          name: 'Monthly Average Flow',
+          marker: {color: 'rgb(0, 166, 255)'}
+        }
+      ],
+      {
+        title: 'Monthly Average Flow',
+        xaxis: {title: 'Month'},
+        yaxis: {title: 'Flow (m³/s)'}
+      }
+    )
+
+    Plotly.newPlot(
+      document.getElementById("monthlyAvgPlot"),
+      [
+        {
+          x: monthlyAverages.map(x => x.month),
+          y: monthlyAverages.map(y => y.value),
+          type: 'line',
+          name: 'Monthly Average Flow',
+          marker: {color: 'rgb(0, 166, 255)'}
+        }
+      ],
+      {
+        title: 'Monthly Average Flow',
+        xaxis: {title: 'Month'},
+        yaxis: {title: 'Flow (m³/s)'}
+      }
+    )
+
+    Plotly.newPlot(
+      document.getElementById("yearlyVolPlot"),
+      [
+        {
+          x: yearlyVolumes.map(x => x.year),
+          y: yearlyVolumes.map(y => y.value),
+          type: 'line',
+          name: 'Annual Volume',
+          marker: {color: 'rgb(0, 166, 255)'}
+        }
+      ],
+      {
+        title: 'Yearly Cumulative Discharge Volume',
+        xaxis: {title: 'Year (Complete Years Only)'},
+        yaxis: {title: 'Million Cubic Meters (m³ * 10^6)'}
+      }
+    )
+
+    Plotly.newPlot(
+      document.getElementById("fdcPlot"),
+      [
+        {
+          x: percentiles,
+          y: totalFdc,
+          type: 'line',
+          name: 'Total Flow Duration Curve',
+          marker: {color: 'rgb(0, 166, 255)'}
+        },
+        ...Object
+          .keys(monthlyFdc)
+          .sort()
+          .map(m => {
+            return {
+              x: percentiles,
+              y: monthlyFdc[m],
+              type: 'line',
+              name: `FDC: Month ${m}`,
+            }
+          })
+      ],
+      {
+        title: 'Total Flow Duration Curve',
+        xaxis: {title: 'Percentile (%)'},
+        yaxis: {title: 'Flow (m³/s)'}
+      }
+    )
   }
 
   const getForecastData = riverid => {
@@ -489,10 +676,9 @@ require((WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, 
     chartRetro.innerHTML = `<img alt="loading signal" src=${LOADING_GIF}>`
     fetchRetroPromise(river.id)
       .then(response => {
-        plotRetro(response)
-        updateStatusIcons({retro: "ready"})
         river.retro = response
-        river.monthlyTimeseries = groupByYearMonth(response)
+        plotRetroReport(response)
+        updateStatusIcons({retro: "ready"})
       })
       .catch(() => {
         updateStatusIcons({retro: "fail"})
@@ -614,7 +800,6 @@ require((WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, 
         fetchData(river.id)
       })
   })
-  // view.watch('extent', () => updateHash())
   reactiveUtils.when(() => view.stationary === true, () => updateHash())
 
 //////////////////////////////////////////////////////////////////////// Export alternatives
@@ -624,20 +809,5 @@ require((WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, 
   window.updateLayerDefinitions = updateLayerDefinitions
   window.resetDefinitionExpression = resetDefinitionExpression
   window.layer = rfsLayer
-}, [
-  "esri/WebMap",
-  "esri/views/MapView",
-  "esri/layers/MapImageLayer",
-  "esri/layers/ImageryLayer",
-  "esri/layers/TileLayer",
-  "esri/layers/WebTileLayer",
-  "esri/layers/FeatureLayer",
-  "esri/widgets/Home",
-  "esri/widgets/BasemapGallery",
-  "esri/widgets/ScaleBar",
-  "esri/widgets/Legend",
-  "esri/widgets/Expand",
-  "esri/widgets/LayerList",
-  "esri/core/reactiveUtils",
-  "esri/intl",
-])
+  window.river = river // todo remove before production
+})

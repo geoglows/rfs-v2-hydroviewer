@@ -15,7 +15,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 
   <!-- Plotly -->
-  <script src="https://cdn.plot.ly/plotly-2.34.0.min.js" charset="utf-8"></script>
+  <script src="https://cdn.plot.ly/plotly-2.35.3.min.js" charset="utf-8"></script>
 
   <!-- ArcGIS JS -->
   <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/4.31/esri/themes/light/main.css"/>
@@ -37,7 +37,6 @@
     </div>
     <div id="request-status" class="load-status"></div>
     <div id="forecastPlot" class="chart"><h4>Enter a River ID or use the map to click on a stream to view river data</h4></div>
-    <div id="retroPlot" class="chart"></div>
     <div class="download-buttons">
       <button class="btn btn-success" id="download-forecast-btn" disabled><a id="download-forecast-link" target="_blank">Save Forecast Data (CSV)</a></button>
       <button class="btn btn-success" id="download-retrospective-btn" disabled><a id="download-retrospective-link" target="_blank">Save Retrospective Data (CSV)</a></button>
@@ -47,11 +46,11 @@
     <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
       <div style="display: flex; align-items: center; justify-content: left;">
         <label style="margin-inline: 10px">
-          <input id="auto-load-forecasts" type="checkbox" checked/>
+          <input id="auto-load-forecasts" type="checkbox"/>
           <span>Show Forecast</span>
         </label>
         <label style="margin-inline: 10px">
-          <input id="auto-load-retrospective" type="checkbox"/>
+          <input id="auto-load-retrospective" type="checkbox" checked/>
           <span>Show Retro<span class="hide-on-small-only">spective</span></span>
         </label>
       </div>
@@ -109,7 +108,6 @@
         For more information about the River Forecast System please visit <a href="https://geoglows.ecmwf.int" target="_blank">geoglows.ecmwf.int</a>.
         For documentation and data download instructions, please consult <a href="https://data.geoglows.org" target="_blank">data.geoglows.org</a>.
       </p>
-      <p>
         More information about the NOAA map layers can be found at:
       <ol>
         <li>NOAA-20 VIIRS True Color: <a href="https://www.arcgis.com/home/item.html?id=c873f4c13aa54b25b01270df9358dc64" target="_blank">arcgis.com</a></li>
@@ -118,22 +116,22 @@
         <li>NOAA GOES Colorized Infrared Weather Satellite (10 minute updates): <a href="https://www.arcgis.com/home/item.html?id=37a875ff3611496883b7ccca97f0f5f4" target="_blank">arcgis.com</a></li>
         <li>NOAA-20 VIIRS Flood Composite: <a href="https://floods.ssec.wisc.edu/products/RIVER-FLDglobal-composite" target="_blank">University of Wisconsin Madison SSEC</a></li>
       </ol>
-      </p>
     </div>
   </div>
   <div class="modal-footer">
     <a class="modal-close waves-effect waves-green btn-flat">Close</a>
   </div>
 </div>
-<div id="river-report-modal" class="modal">
+<div id="river-report-modal" class="modal" style="width: 80%; max-height: 80%;">
   <div class="modal-content">
     <h4>River Report</h4>
-    <button class="btn" role="button" onclick="setRiverId()">Load Report for River</button>
-    <div id="fdcPlot" class="chart"></div>
-    <div id="monthlyAvgPlot" class="chart"></div>
-    <div id="yearlyAvgPlot" class="chart"></div>
+    <button class="btn" role="button" onclick="setRiverId()">Generate Report for River ID</button>
+    <div id="retroPlot" class="chart"></div>
+    <div id="yearlyVolPlot" class="chart"></div>
+    <div id="yearlyStatusPlot" class="chart"></div>
     <div id="monthlyAvgTimeseriesPlot" class="chart"></div>
-    <div id="yearlyAvgTimeseriesPlot" class="chart"></div>
+    <div id="monthlyAvgPlot" class="chart"></div>
+    <div id="fdcPlot" class="chart"></div>
   </div>
   <div class="modal-footer">
     <a href="#" class="modal-close waves-effect waves-green btn-flat">Close</a>
@@ -155,7 +153,7 @@
         <li><a href="/np" data-lang="sv-SV">नेपाली</a></li>
       </ul>
       <a data-tooltip="View Forecast" data-position="bottom" class="btn modal-trigger tooltipped" href="#charts-modal"><i class="material-icons">show_chart</i></a>
-      <a data-tooltip="River Report" class="btn modal-trigger tooltipped" href="#river-report-modal"><i class="material-icons">assessment</i></a>
+      <a data-tooltip="Retrospective Report" data-position="bottom" class="btn modal-trigger tooltipped" href="#river-report-modal"><i class="material-icons">assessment</i></a>
       <a data-tooltip="Learn More" data-position="bottom" class="btn modal-trigger tooltipped" href="#about-modal"><i class="material-icons">help</i></a>
     </div>
   </div>
