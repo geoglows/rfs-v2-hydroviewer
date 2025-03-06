@@ -31,6 +31,22 @@ require([
   Plotly.setPlotConfig({'locale': lang})
   intl.setLocale(lang)
 
+  // styling and constants for retrospective data analysis/plots
+  const percentiles = Array.from({length: 51}, (_, i) => i * 2)
+  const sortedArrayToPercentiles = array => percentiles.toReversed().map(p => array[Math.floor(array.length * p / 100) - (p === 100 ? 1 : 0)])
+  const defaultDateRange = ['2015-01-01', new Date().toISOString().split("T")[0]]
+  const months = Array.from({length: 12}).map((_, idx) => (idx + 1).toString().padStart(2, '0'))
+  const monthNames = months.map(m => new Date(2021, parseInt(m, 10) - 1, 1).toLocaleString(lang, {month: 'short'}))
+  const secondsPerYear = 60 * 60 * 24 * 365.25
+  const statusPercentiles = [0, 13, 28, 72, 87]
+  const monthlyStatusColors = {
+    'Very Wet': 'rgb(44, 125, 205)',
+    'Wet': 'rgb(142, 206, 238)',
+    'Normal': 'rgb(231,226,188)',
+    'Dry': 'rgb(255, 168, 133)',
+    'Very Dry': 'rgb(205, 35, 63)',
+  }
+
   // parse initial state from the hash
   const hashParams = new URLSearchParams(window.location.hash.slice(1))
   let lon = !isNaN(parseFloat(hashParams.get('lon'))) ? parseFloat(hashParams.get('lon')) : 10
@@ -42,10 +58,6 @@ require([
     zoom: zoom,
     definition: hashParams.get('definition') || "",
   }
-
-  const percentiles = Array.from({length: 26}, (_, i) => i * 5)
-  const defaultDateRange = ['2015-01-01', new Date().toISOString().split("T")[0]]
-  const secondsPerYear = 60 * 60 * 24 * 365.25
 
 //////////////////////////////////////////////////////////////////////// Element Selectors
   const inputForecastDate = document.getElementById('forecast-date-calendar')
@@ -60,13 +72,17 @@ require([
   const modalFilter = document.getElementById("filter-modal")
   const chartForecast = document.getElementById("forecastPlot")
   const chartRetro = document.getElementById("retroPlot")
+  const chartYearlyVol = document.getElementById("yearlyVolPlot")
+  const chartYearlyStatus = document.getElementById("yearlyStatusPlot")
+  const chartMonthlyAvg = document.getElementById("monthlyAvgPlot")
+  const chartFdc = document.getElementById("fdcPlot")
 
 //////////////////////////////////////////////////////////////////////// Manipulate Default Controls and DOM Elements
   let loadingStatus = {riverid: "clear", forecast: "clear", retro: "clear"}
   let definitionExpression = ""
 
   // cache of queried data
-  let river = {
+   const riverData = {
     id: null,
     name: null,
     forecast: null,
@@ -76,6 +92,17 @@ require([
     monthlyAverageTimeseries: null,
     monthlyFdc: null,
     totalFdc: null,
+  }
+  let river = JSON.parse(JSON.stringify(riverData));
+  // todo enable caching of data
+  const setRiverData = (key, data) => {
+    river[key] = data
+    localStorage.setItem('riverData', JSON.stringify(river))
+  }
+  const clearRiverData = () => {
+    river = JSON.parse(JSON.stringify(riverData))
+    localStorage.setItem('river', JSON.stringify(river))
+    clearChartDivs()
   }
 
   // set the default date to 12 hours before now UTC time
@@ -391,8 +418,9 @@ require([
       }
     )
   }
-  const plotRetroReport = retro => {
-    chartRetro.innerHTML = ``
+  const plotRetroReport = () => {
+    clearChartDivs('retrospective')
+    document.getElementById("monthlyAvgTimeseriesPlot").innerHTML = ''
 
     let monthlyAverages = []
     let yearlyVolumes = []
@@ -405,26 +433,15 @@ require([
       'Dry': [],
       'Very Dry': [],
     }
-    let monthlyStatusColors = {
-      'Very Wet': 'rgb(0,85,131)',
-      'Wet': 'rgb(0,198,255)',
-      'Normal': 'rgb(193,193,193)',
-      'Dry': 'rgb(250,151,148)',
-      'Very Dry': 'rgb(255, 0, 0)',
-    }
-    const statusPercentiles = [0, 13, 28, 72, 87]
 
-    let monthlyValues = retro.datetime.reduce((acc, currentValue, currentIndex) => {
+    let monthlyValues = river.retro.datetime.reduce((acc, currentValue, currentIndex) => {
       const date = new Date(currentValue)
       const datestring = date.toISOString().slice(0, 7)
       if (!acc[datestring]) acc[datestring] = []
-      acc[datestring].push(retro[river.id][currentIndex])
+      acc[datestring].push(river.retro[river.id][currentIndex])
       return acc
     }, {})
-
-    const sorted = retro[river.id].toSorted((a, b) => a - b)
-    const totalFdc = percentiles.toReversed().map(p => sorted[Math.floor(sorted.length * (p / 100))])
-    const months = Array.from({length: 12}).map((_, idx) => (idx + 1).toString().padStart(2, '0'))
+    const totalFdc = sortedArrayToPercentiles(river.retro[river.id].toSorted((a, b) => a - b))
     const years = Array.from(new Set(Object.keys(monthlyValues).map(k => k.split('-')[0]))).sort((a, b) => a - b)
 
     Object
@@ -437,25 +454,42 @@ require([
           monthlyStatusValues[Object.keys(monthlyStatusValues)[idx]].push(values[Math.floor(values.length * percentile / 100)])
         })
         monthlyAverages.push({month, value: values.reduce((a, b) => a + b, 0) / values.length})
-        monthlyFdc[month] = percentiles.toReversed().map(p => values[Math.floor(values.length * p / 100)])
+        monthlyFdc[month] = sortedArrayToPercentiles(values.toReversed())
       })
     years
       .forEach(year => {
         const yearValues = Object.keys(monthlyAverageTimeseries).filter(k => k.startsWith(`${year}-`)).map(k => monthlyAverageTimeseries[k])
         if (yearValues.length === 12) yearlyVolumes.push({year, value: yearValues.reduce((a, b) => a + b, 0) / 12 * secondsPerYear / 1e6})
       })
+    const fiveYearlyAverages = yearlyVolumes.reduce((acc, {year, value}) => {
+      const period = Math.floor(year / 5) * 5
+      let group = acc.find(g => g.period === period)
+      if (!group) {
+        group = {period, total: 0, count: 0}
+        acc.push(group)
+      }
+      group.total += value
+      group.count += 1
+      return acc
+    }, []).map(({period, total, count}) => ({
+      period,
+      average: total / count
+    }))
 
     Plotly.newPlot(
       chartRetro,
       [
         {
-          x: retro.datetime,
-          y: retro[river.id],
+          x: river.retro.datetime,
+          y: river.retro[river.id],
         }
       ],
       {
         title: `${text.plots.retroTitle} ${river.id}`,
-        yaxis: {title: `${text.plots.retroYaxis} (m³/s)`},
+        yaxis: {
+          title: `${text.plots.retroYaxis} (m³/s)`,
+          range: [0, null]
+        },
         xaxis: {
           title: `${text.plots.retroXaxis} (UTC +00:00)`,
           autorange: false,
@@ -489,7 +523,7 @@ require([
               },
               {
                 label: `${text.words.all}`,
-                count: retro.datetime.length,
+                count: river.retro.datetime.length,
                 step: 'day',
               }
             ]
@@ -500,46 +534,86 @@ require([
     )
 
     Plotly.newPlot(
-      document.getElementById('yearlyStatusPlot'),
+      chartYearlyVol,
+      [
+        {
+          x: yearlyVolumes.map(x => x.year),
+          y: yearlyVolumes.map(y => y.value),
+          type: 'line',
+          name: 'Annual Volume',
+          marker: {color: 'rgb(0, 166, 255)'}
+        },
+        ...fiveYearlyAverages.map((x, idx) => {
+          return {
+            x: [x.period, (idx + 1 < fiveYearlyAverages.length ? fiveYearlyAverages[idx + 1].period : x.period + 5)],
+            y: [x.average, x.average],
+            type: 'scatter',
+            mode: 'lines',
+            legendgroup: '5 Yearly Averages',
+            showlegend: idx === 0,
+            name: '5 Yearly Averages',
+            marker: {color: 'red'},
+          }
+        })
+      ],
+      {
+        title: 'Yearly Cumulative Discharge Volume',
+        legend: {orientation: 'h'},
+        hovermode: 'x',
+        xaxis: {title: 'Year (Complete Years Only)'},
+        yaxis: {
+          title: 'Million Cubic Meters (m³ * 10^6)',
+          range: [0, null]
+        }
+      }
+    )
+
+    Plotly.newPlot(
+      chartYearlyStatus,
       [
         {
           x: months.concat(...months.toReversed()),
-          y: monthlyStatusValues['Very Wet'].concat(monthlyStatusValues['Very Dry'].toReversed()),
-          type: 'line',
+          y: monthlyStatusValues['Very Wet'].concat(monthlyStatusValues['Wet'].toReversed()),
+          mode: 'lines',
           fill: 'toself',
           name: 'Very Wet',
+          line: {width: 0},
           fillcolor: monthlyStatusColors['Very Wet'],
         },
         {
           x: months.concat(...months.toReversed()),
           y: monthlyStatusValues['Wet'].concat(monthlyStatusValues['Normal'].toReversed()),
-          type: 'line',
+          mode: 'lines',
           fill: 'toself',
           name: 'Wet',
+          line: {width: 0},
           fillcolor: monthlyStatusColors['Wet'],
         },
         {
           x: months.concat(...months.toReversed()),
           y: monthlyStatusValues['Normal'].concat(monthlyStatusValues['Dry'].toReversed()),
-          type: 'line',
+          mode: 'lines',
           fill: 'toself',
           name: 'Normal',
+          line: {width: 0},
           fillcolor: monthlyStatusColors['Normal'],
         },
         {
           x: months.concat(...months.toReversed()),
           y: monthlyStatusValues['Dry'].concat(monthlyStatusValues['Very Dry'].toReversed()),
-          type: 'line',
+          mode: 'lines',
           fill: 'toself',
           name: 'Dry',
+          line: {width: 0},
           fillcolor: monthlyStatusColors['Dry'],
         },
         {
           x: months.concat(...months.toReversed()),
           y: monthlyStatusValues['Very Dry'].concat(Array.from({length: 12}).fill(0)),
-          type: 'line',
+          mode: 'lines',
           fill: 'toself',
           name: 'Very Dry',
+          line: {width: 0},
           fillcolor: monthlyStatusColors['Very Dry'],
         },
         ...years.toReversed().map((year, idx) => {
@@ -553,14 +627,83 @@ require([
             y: values,
             name: `Year ${year}`,
             visible: idx === 0 ? true : 'legendonly',
-            marker: {color: 'black'}
+            mode: 'lines',
+            type: 'scatter',
+            line: {width: 2, color: 'black'}
           }
         })
       ],
       {
         title: 'Annual Status by Month',
-        xaxis: {title: 'Month'},
-        yaxis: {title: 'Flow (m³/s)'},
+        xaxis: {
+          title: 'Month',
+          tickvals: months,
+          ticktext: monthNames,
+        },
+        hovermode: 'x',
+        yaxis: {
+          title: 'Flow (m³/s)',
+          range: [0, null]
+        },
+      }
+    )
+
+    Plotly.newPlot(
+      chartMonthlyAvg,
+      [
+        {
+          x: monthlyAverages.map(x => x.month),
+          y: monthlyAverages.map(y => y.value),
+          type: 'line',
+          name: 'Monthly Average Flow',
+          marker: {color: 'rgb(0, 166, 255)'}
+        }
+      ],
+      {
+        title: 'Monthly Average Flow',
+        xaxis: {
+          title: 'Month',
+          tickvals: months,
+          ticktext: monthNames,
+        },
+        hovermode: 'x',
+        yaxis: {
+          title: 'Flow (m³/s)',
+          range: [0, null]
+        }
+      }
+    )
+
+    Plotly.newPlot(
+      chartFdc,
+      [
+        {
+          x: percentiles,
+          y: totalFdc,
+          type: 'lines',
+          name: 'Total Flow Duration Curve',
+        },
+        ...Object
+          .keys(monthlyFdc)
+          .sort()
+          .map((m, idx) => {
+            return {
+              x: percentiles,
+              y: monthlyFdc[m],
+              type: 'line',
+              name: `FDC: Month ${monthNames[idx]}`,
+            }
+          })
+      ],
+      {
+        title: 'Total Flow Duration Curve',
+        xaxis: {title: 'Percentile (%)'},
+        yaxis: {
+          title: 'Flow (m³/s)',
+          range: [0, null]
+        },
+        legend: {orientation: 'h'},
+        hovermode: 'x',
       }
     )
 
@@ -581,71 +724,6 @@ require([
         yaxis: {title: 'Flow (m³/s)'}
       }
     )
-
-    Plotly.newPlot(
-      document.getElementById("monthlyAvgPlot"),
-      [
-        {
-          x: monthlyAverages.map(x => x.month),
-          y: monthlyAverages.map(y => y.value),
-          type: 'line',
-          name: 'Monthly Average Flow',
-          marker: {color: 'rgb(0, 166, 255)'}
-        }
-      ],
-      {
-        title: 'Monthly Average Flow',
-        xaxis: {title: 'Month'},
-        yaxis: {title: 'Flow (m³/s)'}
-      }
-    )
-
-    Plotly.newPlot(
-      document.getElementById("yearlyVolPlot"),
-      [
-        {
-          x: yearlyVolumes.map(x => x.year),
-          y: yearlyVolumes.map(y => y.value),
-          type: 'line',
-          name: 'Annual Volume',
-          marker: {color: 'rgb(0, 166, 255)'}
-        }
-      ],
-      {
-        title: 'Yearly Cumulative Discharge Volume',
-        xaxis: {title: 'Year (Complete Years Only)'},
-        yaxis: {title: 'Million Cubic Meters (m³ * 10^6)'}
-      }
-    )
-
-    Plotly.newPlot(
-      document.getElementById("fdcPlot"),
-      [
-        {
-          x: percentiles,
-          y: totalFdc,
-          type: 'line',
-          name: 'Total Flow Duration Curve',
-          marker: {color: 'rgb(0, 166, 255)'}
-        },
-        ...Object
-          .keys(monthlyFdc)
-          .sort()
-          .map(m => {
-            return {
-              x: percentiles,
-              y: monthlyFdc[m],
-              type: 'line',
-              name: `FDC: Month ${m}`,
-            }
-          })
-      ],
-      {
-        title: 'Total Flow Duration Curve',
-        xaxis: {title: 'Percentile (%)'},
-        yaxis: {title: 'Flow (m³/s)'}
-      }
-    )
   }
 
   const getForecastData = riverid => {
@@ -653,7 +731,8 @@ require([
     if (!river.id) return
     updateStatusIcons({forecast: "load"})
     chartForecast.innerHTML = `<img alt="loading signal" src=${LOADING_GIF}>`
-    Promise.all([fetchForecastPromise(river.id), fetchReturnPeriodsPromise(river.id)])
+    Promise
+      .all([fetchForecastPromise(river.id), fetchReturnPeriodsPromise(river.id)])
       .then(responses => {
         river.forecast = responses[0]
         river.returnPeriods = responses[1]
@@ -671,7 +750,7 @@ require([
     fetchRetroPromise(river.id)
       .then(response => {
         river.retro = response
-        plotRetroReport(response)
+        plotRetroReport()
         updateStatusIcons({retro: "ready"})
       })
       .catch(() => {
@@ -685,7 +764,6 @@ require([
     updateStatusIcons({riverid: "ready", forecast: "clear", retro: "clear"})
     clearChartDivs()
     updateDownloadLinks("set")
-    // todo how to know which model to open?
     if (referrer === 'forecast') {
       M.Modal.getInstance(modalForecasts).open()
     } else if (referrer === 'retro') {
@@ -729,7 +807,11 @@ require([
       chartForecast.innerHTML = ""
     }
     if (chartTypes === "retrospective" || chartTypes === null) {
-      chartRetro.innerHTML = ""
+      chartRetro.innerHTML = ''
+      chartYearlyVol.innerHTML = ''
+      chartYearlyStatus.innerHTML = ''
+      chartMonthlyAvg.innerHTML = ''
+      chartFdc.innerHTML = ''
     }
   }
   const updateDownloadLinks = type => {
