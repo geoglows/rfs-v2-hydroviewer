@@ -48,8 +48,6 @@ require([
   const secondsPerYear = 60 * 60 * 24 * 365.25
 
 //////////////////////////////////////////////////////////////////////// Element Selectors
-  const checkboxLoadForecast = document.getElementById('auto-load-forecasts')
-  const checkboxLoadRetro = document.getElementById('auto-load-retrospective')
   const inputForecastDate = document.getElementById('forecast-date-calendar')
   const riverName = document.getElementById('river-name')
   const selectRiverCountry = document.getElementById('riverCountry')
@@ -57,7 +55,8 @@ require([
   const selectVPU = document.getElementById('vpuSelect')
   const definitionString = document.getElementById("definitionString")
   const definitionDiv = document.getElementById("definition-expression")
-  const modalCharts = document.getElementById("charts-modal")
+  const modalForecasts = document.getElementById("forecast-modal")
+  const modalRetro = document.getElementById("retro-modal")
   const modalFilter = document.getElementById("filter-modal")
   const chartForecast = document.getElementById("forecastPlot")
   const chartRetro = document.getElementById("retroPlot")
@@ -304,15 +303,11 @@ require([
     })
   }
   const fetchRetroPromise = riverid => {
-    // return new Promise((resolve, reject) => {
-    //   fetch(`${REST_ENDPOINT}/retrospective/${riverid}/?format=json`)
-    //     .then(response => response.json())
-    //     .then(response => resolve(response))
-    //     .catch(() => reject())
-    // })
     return new Promise((resolve, reject) => {
-      river = JSON.parse(localStorage.getItem('river'))
-      return resolve(river.retro)
+      fetch(`${REST_ENDPOINT}/retrospective/${riverid}/?format=json`)
+        .then(response => response.json())
+        .then(response => resolve(response))
+        .catch(() => reject())
     })
   }
 
@@ -667,7 +662,6 @@ require([
       })
       .catch(() => {
         updateStatusIcons({forecast: "fail"})
-        giveForecastRetryButton(river.id)
       })
   }
   const getRetrospectiveData = () => {
@@ -682,24 +676,29 @@ require([
       })
       .catch(() => {
         updateStatusIcons({retro: "fail"})
-        giveRetrospectiveRetryButton(river.id)
       })
   }
-  const fetchData = riverid => {
+  const fetchData = ({riverid, referrer = "forecast"}) => {
     river.id = riverid ? riverid : river.id
     if (!river.id) return updateStatusIcons({riverid: "fail"})
-    M.Modal.getInstance(modalCharts).open()
+    // todo where to show the status icons
     updateStatusIcons({riverid: "ready", forecast: "clear", retro: "clear"})
     clearChartDivs()
     updateDownloadLinks("set")
-    checkboxLoadForecast.checked ? getForecastData() : giveForecastRetryButton(river.id)
-    checkboxLoadRetro.checked ? getRetrospectiveData() : giveRetrospectiveRetryButton(river.id)
+    // todo how to know which model to open?
+    if (referrer === 'forecast') {
+      M.Modal.getInstance(modalForecasts).open()
+    } else if (referrer === 'retro') {
+      M.Modal.getInstance(modalRetro).open()
+    }
+    getForecastData()
+    getRetrospectiveData()
   }
-  const setRiverId = () => {
+  const setRiverId = referrer => {
     river.id = prompt(text.prompts.enterRiverID)
     if (!river.id) return
     if (!/^\d{9}$/.test(river.id)) return alert(text.prompts.invalidRiverID)
-    fetchData(parseInt(river.id))
+    fetchData({riverid: parseInt(river.id), referrer: referrer})
   }
 
 //////////////////////////////////////////////////////////////////////// Update
@@ -732,14 +731,6 @@ require([
     if (chartTypes === "retrospective" || chartTypes === null) {
       chartRetro.innerHTML = ""
     }
-  }
-  const giveForecastRetryButton = riverid => {
-    clearChartDivs({chartTypes: "forecast"})
-    chartForecast.innerHTML = `<button class="btn btn-warning" onclick="window.getForecastData(${riverid})">${text.inputs.forecast}</button>`
-  }
-  const giveRetrospectiveRetryButton = riverid => {
-    clearChartDivs({chartTypes: "historical"})
-    chartRetro.innerHTML = `<button class="btn btn-warning" onclick="window.getRetrospectiveData(${riverid})">${text.inputs.retro}</button>`
   }
   const updateDownloadLinks = type => {
     if (type === "clear") {
@@ -797,7 +788,7 @@ require([
             width: 3
           }
         })
-        fetchData(river.id)
+        fetchData({riverid: river.id, referrer: "forecast"})
       })
   })
   reactiveUtils.when(() => view.stationary === true, () => updateHash())
@@ -809,5 +800,4 @@ require([
   window.updateLayerDefinitions = updateLayerDefinitions
   window.resetDefinitionExpression = resetDefinitionExpression
   window.layer = rfsLayer
-  window.river = river // todo remove before production
 })

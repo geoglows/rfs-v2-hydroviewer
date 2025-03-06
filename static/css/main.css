@@ -125,14 +125,6 @@ html, body {
     flex-direction: column;
 }
 
-.download-buttons {
-    justify-content: space-between;
-}
-
-.download-buttons > * {
-    margin: 5px;
-}
-
 /* Override materialize css styles */
 label {
     font-size: 1.2rem !important;
