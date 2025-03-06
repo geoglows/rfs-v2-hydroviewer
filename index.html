@@ -125,10 +125,26 @@
     <a class="modal-close waves-effect waves-green btn-flat">Close</a>
   </div>
 </div>
+<div id="river-report-modal" class="modal">
+  <div class="modal-content">
+    <h4>River Report</h4>
+    <button class="btn" role="button" onclick="setRiverId()">Load Report for River</button>
+    <div id="fdcPlot" class="chart"></div>
+    <div id="monthlyAvgPlot" class="chart"></div>
+    <div id="yearlyAvgPlot" class="chart"></div>
+    <div id="monthlyAvgTimeseriesPlot" class="chart"></div>
+    <div id="yearlyAvgTimeseriesPlot" class="chart"></div>
+  </div>
+  <div class="modal-footer">
+    <a href="#" class="modal-close waves-effect waves-green btn-flat">Close</a>
+  </div>
+</div>
 
 <div class="body-wrapper">
   <div class="nav-bar-wrapper" style="background-color: #81d4fa">
-    <h4 style="font-size: 2rem; font-weight: bolder">GEOGLOWS River Forecast System</h4>
+    <h4 style="font-size: 2rem; font-weight: bolder">
+      <span class="hide-on-small-only">GEOGLOWS </span>R<span class="hide-on-small-only">iver </span>F<span class="hide-on-small-only">orecast </span>S<span class="hide-on-small-only">ystem</span>
+    </h4>
     <div>
       <a class="btn dropdown-trigger" href="#" data-target="language-select"><i class="material-icons">translate</i></a>
       <ul id="language-select" class="dropdown-content">
@@ -138,7 +154,8 @@
         <li><a href="/sv" data-lang="sv-SV">Svenska</a></li>
         <li><a href="/np" data-lang="sv-SV">नेपाली</a></li>
       </ul>
-      <a data-tooltip="View Charts" data-position="bottom" class="btn modal-trigger tooltipped" href="#charts-modal"><i class="material-icons">show_chart</i></a>
+      <a data-tooltip="View Forecast" data-position="bottom" class="btn modal-trigger tooltipped" href="#charts-modal"><i class="material-icons">show_chart</i></a>
+      <a data-tooltip="River Report" class="btn modal-trigger tooltipped" href="#river-report-modal"><i class="material-icons">assessment</i></a>
       <a data-tooltip="Learn More" data-position="bottom" class="btn modal-trigger tooltipped" href="#about-modal"><i class="material-icons">help</i></a>
     </div>
   </div>

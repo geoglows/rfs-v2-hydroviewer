@@ -1,20 +1,4 @@
-require([
-  "esri/WebMap",
-  "esri/views/MapView",
-  "esri/layers/MapImageLayer",
-  "esri/layers/ImageryLayer",
-  "esri/layers/TileLayer",
-  "esri/layers/WebTileLayer",
-  "esri/layers/FeatureLayer",
-  "esri/widgets/Home",
-  "esri/widgets/BasemapGallery",
-  "esri/widgets/ScaleBar",
-  "esri/widgets/Legend",
-  "esri/widgets/Expand",
-  "esri/widgets/LayerList",
-  "esri/core/reactiveUtils",
-  "esri/intl",
-], (WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, FeatureLayer, Home, BasemapGallery, ScaleBar, Legend, Expand, LayerList, reactiveUtils, intl) => {
+require((WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, FeatureLayer, Home, BasemapGallery, ScaleBar, Legend, Expand, LayerList, reactiveUtils, intl) => {
   'use strict'
 
 //////////////////////////////////////////////////////////////////////// Constants Variables
@@ -60,8 +44,19 @@ require([
 
 //////////////////////////////////////////////////////////////////////// Manipulate Default Controls and DOM Elements
   let loadingStatus = {riverid: "clear", forecast: "clear", retro: "clear"}
-  let riverId
   let definitionExpression = ""
+
+  // cache of queried data
+  let river = {
+    id: null,
+    name: null,
+    forecast: {
+      date: null,
+      data: null,
+    },
+    retro: null,
+    monthlyTimeseries: null,
+  }
 
   // set the default date to 12 hours before now UTC time
   const now = new Date()
@@ -295,6 +290,7 @@ require([
         .catch(() => reject())
     })
   }
+
   const returnPeriodShapes = ({rp, x0, x1, maxFlow}) => {
     const returnPeriodColors = {
       '2': 'rgb(254, 240, 1)',
@@ -383,11 +379,11 @@ require([
       [
         {
           x: response.datetime,
-          y: response[riverId],
+          y: response[river.id],
         }
       ],
       {
-        title: `${text.plots.retroTitle} ${riverId}`,
+        title: `${text.plots.retroTitle} ${river.id}`,
         yaxis: {title: `${text.plots.retroYaxis} (m³/s)`},
         xaxis: {
           title: `${text.plots.retroXaxis} (UTC +00:00)`,
@@ -432,50 +428,92 @@ require([
       }
     )
   }
+
+  const groupByYearMonth = (data) => {
+    const monthlyValues = data.datetime.reduce((acc, currentValue, currentIndex) => {
+      const date = new Date(currentValue)
+      const datestring = date.toISOString().slice(0, 7)
+      if (!acc[datestring]) acc[datestring] = []
+      acc[datestring].push(data[river.id][currentIndex])
+      return acc
+    }, {})
+    const monthlyTimeSeries = Object.keys(monthlyValues).map(k => {
+      return {
+        [k]: monthlyValues[k].reduce((a, b) => a + b, 0) / monthlyValues[k].length
+      }
+    })
+    // for each month, get the year-month keys which are for that month, and compute the average
+    const monthlyAverages = Array(12).map((_, idx) => {
+      const key = (idx + 1).toString().padStart(2, '0')
+      let values = []
+      Object.keys(monthlyTimeSeries).filter(k => k.endsWith(`-${key}`)).forEach(k => values.push(monthlyTimeSeries[k]))
+      values = values.flat()
+      return {month: idx + 1, average: values.reduce((a, b) => a + b, 0) / values.length}
+    })
+    // get a list of unique years from the keys and then select all
+    const yearlyAverages = Set(...Object.keys(monthlyTimeSeries)
+      .map(k => k.split('-')[0])
+    )
+      .sort((a, b) => a - b)
+      .map(year => {
+        return Object
+          .keys(monthlyTimeSeries)
+          .filter(k => k.startsWith(`${year}-`))
+          .map(k => monthlyTimeSeries[k])
+          .flat()
+      })
+      .map(array => array.reduce((a, b) => a + b, 0) / array.length)
+    return {monthlyAverages, yearlyAverages, monthlyTimeSeries}
+  }
+
   const getForecastData = riverid => {
-    riverId = riverid ? riverid : riverId
-    if (!riverId) return
+    river.id = riverid ? riverid : river.id
+    if (!river.id) return
     updateStatusIcons({forecast: "load"})
     chartForecast.innerHTML = `<img alt="loading signal" src=${LOADING_GIF}>`
-    Promise.all([fetchForecastPromise(riverId), fetchReturnPeriodsPromise(riverId)])
+    Promise.all([fetchForecastPromise(river.id), fetchReturnPeriodsPromise(river.id)])
       .then(responses => {
-        plotForecast({forecast: responses[0], rp: responses[1], riverid: riverId})
+        river.forecast = responses[0]
+        river.returnPeriods = responses[1]
+        plotForecast({forecast: responses[0], rp: responses[1], riverid: river.id})
         updateStatusIcons({forecast: "ready"})
       })
       .catch(() => {
         updateStatusIcons({forecast: "fail"})
-        giveForecastRetryButton(riverId)
+        giveForecastRetryButton(river.id)
       })
   }
   const getRetrospectiveData = () => {
-    if (!riverId) return
+    if (!river.id) return
     updateStatusIcons({retro: "load"})
     chartRetro.innerHTML = `<img alt="loading signal" src=${LOADING_GIF}>`
-    fetchRetroPromise(riverId)
+    fetchRetroPromise(river.id)
       .then(response => {
         plotRetro(response)
         updateStatusIcons({retro: "ready"})
+        river.retro = response
+        river.monthlyTimeseries = groupByYearMonth(response)
       })
       .catch(() => {
         updateStatusIcons({retro: "fail"})
-        giveRetrospectiveRetryButton(riverId)
+        giveRetrospectiveRetryButton(river.id)
       })
   }
   const fetchData = riverid => {
-    riverId = riverid ? riverid : riverId
-    if (!riverId) return updateStatusIcons({riverid: "fail"})
+    river.id = riverid ? riverid : river.id
+    if (!river.id) return updateStatusIcons({riverid: "fail"})
     M.Modal.getInstance(modalCharts).open()
     updateStatusIcons({riverid: "ready", forecast: "clear", retro: "clear"})
     clearChartDivs()
     updateDownloadLinks("set")
-    checkboxLoadForecast.checked ? getForecastData() : giveForecastRetryButton(riverId)
-    checkboxLoadRetro.checked ? getRetrospectiveData() : giveRetrospectiveRetryButton(riverId)
+    checkboxLoadForecast.checked ? getForecastData() : giveForecastRetryButton(river.id)
+    checkboxLoadRetro.checked ? getRetrospectiveData() : giveRetrospectiveRetryButton(river.id)
   }
   const setRiverId = () => {
-    riverId = prompt(text.prompts.enterRiverID)
-    if (!riverId) return
-    if (!/^\d{9}$/.test(riverId)) return alert(text.prompts.invalidRiverID)
-    fetchData(parseInt(riverId))
+    river.id = prompt(text.prompts.enterRiverID)
+    if (!river.id) return
+    if (!/^\d{9}$/.test(river.id)) return alert(text.prompts.invalidRiverID)
+    fetchData(parseInt(river.id))
   }
 
 //////////////////////////////////////////////////////////////////////// Update
@@ -492,7 +530,7 @@ require([
           message = text.status.load
           break
         case "ready":
-          message = key === "riverid" ? riverId : text.status.ready
+          message = key === "riverid" ? river.id : text.status.ready
           break
         case "fail":
           message = text.status.fail
@@ -524,8 +562,8 @@ require([
       document.getElementById("download-forecast-btn").disabled = true
       document.getElementById("download-retrospective-btn").disabled = true
     } else if (type === "set") {
-      document.getElementById("download-forecast-link").href = `${REST_ENDPOINT}/forecast/${riverId}`
-      document.getElementById("download-retrospective-link").href = `${REST_ENDPOINT}/retrospective/${riverId}`
+      document.getElementById("download-forecast-link").href = `${REST_ENDPOINT}/forecast/${river.id}`
+      document.getElementById("download-retrospective-link").href = `${REST_ENDPOINT}/retrospective/${river.id}`
       document.getElementById("download-forecast-btn").disabled = false
       document.getElementById("download-retrospective-btn").disabled = false
     }
@@ -563,7 +601,7 @@ require([
     updateStatusIcons({riverid: "load", forecast: "clear", retro: "clear"})
     searchLayerByClickPromise(event)
       .then(response => {
-        riverId = response.features[0].attributes.comid
+        river.id = response.features[0].attributes.comid
         view.graphics.removeAll()
         view.graphics.add({
           geometry: response.features[0].geometry,
@@ -573,7 +611,7 @@ require([
             width: 3
           }
         })
-        fetchData(riverId)
+        fetchData(river.id)
       })
   })
   // view.watch('extent', () => updateHash())
@@ -586,4 +624,20 @@ require([
   window.updateLayerDefinitions = updateLayerDefinitions
   window.resetDefinitionExpression = resetDefinitionExpression
   window.layer = rfsLayer
-})
+}, [
+  "esri/WebMap",
+  "esri/views/MapView",
+  "esri/layers/MapImageLayer",
+  "esri/layers/ImageryLayer",
+  "esri/layers/TileLayer",
+  "esri/layers/WebTileLayer",
+  "esri/layers/FeatureLayer",
+  "esri/widgets/Home",
+  "esri/widgets/BasemapGallery",
+  "esri/widgets/ScaleBar",
+  "esri/widgets/Legend",
+  "esri/widgets/Expand",
+  "esri/widgets/LayerList",
+  "esri/core/reactiveUtils",
+  "esri/intl",
+])
