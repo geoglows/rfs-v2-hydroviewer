@@ -60,6 +60,7 @@ require([
   }
 
 //////////////////////////////////////////////////////////////////////// Element Selectors
+  const loadStatusDivs = Array.from(document.getElementsByClassName("load-status"))
   const inputForecastDate = document.getElementById('forecast-date-calendar')
   const riverName = document.getElementById('river-name')
   const selectRiverCountry = document.getElementById('riverCountry')
@@ -82,7 +83,7 @@ require([
   let definitionExpression = ""
 
   // cache of queried data
-   const riverData = {
+  const riverData = {
     id: null,
     name: null,
     forecast: null,
@@ -482,16 +483,29 @@ require([
         {
           x: river.retro.datetime,
           y: river.retro[river.id],
+          type: 'lines',
+          name: 'Daily Average',
+        },
+        {
+          x: Object.keys(monthlyAverageTimeseries),
+          y: Object.values(monthlyAverageTimeseries),
+          type: 'lines',
+          name: 'Monthly Average',
+          line: {color: 'rgb(0, 166, 255)'},
+          visible: 'legendonly'
         }
       ],
       {
         title: `${text.plots.retroTitle} ${river.id}`,
+        legend: {orientation: 'h', x: 0, y: 1},
+        hovermode: 'x',
         yaxis: {
           title: `${text.plots.retroYaxis} (m³/s)`,
           range: [0, null]
         },
         xaxis: {
           title: `${text.plots.retroXaxis} (UTC +00:00)`,
+          type: 'date',
           autorange: false,
           range: defaultDateRange,
           rangeslider: {},
@@ -528,7 +542,6 @@ require([
               }
             ]
           },
-          type: 'date'
         }
       }
     )
@@ -579,6 +592,8 @@ require([
           name: 'Very Wet',
           line: {width: 0},
           fillcolor: monthlyStatusColors['Very Wet'],
+          legendgroup: 'Monthly Status Categories',
+          legendgrouptitle: {text: 'Monthly Status Categories'},
         },
         {
           x: months.concat(...months.toReversed()),
@@ -588,6 +603,8 @@ require([
           name: 'Wet',
           line: {width: 0},
           fillcolor: monthlyStatusColors['Wet'],
+          legendgroup: 'Monthly Status Categories',
+          legendgrouptitle: {text: 'Monthly Status Categories'},
         },
         {
           x: months.concat(...months.toReversed()),
@@ -597,6 +614,8 @@ require([
           name: 'Normal',
           line: {width: 0},
           fillcolor: monthlyStatusColors['Normal'],
+          legendgroup: 'Monthly Status Categories',
+          legendgrouptitle: {text: 'Monthly Status Categories'},
         },
         {
           x: months.concat(...months.toReversed()),
@@ -606,6 +625,8 @@ require([
           name: 'Dry',
           line: {width: 0},
           fillcolor: monthlyStatusColors['Dry'],
+          legendgroup: 'Monthly Status Categories',
+          legendgrouptitle: {text: 'Monthly Status Categories'},
         },
         {
           x: months.concat(...months.toReversed()),
@@ -615,6 +636,16 @@ require([
           name: 'Very Dry',
           line: {width: 0},
           fillcolor: monthlyStatusColors['Very Dry'],
+          legendgroup: 'Monthly Status Categories',
+          legendgrouptitle: {text: 'Monthly Status Categories'},
+        },
+        {
+          x: monthlyAverages.map(x => x.month),
+          y: monthlyAverages.map(y => y.value),
+          mode: 'lines',
+          name: 'Monthly Average Flows',
+          visible: 'legendonly',
+          line: {color: 'rgb(0,0,0)', width: 3},
         },
         ...years.toReversed().map((year, idx) => {
           const values = Object
@@ -628,7 +659,6 @@ require([
             name: `Year ${year}`,
             visible: idx === 0 ? true : 'legendonly',
             mode: 'lines',
-            type: 'scatter',
             line: {width: 2, color: 'black'}
           }
         })
@@ -645,32 +675,6 @@ require([
           title: 'Flow (m³/s)',
           range: [0, null]
         },
-      }
-    )
-
-    Plotly.newPlot(
-      chartMonthlyAvg,
-      [
-        {
-          x: monthlyAverages.map(x => x.month),
-          y: monthlyAverages.map(y => y.value),
-          type: 'line',
-          name: 'Monthly Average Flow',
-          marker: {color: 'rgb(0, 166, 255)'}
-        }
-      ],
-      {
-        title: 'Monthly Average Flow',
-        xaxis: {
-          title: 'Month',
-          tickvals: months,
-          ticktext: monthNames,
-        },
-        hovermode: 'x',
-        yaxis: {
-          title: 'Flow (m³/s)',
-          range: [0, null]
-        }
       }
     )
 
@@ -706,24 +710,6 @@ require([
         hovermode: 'x',
       }
     )
-
-    Plotly.newPlot(
-      document.getElementById("monthlyAvgTimeseriesPlot"),
-      [
-        {
-          x: Object.keys(monthlyAverageTimeseries),
-          y: Object.values(monthlyAverageTimeseries),
-          type: 'line',
-          name: 'Monthly Average Flow',
-          marker: {color: 'rgb(0, 166, 255)'}
-        }
-      ],
-      {
-        title: 'Monthly Average Flow',
-        xaxis: {title: 'Month'},
-        yaxis: {title: 'Flow (m³/s)'}
-      }
-    )
   }
 
   const getForecastData = riverid => {
@@ -757,10 +743,9 @@ require([
         updateStatusIcons({retro: "fail"})
       })
   }
-  const fetchData = ({riverid, referrer = "forecast"}) => {
+  const fetchData = ({riverid, referrer = null}) => {
     river.id = riverid ? riverid : river.id
     if (!river.id) return updateStatusIcons({riverid: "fail"})
-    // todo where to show the status icons
     updateStatusIcons({riverid: "ready", forecast: "clear", retro: "clear"})
     clearChartDivs()
     updateDownloadLinks("set")
@@ -773,10 +758,10 @@ require([
     getRetrospectiveData()
   }
   const setRiverId = referrer => {
-    river.id = prompt(text.prompts.enterRiverID)
+    river.id = parseInt(prompt(text.prompts.enterRiverID))
     if (!river.id) return
     if (!/^\d{9}$/.test(river.id)) return alert(text.prompts.invalidRiverID)
-    fetchData({riverid: parseInt(river.id), referrer: referrer})
+    fetchData({riverid: river.id, referrer: referrer})
   }
 
 //////////////////////////////////////////////////////////////////////// Update
@@ -784,23 +769,27 @@ require([
     for (let key in status) {
       loadingStatus[key] = status[key]
     }
-    document.getElementById("request-status").innerHTML = [
-      'riverid', 'forecast', 'retro'
-    ].map(key => {
-      let message = text.status.clear
-      switch (loadingStatus[key]) {
-        case "load":
-          message = text.status.load
-          break
-        case "ready":
-          message = key === "riverid" ? river.id : text.status.ready
-          break
-        case "fail":
-          message = text.status.fail
-          break
-      }
-      return `<span class="status-${loadingStatus[key]}">${text.words[key]}: ${message}</span>`
-    }).join(' - ')
+    const statusMessage = ['riverid', 'forecast', 'retro']
+      .map(key => {
+        let message = ''
+        if (key === 'riverid' && loadingStatus[key] === "clear") message = text.inputs.enterRiverId
+        switch (loadingStatus[key]) {
+          case "load":
+            message = text.status.load;
+            break
+          case "ready":
+            message = key === "riverid" ? river.id : text.status.ready;
+            break;
+          case "fail":
+            message = text.status.fail;
+            break
+        }
+        message = message ? `${text.words[key]}: ${message}` : `${text.words[key]}`
+        const modalFunction = key === "forecast" ? "showForecastModal()" : key === "retro" ? "showRetroModal()" : "setRiverId()";
+        return `<button class="btn-flat status-btn status-${loadingStatus[key]}" onclick="${modalFunction}">${message}</button>`;
+      })
+      .join('');
+    loadStatusDivs.forEach(el => el.innerHTML = statusMessage)
   }
   const clearChartDivs = (chartTypes) => {
     if (chartTypes === "forecast" || chartTypes === null) {
@@ -845,6 +834,7 @@ require([
 
 //////////////////////////////////////////////////////////////////////// INITIAL LOAD
   M.AutoInit()
+  updateStatusIcons(JSON.parse(JSON.stringify(loadingStatus)))
   if (initialState.definition) updateLayerDefinitions(initialState.definition)
   if (window.innerWidth < 800) M.toast({html: text.prompts.mobile, classes: "blue custom-toast-placement", displayLength: 8000})
 
@@ -875,11 +865,23 @@ require([
   })
   reactiveUtils.when(() => view.stationary === true, () => updateHash())
 
+//////////////////////////////////////////////////////////////////////// Modal Functions
+  const showForecastModal = () => {
+    M.Modal.getInstance(modalForecasts).open()
+    M.Modal.getInstance(modalRetro).close()
+  }
+  const showRetroModal = () => {
+    M.Modal.getInstance(modalForecasts).close()
+    M.Modal.getInstance(modalRetro).open()
+  }
+
 //////////////////////////////////////////////////////////////////////// Export alternatives
   window.setRiverId = setRiverId
   window.getForecastData = getForecastData
   window.getRetrospectiveData = getRetrospectiveData
   window.updateLayerDefinitions = updateLayerDefinitions
   window.resetDefinitionExpression = resetDefinitionExpression
+  window.showForecastModal = showForecastModal
+  window.showRetroModal = showRetroModal
   window.layer = rfsLayer
 })

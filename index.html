@@ -32,11 +32,11 @@
 <div id="forecast-modal" class="modal bottom-sheet">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
     <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%">
-      <h4 style="margin: 0">Forecasted Streamflow</h4>
-      <button class="btn" role="button" onclick="setRiverId('forecast')">Enter River ID</button>
+      <div style="flex-grow: 1; max-width: 150px"></div>
+      <h4 style="margin: 0; text-align: center">River Forecast</h4>
       <input type="date" id="forecast-date-calendar" name="forecast-date-calendar" min="2024-07-01" onkeydown="return false" style="max-width: 150px;">
     </div>
-    <div id="request-status" class="load-status"></div>
+    <div class="load-status"></div>
     <div id="forecastPlot" class="chart"><h4>Enter a River ID or use the map to click on a stream to view river data</h4></div>
   </div>
   <div class="modal-footer">
@@ -46,9 +46,9 @@
 </div>
 <div id="retro-modal" class="modal bottom-sheet" style="max-height: 80%;">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
-    <h4 style="margin: 0">River Report</h4>
-    <button class="btn" role="button" onclick="setRiverId('retro')">Generate Report for River ID</button>
-    <div id="retroPlot" class="chart"></div>
+    <h4 style="margin: 0">Retrospective Report</h4>
+    <div class="load-status"></div>
+    <div id="retroPlot" class="chart"><h4>Enter a River ID or use the map to click on a stream to view river data</h4></div>
     <div id="yearlyVolPlot" class="chart"></div>
     <div id="yearlyStatusPlot" class="chart"></div>
     <div id="monthlyAvgPlot" class="chart"></div>
@@ -133,6 +133,7 @@
     <div>
       <a data-tooltip="View Forecast" data-position="bottom" class="btn modal-trigger tooltipped" href="#forecast-modal"><i class="material-icons">timeline</i></a>
       <a data-tooltip="Retrospective Report" data-position="bottom" class="btn modal-trigger tooltipped" href="#retro-modal"><i class="material-icons">assessment</i></a>
+      <a data-tooltip="Learn More" data-position="bottom" class="btn modal-trigger tooltipped" href="#about-modal"><i class="material-icons">help</i></a>
       <a data-tooltip="Language" data-position="bottom" class="btn dropdown-trigger tooltipped" href="#" data-target="language-select"><i class="material-icons">translate</i></a>
       <ul id="language-select" class="dropdown-content">
         <li><a href="#" data-lang="en-US">English</a></li>
@@ -141,7 +142,6 @@
         <li><a href="/sv" data-lang="sv-SV">Svenska</a></li>
         <li><a href="/np" data-lang="sv-SV">नेपाली</a></li>
       </ul>
-      <a data-tooltip="Learn More" data-position="bottom" class="btn modal-trigger tooltipped" href="#about-modal"><i class="material-icons">help</i></a>
     </div>
   </div>
   <div id="map" class="map"></div>

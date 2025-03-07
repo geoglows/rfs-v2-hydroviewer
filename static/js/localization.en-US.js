@@ -18,7 +18,6 @@ window.text = {
     "load": "Loading",
     "ready": "Ready",
     "fail": "Failed",
-    "clear": "none",
     "unknown": "Unknown River Name"
   },
   "tooltips": {
@@ -30,7 +29,8 @@ window.text = {
   },
   "inputs": {
     "forecast": "Show Forecast Plots",
-    "retro": "Show Retrospective Plots"
+    "retro": "Show Retrospective Plots",
+    "enterRiverId": "Enter River ID",
   },
   "plots": {
     "fcTitle": "River Forecast for",

@@ -82,26 +82,41 @@ html, body {
     width: 100%;
     display: flex;
     flex-direction: row;
-    justify-content: space-around;
+    justify-content: center;
     margin: 20px;
+}
+
+.load-status:first-child {
+    background-color: #0084ff;
+}
+.load-status > button.status-clear:first-of-type {
+    background-color: #0084ff;
+    color: white;
+}
+
+.status-btn {
+    border: 1px solid black;
+    text-transform: unset;
+    font-weight: bold;
+    width: 200px;
 }
 
 .status-load {
     color: orange;
+    background-color: #fff4df;
 }
 
 .status-ready {
     color: green;
+    background-color: #f4ffdf;
 }
 
 .status-failed {
     color: red;
+    background-color: #ffdfdf;
 }
 
-.status-clear {
-    color: lightgrey;
-    opacity: 25%;
-}
+.status-clear {}
 
 .chart {
     height: fit-content;
