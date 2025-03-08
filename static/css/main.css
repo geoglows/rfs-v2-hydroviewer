@@ -167,6 +167,18 @@ button > a {
     color: unset;
 }
 
+#timeSlider {
+    position: absolute;
+    bottom: 20px;
+    width: 80%;
+    left: 10%;
+    visibility: hidden;
+}
+
+#timeSlider.show-slider {
+    visibility: visible;
+}
+
 /* on mobile screens, change the download-buttons class */
 @media (max-width: 600px) {
     .download-buttons {

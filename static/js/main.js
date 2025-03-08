@@ -12,9 +12,10 @@ require([
   "esri/widgets/Legend",
   "esri/widgets/Expand",
   "esri/widgets/LayerList",
+  "esri/widgets/TimeSlider",
   "esri/core/reactiveUtils",
   "esri/intl",
-], (WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, FeatureLayer, Home, BasemapGallery, ScaleBar, Legend, Expand, LayerList, reactiveUtils, intl) => {
+], (WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, FeatureLayer, Home, BasemapGallery, ScaleBar, Legend, Expand, LayerList, TimeSlider, reactiveUtils, intl) => {
   'use strict'
 
 //////////////////////////////////////////////////////////////////////// Constants Variables
@@ -62,15 +63,19 @@ require([
 //////////////////////////////////////////////////////////////////////// Element Selectors
   const loadStatusDivs = Array.from(document.getElementsByClassName("load-status"))
   const inputForecastDate = document.getElementById('forecast-date-calendar')
+  const timeSliderDiv = document.getElementById('timeSlider')
   const riverName = document.getElementById('river-name')
+  // filtering inputs
   const selectRiverCountry = document.getElementById('riverCountry')
   const selectOutletCountry = document.getElementById('outletCountry')
   const selectVPU = document.getElementById('vpuSelect')
   const definitionString = document.getElementById("definitionString")
   const definitionDiv = document.getElementById("definition-expression")
+  // modal elements
   const modalForecasts = document.getElementById("forecast-modal")
   const modalRetro = document.getElementById("retro-modal")
   const modalFilter = document.getElementById("filter-modal")
+  // plots
   const chartForecast = document.getElementById("forecastPlot")
   const chartRetro = document.getElementById("retroPlot")
   const chartYearlyVol = document.getElementById("yearlyVolPlot")
@@ -133,6 +138,15 @@ require([
       }
     )
 
+  // // date range picker by months from Jan 2000 to the most today's month
+  // const dateRangePicker = M.Datepicker.init(inputForecastDate, {
+  //   format: "yyyy-mm",
+  //   defaultDate: now,
+  //   setDefaultDate: true,
+  //   minDate: new Date(2000, 0, 1),
+  //   maxDate: new Date(),
+  // })
+
 ////////////////////////////////////////////////////////////////////////  Create Layer, Map, View
   const rfsLayer = new MapImageLayer({
     url: RFS_LAYER_URL,
@@ -142,9 +156,9 @@ require([
       definitionExpression: definitionExpression,
     }]
   })
-
   const monthlyStatusLayer = new WebTileLayer({
-    urlTemplate: 'https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/{level}/{col}/{row}.png',
+    // urlTemplate: `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/${getStatusDate()}/{level}/{col}/{row}.png`,
+    urlTemplate: `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/{level}/{col}/{row}.png`,
     title: "Monthly Status",
     visible: false,
     maxScale: 9244600,
@@ -228,11 +242,25 @@ require([
     expandTooltip: text.tooltips.layerList,
     expanded: false
   })
+  const timeSlider = new TimeSlider({
+    container: "timeSlider",
+    view: view,
+    playRate: 1250,
+    timeVisible: true,
+    loop: true,
+    expanded: false,
+    mode: "instant",
+  });
 
   const filterButton = document.createElement('div');
   filterButton.className = "esri-widget--button esri-widget esri-interactive";
   filterButton.innerHTML = `<span class="esri-icon-filter"></span>`;
   filterButton.addEventListener('click', () => M.Modal.getInstance(modalFilter).open());
+
+  const timeSliderButton = document.createElement('div');
+  timeSliderButton.className = "esri-widget--button esri-widget esri-interactive";
+  timeSliderButton.innerHTML = `<span class="esri-icon-time-clock"></span>`;
+  timeSliderButton.addEventListener('click', () => timeSliderDiv.classList.toggle('show-slider'))
 
   view.ui.add(homeBtn, "top-left");
   view.ui.add(layerListExpand, "top-right")
@@ -240,6 +268,8 @@ require([
   view.ui.add(filterButton, "top-left");
   view.ui.add(scaleBar, "bottom-right");
   view.ui.add(legendExpand, "bottom-left");
+  view.ui.add(timeSliderButton, "top-left");
+  // view.ui.add(timeSliderExpand, "bottom-right");
   view.navigation.browserTouchPanEnabled = true;
   view.when(() => {
     map.layers.add(viirsFloodClassified)
@@ -249,7 +279,12 @@ require([
     map.layers.add(viirsTrueColor)
     map.layers.add(monthlyStatusLayer)
     map.layers.add(rfsLayer)
+    view.whenLayerView(rfsLayer.findSublayerById(0).layer).then(_ => {
+      timeSlider.fullTimeExtent = rfsLayer.findSublayerById(0).layer.timeInfo.fullTimeExtent.expandTo("hours");
+      timeSlider.stops = {interval: rfsLayer.findSublayerById(0).layer.timeInfo.interval}
+    })
   })  // layers should be added to webmaps after the view is ready
+
 
   const buildDefinitionExpression = () => {
     const riverCountry = M.FormSelect.getInstance(selectRiverCountry).getSelectedValues()
@@ -894,4 +929,5 @@ require([
   window.resetDefinitionExpression = resetDefinitionExpression
   window.showForecastModal = showForecastModal
   window.showRetroModal = showRetroModal
+  window.layer = rfsLayer
 })

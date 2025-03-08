@@ -36,7 +36,7 @@
       <input type="date" id="forecast-date-calendar" name="forecast-date-calendar" min="2024-07-01" onkeydown="return false" style="max-width: 150px;">
     </div>
     <div class="load-status"></div>
-    <div id="forecastPlot" class="chart"><h4>Enter a River ID or use the map to click on a stream to view river data</h4></div>
+    <div id="forecastPlot" class="chart"><h4>Enter a River ID or use the map to click on a stream to view data</h4></div>
   </div>
   <div class="modal-footer">
       <button class="btn btn-success" id="download-forecast-btn" disabled><a id="download-forecast-link" target="_blank">Save Forecast Data (CSV)</a></button>
@@ -47,7 +47,7 @@
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
     <h4 style="margin: 0">Retrospective Report</h4>
     <div class="load-status"></div>
-    <div id="retroPlot" class="chart"><h4>Enter a River ID or use the map to click on a stream to view river data</h4></div>
+    <div id="retroPlot" class="chart"><h4>Enter a River ID or use the map to click on a stream to view data</h4></div>
     <div id="yearlyVolPlot" class="chart"></div>
     <div id="yearlyStatusPlot" class="chart"></div>
     <div id="monthlyAvgPlot" class="chart"></div>
@@ -146,6 +146,7 @@
     </div>
   </div>
   <div id="map" class="map"></div>
+  <div id="timeSlider"></div>
 </div>
 </body>
 </html>
