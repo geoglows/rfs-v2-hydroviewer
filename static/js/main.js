@@ -147,7 +147,9 @@ require([
     urlTemplate: 'https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/{level}/{col}/{row}.png',
     title: "Monthly Status",
     visible: false,
+    maxScale: 9244600,
   })
+
   const viirsFloodClassified = new WebTileLayer({
     urlTemplate: "https://floods.ssec.wisc.edu/tiles/RIVER-FLDglobal-composite/{level}/{col}/{row}.png",
     title: "NOAA-20 VIIRS Flood Composite",
@@ -189,7 +191,7 @@ require([
     constraints: {
       rotationEnabled: false,
       snapToZoom: false,
-      minZoom: 0,
+      minZoom: 2,
     },
   })
   const homeBtn = new Home({
