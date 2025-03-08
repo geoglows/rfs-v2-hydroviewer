@@ -126,10 +126,7 @@ require([
   const rfsLayer = new MapImageLayer({
     url: RFS_LAYER_URL,
     title: "GEOGLOWS River Forecast System v2",
-    sublayers: [{
-      id: 0,
-      definitionExpression: definitionExpression,
-    }]
+    sublayers: [{id: 0, definitionExpression}]
   })
 
   const monthlyStatusLayer = new WebTileLayer({
@@ -344,7 +341,7 @@ require([
           spatialRelationship: "intersects",
           outFields: ["*"],
           returnGeometry: true,
-          definitionExpression: definitionExpression,
+          definitionExpression,
         })
         .then(response => {
           if (!response.features.length) {
@@ -897,5 +894,4 @@ require([
   window.resetDefinitionExpression = resetDefinitionExpression
   window.showForecastModal = showForecastModal
   window.showRetroModal = showRetroModal
-  window.layer = rfsLayer
 })
