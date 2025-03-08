@@ -468,20 +468,22 @@ require([
         const yearValues = Object.keys(monthlyAverageTimeseries).filter(k => k.startsWith(`${year}-`)).map(k => monthlyAverageTimeseries[k])
         if (yearValues.length === 12) yearlyVolumes.push({year, value: yearValues.reduce((a, b) => a + b, 0) / 12 * secondsPerYear / 1e6})
       })
-    const fiveYearlyAverages = yearlyVolumes.reduce((acc, {year, value}) => {
-      const period = Math.floor(year / 5) * 5
-      let group = acc.find(g => g.period === period)
-      if (!group) {
-        group = {period, total: 0, count: 0}
-        acc.push(group)
-      }
-      group.total += value
-      group.count += 1
-      return acc
-    }, []).map(({period, total, count}) => ({
-      period,
-      average: total / count
-    }))
+    const fiveYearlyAverages = yearlyVolumes
+      .reduce((acc, {year, value}) => {
+        const period = Math.floor(year / 5) * 5
+        let group = acc.find(g => g.period === period)
+        if (!group) {
+          group = {period, total: 0, count: 0}
+          acc.push(group)
+        }
+        group.total += value
+        group.count += 1
+        return acc
+      }, [])
+      .map(({period, total, count}) => ({
+        period,
+        average: total / count
+      }))
 
     Plotly.newPlot(
       chartRetro,
