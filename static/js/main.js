@@ -33,11 +33,10 @@ require([
   Plotly.setPlotConfig({'locale': lang})
   intl.setLocale(lang)
   config.request.interceptors.push({
-    // explicitly disallow appending the _ts query params to tile layers so tiles can be cached.
     urls: /rfs-v2.s3-us-west-2.amazonaws.com/,
     before: function (params) {
-      params.url = params.url.split('?')[0];
-      delete params.requestOptions.query
+      params.url = params.url.split('?')[0]
+      delete params.requestOptions.query // prevent appending the _ts query param so tiles can be cached.
     }
   });
 
@@ -49,13 +48,8 @@ require([
   const monthNames = months.map(m => new Date(2021, parseInt(m, 10) - 1, 1).toLocaleString(lang, {month: 'short'}))
   const secondsPerYear = 60 * 60 * 24 * 365.25
   const statusPercentiles = [0, 13, 28, 72, 87]
-  const monthlyStatusColors = {
-    'Very Wet': 'rgb(44, 125, 205)',
-    'Wet': 'rgb(142, 206, 238)',
-    'Normal': 'rgb(231,226,188)',
-    'Dry': 'rgb(255, 168, 133)',
-    'Very Dry': 'rgb(205, 35, 63)',
-  }
+  const statusColors = ['rgb(44, 125, 205)', 'rgb(142, 206, 238)', 'rgb(231,226,188)', 'rgb(255, 168, 133)', 'rgb(205, 35, 63)']
+  const statusLabels = ['Very Wet', 'Wet', 'Normal', 'Dry', 'Very Dry']
 
   // parse initial state from the hash
   const hashParams = new URLSearchParams(window.location.hash.slice(1))
@@ -94,18 +88,11 @@ require([
 //////////////////////////////////////////////////////////////////////// Manipulate Default Controls and DOM Elements
   let loadingStatus = {riverid: "clear", forecast: "clear", retro: "clear"}
   let definitionExpression = ""
-
-  // cache of queried data
   let river = {
     id: null,
     name: null,
     forecast: null,
     retro: null,
-    monthlyAverages: null,
-    yearlyVolumes: null,
-    monthlyAverageTimeseries: null,
-    monthlyFdc: null,
-    totalFdc: null,
   };
 
   // set the default date to 12 hours before now UTC time
@@ -149,7 +136,7 @@ require([
     urlTemplate: `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/${now.toISOString().slice(0, 7)}/{level}/{col}/{row}.png`,
     title: "Monthly Status",
     visible: false,
-    maxScale: 9244600,
+    maxScale: 9244600,  // zoom level 6
   })
   monthlyStatusLayer.getTileUrl = (level, row, col) => {
     return `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/${timeSlider.timeExtent.start.toISOString().slice(0, 7)}/{level}/{col}/{row}.png`
@@ -245,6 +232,8 @@ require([
     loop: true,
     expanded: false,
     mode: "instant",
+    fullTimeExtent: {start: new Date("2025-01-01T00:00:00Z"), end: new Date("2025-03-01T00:00:00Z")},
+    stops: {interval: {value: 1, unit: "months"}}
   });
 
   const filterButton = document.createElement('div');
@@ -296,15 +285,12 @@ require([
     map.layers.add(viirsTrueColor)
     map.layers.add(monthlyStatusLayer)
     map.layers.add(rfsLayer)
-    view.whenLayerView(rfsLayer.findSublayerById(0).layer).then(_ => {
-      timeSlider.fullTimeExtent = rfsLayer.findSublayerById(0).layer.timeInfo.fullTimeExtent.expandTo("hours");
-      timeSlider.stops = {interval: rfsLayer.findSublayerById(0).layer.timeInfo.interval}
-    })
+    // view.whenLayerView(rfsLayer.findSublayerById(0).layer).then(_ => {
+    //   timeSlider.fullTimeExtent = rfsLayer.findSublayerById(0).layer.timeInfo.fullTimeExtent.expandTo("hours");
+    //   timeSlider.stops = {interval: rfsLayer.findSublayerById(0).layer.timeInfo.interval}
+    // })
   })  // layers should be added to webmaps after the view is ready
-  // reactiveUtils.watch(() => timeSlider.timeExtent, (value) => {
-  //   monthlyStatusLayer.refresh()
-  // })
-
+  reactiveUtils.watch(() => timeSlider.timeExtent, () => monthlyStatusLayer.refresh())
 
   const buildDefinitionExpression = () => {
     const riverCountry = M.FormSelect.getInstance(selectRiverCountry).getSelectedValues()
@@ -484,7 +470,6 @@ require([
   }
   const plotRetroReport = () => {
     clearChartDivs('retrospective')
-    document.getElementById("monthlyAvgTimeseriesPlot").innerHTML = ''
 
     let monthlyAverages = []
     let yearlyVolumes = []
@@ -649,61 +634,22 @@ require([
     Plotly.newPlot(
       chartYearlyStatus,
       [
-        {
-          x: months.concat(...months.toReversed()),
-          y: monthlyStatusValues['Very Wet'].concat(monthlyStatusValues['Wet'].toReversed()),
-          mode: 'lines',
-          fill: 'toself',
-          name: 'Very Wet',
-          line: {width: 0},
-          fillcolor: monthlyStatusColors['Very Wet'],
-          legendgroup: 'Monthly Status Categories',
-          legendgrouptitle: {text: 'Monthly Status Categories'},
-        },
-        {
-          x: months.concat(...months.toReversed()),
-          y: monthlyStatusValues['Wet'].concat(monthlyStatusValues['Normal'].toReversed()),
-          mode: 'lines',
-          fill: 'toself',
-          name: 'Wet',
-          line: {width: 0},
-          fillcolor: monthlyStatusColors['Wet'],
-          legendgroup: 'Monthly Status Categories',
-          legendgrouptitle: {text: 'Monthly Status Categories'},
-        },
-        {
-          x: months.concat(...months.toReversed()),
-          y: monthlyStatusValues['Normal'].concat(monthlyStatusValues['Dry'].toReversed()),
-          mode: 'lines',
-          fill: 'toself',
-          name: 'Normal',
-          line: {width: 0},
-          fillcolor: monthlyStatusColors['Normal'],
-          legendgroup: 'Monthly Status Categories',
-          legendgrouptitle: {text: 'Monthly Status Categories'},
-        },
-        {
-          x: months.concat(...months.toReversed()),
-          y: monthlyStatusValues['Dry'].concat(monthlyStatusValues['Very Dry'].toReversed()),
-          mode: 'lines',
-          fill: 'toself',
-          name: 'Dry',
-          line: {width: 0},
-          fillcolor: monthlyStatusColors['Dry'],
-          legendgroup: 'Monthly Status Categories',
-          legendgrouptitle: {text: 'Monthly Status Categories'},
-        },
-        {
-          x: months.concat(...months.toReversed()),
-          y: monthlyStatusValues['Very Dry'].concat(Array.from({length: 12}).fill(0)),
-          mode: 'lines',
-          fill: 'toself',
-          name: 'Very Dry',
-          line: {width: 0},
-          fillcolor: monthlyStatusColors['Very Dry'],
-          legendgroup: 'Monthly Status Categories',
-          legendgrouptitle: {text: 'Monthly Status Categories'},
-        },
+        ...statusColors.map((color, idx) => {
+          const label = statusLabels[idx]
+          const nextLabel = statusLabels[idx + 1]
+          const lastEntry = idx === statusLabels.length - 1
+          return {
+            x: months.concat(...months.toReversed()),
+            y: monthlyStatusValues[label].concat(lastEntry ? Array.from({length: 12}).fill(0) : monthlyStatusValues[nextLabel].toReversed()),
+            mode: 'lines',
+            fill: 'toself',
+            name: label,
+            line: {width: 0},
+            fillcolor: color,
+            legendgroup: 'Monthly Status Categories',
+            legendgrouptitle: {text: 'Monthly Status Categories'},
+          }
+        }),
         {
           x: monthlyAverages.map(x => x.month),
           y: monthlyAverages.map(y => y.value),
@@ -865,7 +811,6 @@ require([
       chartRetro.innerHTML = ''
       chartYearlyVol.innerHTML = ''
       chartYearlyStatus.innerHTML = ''
-      chartMonthlyAvg.innerHTML = ''
       chartFdc.innerHTML = ''
     }
   }
@@ -903,7 +848,6 @@ require([
   updateStatusIcons(JSON.parse(JSON.stringify(loadingStatus)))
   if (initialState.definition) updateLayerDefinitions(initialState.definition)
   if (window.innerWidth < 800) M.toast({html: text.prompts.mobile, classes: "blue custom-toast-placement", displayLength: 8000})
-  // monthlyStatusLayer.urlTemplate = `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/hydrography/{level}/{col}/{row}.png`
 
 //////////////////////////////////////////////////////////////////////// Event Listeners
   inputForecastDate.addEventListener("change", () => getForecastData())
