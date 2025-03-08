@@ -892,5 +892,4 @@ require([
   window.resetDefinitionExpression = resetDefinitionExpression
   window.showForecastModal = showForecastModal
   window.showRetroModal = showRetroModal
-  window.layer = rfsLayer
 })
