@@ -143,6 +143,11 @@ require([
     }]
   })
 
+  const monthlyStatusLayer = new WebTileLayer({
+    urlTemplate: 'https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/{level}/{col}/{row}.png',
+    title: "Monthly Status",
+    visible: false,
+  })
   const viirsFloodClassified = new WebTileLayer({
     urlTemplate: "https://floods.ssec.wisc.edu/tiles/RIVER-FLDglobal-composite/{level}/{col}/{row}.png",
     title: "NOAA-20 VIIRS Flood Composite",
@@ -240,6 +245,7 @@ require([
     map.layers.add(viirsThermalAnomalies)
     map.layers.add(viirsWaterStates)
     map.layers.add(viirsTrueColor)
+    map.layers.add(monthlyStatusLayer)
     map.layers.add(rfsLayer)
   })  // layers should be added to webmaps after the view is ready
 
@@ -837,6 +843,7 @@ require([
   updateStatusIcons(JSON.parse(JSON.stringify(loadingStatus)))
   if (initialState.definition) updateLayerDefinitions(initialState.definition)
   if (window.innerWidth < 800) M.toast({html: text.prompts.mobile, classes: "blue custom-toast-placement", displayLength: 8000})
+  // monthlyStatusLayer.urlTemplate = `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/hydrography/{level}/{col}/{row}.png`
 
 //////////////////////////////////////////////////////////////////////// Event Listeners
   inputForecastDate.addEventListener("change", () => getForecastData())

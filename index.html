@@ -28,7 +28,6 @@
 
 </head>
 <body>
-
 <div id="forecast-modal" class="modal bottom-sheet">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
     <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%">
@@ -44,7 +43,7 @@
     <a class="modal-close waves-effect waves-green btn-flat">Close</a>
   </div>
 </div>
-<div id="retro-modal" class="modal bottom-sheet" style="max-height: 80%;">
+<div id="retro-modal" class="modal bottom-sheet">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
     <h4 style="margin: 0">Retrospective Report</h4>
     <div class="load-status"></div>
@@ -56,7 +55,9 @@
     <div id="monthlyAvgTimeseriesPlot" class="chart"></div>
   </div>
   <div class="modal-footer">
-    <button class="btn btn-success" id="download-retrospective-btn" disabled><a id="download-retrospective-link" target="_blank">Save Retrospective Data (CSV)</a></button>
+    <button class="btn btn-success" id="download-retrospective-btn" disabled>
+      <a id="download-retrospective-link" target="_blank">Save Retrospective Data (CSV)</a>
+    </button>
     <a href="#" class="modal-close waves-effect waves-green btn-flat">Close</a>
   </div>
 </div>
