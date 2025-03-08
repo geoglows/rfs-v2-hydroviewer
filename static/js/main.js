@@ -89,7 +89,6 @@ require([
   const chartRetro = document.getElementById("retroPlot")
   const chartYearlyVol = document.getElementById("yearlyVolPlot")
   const chartYearlyStatus = document.getElementById("yearlyStatusPlot")
-  const chartMonthlyAvg = document.getElementById("monthlyAvgPlot")
   const chartFdc = document.getElementById("fdcPlot")
 
 //////////////////////////////////////////////////////////////////////// Manipulate Default Controls and DOM Elements
@@ -97,7 +96,7 @@ require([
   let definitionExpression = ""
 
   // cache of queried data
-  const riverData = {
+  let river = {
     id: null,
     name: null,
     forecast: null,
@@ -107,18 +106,7 @@ require([
     monthlyAverageTimeseries: null,
     monthlyFdc: null,
     totalFdc: null,
-  }
-  let river = JSON.parse(JSON.stringify(riverData));
-  // todo enable caching of data
-  const setRiverData = (key, data) => {
-    river[key] = data
-    localStorage.setItem('riverData', JSON.stringify(river))
-  }
-  const clearRiverData = () => {
-    river = JSON.parse(JSON.stringify(riverData))
-    localStorage.setItem('river', JSON.stringify(river))
-    clearChartDivs()
-  }
+  };
 
   // set the default date to 12 hours before now UTC time
   const now = new Date()
@@ -809,6 +797,7 @@ require([
   const getRetrospectiveData = () => {
     if (!river.id) return
     updateStatusIcons({retro: "load"})
+    clearChartDivs('retrospective')
     chartRetro.innerHTML = `<img alt="loading signal" src=${LOADING_GIF}>`
     fetchRetroPromise(river.id)
       .then(response => {
@@ -921,6 +910,9 @@ require([
   window.addEventListener('resize', () => {
     Plotly.Plots.resize(chartForecast)
     Plotly.Plots.resize(chartRetro)
+    Plotly.Plots.resize(chartYearlyVol)
+    Plotly.Plots.resize(chartYearlyStatus)
+    Plotly.Plots.resize(chartFdc)
   })
   view.on("click", event => {
     if (view.zoom < MIN_QUERY_ZOOM) return view.goTo({target: event.mapPoint, zoom: MIN_QUERY_ZOOM});
