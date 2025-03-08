@@ -15,7 +15,8 @@ require([
   "esri/widgets/TimeSlider",
   "esri/core/reactiveUtils",
   "esri/intl",
-], (WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, FeatureLayer, Home, BasemapGallery, ScaleBar, Legend, Expand, LayerList, TimeSlider, reactiveUtils, intl) => {
+  "esri/config",
+], (WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, FeatureLayer, Home, BasemapGallery, ScaleBar, Legend, Expand, LayerList, TimeSlider, reactiveUtils, intl, config) => {
   'use strict'
 
 //////////////////////////////////////////////////////////////////////// Constants Variables
@@ -31,6 +32,14 @@ require([
   const lang = (window.location.pathname.split("/").filter(x => x && !x.includes(".html") && !x.includes('viewer'))[0] || 'en-US');
   Plotly.setPlotConfig({'locale': lang})
   intl.setLocale(lang)
+  config.request.interceptors.push({
+    // explicitly disallow appending the _ts query params to tile layers so tiles can be cached.
+    urls: /rfs-v2.s3-us-west-2.amazonaws.com/,
+    before: function (params) {
+      params.url = params.url.split('?')[0];
+      delete params.requestOptions.query
+    }
+  });
 
   // styling and constants for retrospective data analysis/plots
   const percentiles = Array.from({length: 51}, (_, i) => i * 2)
@@ -138,15 +147,6 @@ require([
       }
     )
 
-  // // date range picker by months from Jan 2000 to the most today's month
-  // const dateRangePicker = M.Datepicker.init(inputForecastDate, {
-  //   format: "yyyy-mm",
-  //   defaultDate: now,
-  //   setDefaultDate: true,
-  //   minDate: new Date(2000, 0, 1),
-  //   maxDate: new Date(),
-  // })
-
 ////////////////////////////////////////////////////////////////////////  Create Layer, Map, View
   const rfsLayer = new MapImageLayer({
     url: RFS_LAYER_URL,
@@ -156,13 +156,20 @@ require([
       definitionExpression: definitionExpression,
     }]
   })
+
   const monthlyStatusLayer = new WebTileLayer({
-    // urlTemplate: `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/${getStatusDate()}/{level}/{col}/{row}.png`,
-    urlTemplate: `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/{level}/{col}/{row}.png`,
+    urlTemplate: `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/${now.toISOString().slice(0, 7)}/{level}/{col}/{row}.png`,
     title: "Monthly Status",
     visible: false,
     maxScale: 9244600,
   })
+  monthlyStatusLayer.getTileUrl = (level, row, col) => {
+    return `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/${timeSlider.timeExtent.start.toISOString().slice(0, 7)}/{level}/{col}/{row}.png`
+      .replace("{level}", level)
+      .replace("{row}", row)
+      .replace("{col}", col)
+      .split('?')[0]
+  }
 
   const viirsFloodClassified = new WebTileLayer({
     urlTemplate: "https://floods.ssec.wisc.edu/tiles/RIVER-FLDglobal-composite/{level}/{col}/{row}.png",
@@ -262,6 +269,28 @@ require([
   timeSliderButton.innerHTML = `<span class="esri-icon-time-clock"></span>`;
   timeSliderButton.addEventListener('click', () => timeSliderDiv.classList.toggle('show-slider'))
 
+//   const statusSlider = document.createElement('div');
+//   // the number of values is the number of months between 2025-01-01 and 2025-03-01
+//   const nValues = 3
+//   statusSlider.style.width = "500px"
+//   statusSlider.style.height = "80px"
+//   statusSlider.innerHTML = `
+//   <div style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center">
+//     <form style="width: 80%">
+//       <p class="range-field">
+// <!--        <input type="range" min="0" max="100" />-->
+//         <input type="range" min="0" max="${nValues - 1}" />
+//       </p>
+//     </form>
+//   </div>
+// `
+//   const sliderExpand = new Expand({
+//     view: view,
+//     content: statusSlider,
+//     expandTooltip: "Status Slider",
+//     expanded: false
+//   })
+
   view.ui.add(homeBtn, "top-left");
   view.ui.add(layerListExpand, "top-right")
   view.ui.add(basemapExpand, "top-right")
@@ -269,7 +298,7 @@ require([
   view.ui.add(scaleBar, "bottom-right");
   view.ui.add(legendExpand, "bottom-left");
   view.ui.add(timeSliderButton, "top-left");
-  // view.ui.add(timeSliderExpand, "bottom-right");
+  // view.ui.add(sliderExpand, "top-right");
   view.navigation.browserTouchPanEnabled = true;
   view.when(() => {
     map.layers.add(viirsFloodClassified)
@@ -284,6 +313,9 @@ require([
       timeSlider.stops = {interval: rfsLayer.findSublayerById(0).layer.timeInfo.interval}
     })
   })  // layers should be added to webmaps after the view is ready
+  // reactiveUtils.watch(() => timeSlider.timeExtent, (value) => {
+  //   monthlyStatusLayer.refresh()
+  // })
 
 
   const buildDefinitionExpression = () => {
