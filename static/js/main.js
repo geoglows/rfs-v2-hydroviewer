@@ -82,7 +82,7 @@ require([
       hashParams.set('lon', lon ? lon.toFixed(2) : hashParams.get('lon'))
       hashParams.set('lat', lat ? lat.toFixed(2) : hashParams.get('lat'))
       hashParams.set('zoom', zoom ? zoom.toFixed(2) : hashParams.get('zoom'))
-      hashParams.set('definition', definition ? definition : hashParams.get('definition'))
+      hashParams.set('definition', definition ? definition : hashParams.get('definition') || "")
       window.location.hash = hashParams.toString()
     }
     const resetDefinitionForm = () => {
