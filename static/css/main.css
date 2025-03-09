@@ -29,7 +29,7 @@ html, body {
     flex-grow: 1;
 }
 
-.map {
+arcgis-map {
     cursor: pointer;
     width: 100%;
     flex-grow: 1;
@@ -89,6 +89,7 @@ html, body {
 .load-status:first-child {
     background-color: #0084ff;
 }
+
 .load-status > button.status-clear:first-of-type {
     background-color: #0084ff;
     color: white;
@@ -99,6 +100,8 @@ html, body {
     text-transform: unset;
     font-weight: bold;
     width: 200px;
+    color: green;
+    background-color: #f4ffdf;
 }
 
 .status-load {
@@ -107,8 +110,6 @@ html, body {
 }
 
 .status-ready {
-    color: green;
-    background-color: #f4ffdf;
 }
 
 .status-failed {
@@ -116,7 +117,10 @@ html, body {
     background-color: #ffdfdf;
 }
 
-.status-clear {}
+.status-clear {
+    color: black;
+    background-color: rgba(255, 255, 255, 0);
+}
 
 .chart {
     height: fit-content;

@@ -15,6 +15,7 @@ window.text = {
     "findingRiver": "Identifying river segment. Charts will load soon."
   },
   "status": {
+    "clear": "None",
     "load": "Loading",
     "ready": "Ready",
     "fail": "Failed",
