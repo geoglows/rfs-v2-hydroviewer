@@ -15,10 +15,10 @@ window.text = {
     "findingRiver": "Identifying river segment. Charts will load soon."
   },
   "status": {
+    "clear": "None",
     "load": "Loading",
     "ready": "Ready",
     "fail": "Failed",
-    "clear": "none",
     "unknown": "Unknown River Name"
   },
   "tooltips": {
@@ -30,7 +30,8 @@ window.text = {
   },
   "inputs": {
     "forecast": "Show Forecast Plots",
-    "retro": "Show Retrospective Plots"
+    "retro": "Show Retrospective Plots",
+    "enterRiverId": "Enter River ID",
   },
   "plots": {
     "fcTitle": "River Forecast for",
