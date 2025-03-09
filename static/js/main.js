@@ -1,23 +1,14 @@
 require([
-  "esri/WebMap",
-  "esri/views/MapView",
   "esri/layers/MapImageLayer",
   "esri/layers/ImageryLayer",
   "esri/layers/TileLayer",
   "esri/layers/WebTileLayer",
   "esri/layers/FeatureLayer",
-  "esri/widgets/Home",
-  "esri/widgets/BasemapGallery",
-  "esri/widgets/ScaleBar",
-  "esri/widgets/Legend",
-  "esri/widgets/Expand",
-  "esri/widgets/LayerList",
   "esri/widgets/TimeSlider",
   "esri/core/reactiveUtils",
   "esri/intl",
   "esri/config",
-], (WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, FeatureLayer, Home, BasemapGallery, ScaleBar, Legend, Expand, LayerList, TimeSlider, reactiveUtils, intl, config) => {
-  'use strict'
+], (MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, FeatureLayer, TimeSlider, reactiveUtils, intl, config) => {
 
 //////////////////////////////////////////////////////////////////////// Constants Variables
   const REST_ENDPOINT = 'https://geoglows.ecmwf.int/api/v2'
@@ -27,43 +18,7 @@ require([
   const riverCountriesJSON = '../static/json/riverCountries.json'
   const outletCountriesJSON = '../static/json/outletCountries.json'
   const vpuListJSON = '../static/json/vpuList.json'
-
-  // parse language from the url path
-  const lang = (window.location.pathname.split("/").filter(x => x && !x.includes(".html") && !x.includes('viewer'))[0] || 'en-US');
-  Plotly.setPlotConfig({'locale': lang})
-  intl.setLocale(lang)
-  config.request.interceptors.push({
-    urls: /rfs-v2.s3-us-west-2.amazonaws.com/,
-    before: function (params) {
-      params.url = params.url.split('?')[0]
-      delete params.requestOptions.query // prevent appending the _ts query param so tiles can be cached.
-    }
-  });
-
-  // styling and constants for retrospective data analysis/plots
-  const percentiles = Array.from({length: 51}, (_, i) => i * 2)
-  const sortedArrayToPercentiles = array => percentiles.toReversed().map(p => array[Math.floor(array.length * p / 100) - (p === 100 ? 1 : 0)])
-  const defaultDateRange = ['2015-01-01', new Date().toISOString().split("T")[0]]
-  const months = Array.from({length: 12}).map((_, idx) => (idx + 1).toString().padStart(2, '0'))
-  const monthNames = months.map(m => new Date(2021, parseInt(m, 10) - 1, 1).toLocaleString(lang, {month: 'short'}))
-  const secondsPerYear = 60 * 60 * 24 * 365.25
-  const statusPercentiles = [0, 13, 28, 72, 87]
-  const statusColors = ['rgb(44, 125, 205)', 'rgb(142, 206, 238)', 'rgb(231,226,188)', 'rgb(255, 168, 133)', 'rgb(205, 35, 63)']
-  const statusLabels = ['Very Wet', 'Wet', 'Normal', 'Dry', 'Very Dry']
-
-  // parse initial state from the hash
-  const hashParams = new URLSearchParams(window.location.hash.slice(1))
-  let lon = !isNaN(parseFloat(hashParams.get('lon'))) ? parseFloat(hashParams.get('lon')) : 10
-  let lat = !isNaN(parseFloat(hashParams.get('lat'))) ? parseFloat(hashParams.get('lat')) : 18
-  let zoom = !isNaN(parseFloat(hashParams.get('zoom'))) ? parseFloat(hashParams.get('zoom')) : 2.75
-  const initialState = {
-    lon: lon,
-    lat: lat,
-    zoom: zoom,
-    definition: hashParams.get('definition') || "",
-  }
-
-//////////////////////////////////////////////////////////////////////// Element Selectors
+  // manipulated eleements
   const loadStatusDivs = Array.from(document.getElementsByClassName("load-status"))
   const inputForecastDate = document.getElementById('forecast-date-calendar')
   const timeSliderDiv = document.getElementById('timeSlider')
@@ -84,6 +39,64 @@ require([
   const chartYearlyVol = document.getElementById("yearlyVolPlot")
   const chartYearlyStatus = document.getElementById("yearlyStatusPlot")
   const chartFdc = document.getElementById("fdcPlot")
+
+  // styling and constants for retrospective data analysis/plots
+  const percentiles = Array.from({length: 51}, (_, i) => i * 2)
+  const sortedArrayToPercentiles = array => percentiles.toReversed().map(p => array[Math.floor(array.length * p / 100) - (p === 100 ? 1 : 0)])
+  const defaultDateRange = ['2015-01-01', new Date().toISOString().split("T")[0]]
+  const secondsPerYear = 60 * 60 * 24 * 365.25
+  const statusPercentiles = [0, 13, 28, 72, 87]
+  const statusColors = ['rgb(44, 125, 205)', 'rgb(142, 206, 238)', 'rgb(231,226,188)', 'rgb(255, 168, 133)', 'rgb(205, 35, 63)']
+  const statusLabels = ['Very Wet', 'Wet', 'Normal', 'Dry', 'Very Dry']
+  const lang = (window.location.pathname.split("/").filter(x => x && !x.includes(".html") && !x.includes('viewer'))[0] || 'en-US');
+  const months = Array.from({length: 12}).map((_, idx) => (idx + 1).toString().padStart(2, '0'))
+  const monthNames = months.map(m => new Date(2021, parseInt(m, 10) - 1, 1).toLocaleString(lang, {month: 'short'}))
+
+  // parse language from the url path
+  Plotly.setPlotConfig({'locale': lang})
+  intl.setLocale(lang)
+  config.request.interceptors.push({
+    urls: /rfs-v2.s3-us-west-2.amazonaws.com/,
+    before: function (params) {
+      params.url = params.url.split('?')[0]
+      delete params.requestOptions.query // prevent appending the _ts query param so tiles can be cached.
+    }
+  });
+
+  // parse initial state from the hash
+  const hashParams = new URLSearchParams(window.location.hash.slice(1))
+  let lon = !isNaN(parseFloat(hashParams.get('lon'))) ? parseFloat(hashParams.get('lon')) : 10
+  let lat = !isNaN(parseFloat(hashParams.get('lat'))) ? parseFloat(hashParams.get('lat')) : 18
+  let zoom = !isNaN(parseFloat(hashParams.get('zoom'))) ? parseFloat(hashParams.get('zoom')) : 2.75
+  const initialState = {
+    lon: lon,
+    lat: lat,
+    zoom: zoom,
+    definition: hashParams.get('definition') || "",
+  }
+
+//////////////////////////////////////////////////////////////////////// HASH UPDATES
+  const showForecastModal = () => {
+    M.Modal.getInstance(modalForecasts).open()
+    M.Modal.getInstance(modalRetro).close()
+  }
+  const showRetroModal = () => {
+    M.Modal.getInstance(modalForecasts).close()
+    M.Modal.getInstance(modalRetro).open()
+  }
+  const updateHash = () => {
+    const hashParams = new URLSearchParams(window.location.hash.slice(1))
+    hashParams.set('lon', view.center.longitude.toFixed(2))
+    hashParams.set('lat', view.center.latitude.toFixed(2))
+    hashParams.set('zoom', view.zoom.toFixed(2))
+    hashParams.set('definition', definitionExpression)
+    window.location.hash = hashParams.toString()
+  }
+  const setHashDefinition = definition => {
+    const hashParams = new URLSearchParams(window.location.hash.slice(1))
+    hashParams.set('definition', definition)
+    window.location.hash = hashParams.toString()
+  }
 
 //////////////////////////////////////////////////////////////////////// Manipulate Default Controls and DOM Elements
   let loadingStatus = {riverid: "clear", forecast: "clear", retro: "clear"}
@@ -123,6 +136,17 @@ require([
     )
 
 ////////////////////////////////////////////////////////////////////////  Create Layer, Map, View
+  const mapContainer = document.querySelector('arcgis-map')
+  const map = mapContainer.map
+  const view = mapContainer.view
+  view.zoom = initialState.zoom
+  view.center = initialState.center
+  view.constraints = {
+    rotationEnabled: false,
+    snapToZoom: false,
+    minZoom: 2,
+  }
+
   const rfsLayer = new MapImageLayer({
     url: RFS_LAYER_URL,
     title: "GEOGLOWS River Forecast System v2",
@@ -130,18 +154,12 @@ require([
   })
 
   const monthlyStatusLayer = new WebTileLayer({
+    // urlTemplate: `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/${timeSlider.timeExtent.start.toISOString().slice(0, 7)}/{level}/{col}/{row}.png`
     urlTemplate: `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/${now.toISOString().slice(0, 7)}/{level}/{col}/{row}.png`,
     title: "Monthly Status",
     visible: false,
     maxScale: 9244600,  // zoom level 6
   })
-  monthlyStatusLayer.getTileUrl = (level, row, col) => {
-    return `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/${timeSlider.timeExtent.start.toISOString().slice(0, 7)}/{level}/{col}/{row}.png`
-      .replace("{level}", level)
-      .replace("{row}", row)
-      .replace("{col}", col)
-      .split('?')[0]
-  }
 
   const viirsFloodClassified = new WebTileLayer({
     urlTemplate: "https://floods.ssec.wisc.edu/tiles/RIVER-FLDglobal-composite/{level}/{col}/{row}.png",
@@ -170,45 +188,6 @@ require([
     visible: false,
   })
 
-  const map = new WebMap({
-    portalItem: {id: "a69f14ea2e784e019f4a4b6835ffd376"},
-    title: "Environment Basemap",
-    spatialReference: {wkid: 102100},
-    legendEnabled: true,
-  })
-  const view = new MapView({
-    container: "map",
-    map: map,
-    zoom: initialState.zoom,
-    center: [initialState.lon, initialState.lat],
-    constraints: {
-      rotationEnabled: false,
-      snapToZoom: false,
-      minZoom: 2,
-    },
-  })
-  const scaleBar = new ScaleBar({view: view, unit: "dual"})
-  const legend = new Legend({view: view})
-  const basemapGallery = new BasemapGallery({view: view})
-  const layerList = new LayerList({view: view})
-  const legendExpand = new Expand({
-    view: view,
-    content: legend,
-    expandTooltip: text.tooltips.legend,
-    expanded: false
-  })
-  const basemapExpand = new Expand({
-    view: view,
-    content: basemapGallery,
-    expandTooltip: text.tooltips.basemap,
-    expanded: false
-  })
-  const layerListExpand = new Expand({
-    view: view,
-    content: layerList,
-    expandTooltip: text.tooltips.layerList,
-    expanded: false
-  })
   const timeSlider = new TimeSlider({
     container: "timeSlider",
     view: view,
@@ -229,11 +208,7 @@ require([
   timeSliderButton.innerHTML = `<span class="esri-icon-time-clock"></span>`;
   timeSliderButton.addEventListener('click', () => timeSliderDiv.classList.toggle('show-slider'))
 
-  view.ui.add(layerListExpand, "top-right")
-  view.ui.add(basemapExpand, "top-right")
   view.ui.add(filterButton, "top-left");
-  view.ui.add(scaleBar, "bottom-right");
-  view.ui.add(legendExpand, "bottom-left");
   view.ui.add(timeSliderButton, "top-left");
   view.navigation.browserTouchPanEnabled = true;
   view.when(() => {
@@ -291,7 +266,7 @@ require([
   }
 
 //////////////////////////////////////////////////////////////////////// GET DATA FROM API AND MANAGING PLOTS
-  const searchLayerByClickPromise = (event) => {
+  const searchLayerByClickPromise = event => {
     return new Promise((resolve, reject) => {
       rfsLayer
         .findSublayerById(0)
@@ -761,7 +736,7 @@ require([
       .join('');
     loadStatusDivs.forEach(el => el.innerHTML = statusMessage)
   }
-  const clearChartDivs = (chartTypes) => {
+  const clearChartDivs = chartTypes => {
     if (chartTypes === "forecast" || chartTypes === null) {
       chartForecast.innerHTML = ""
     }
@@ -786,36 +761,14 @@ require([
     }
   }
 
-//////////////////////////////////////////////////////////////////////// HASH UPDATES
-  const updateHash = () => {
-    const hashParams = new URLSearchParams(window.location.hash.slice(1))
-    hashParams.set('lon', view.center.longitude.toFixed(2))
-    hashParams.set('lat', view.center.latitude.toFixed(2))
-    hashParams.set('zoom', view.zoom.toFixed(2))
-    hashParams.set('definition', definitionExpression)
-    window.location.hash = hashParams.toString()
-  }
-  const setHashDefinition = definition => {
-    const hashParams = new URLSearchParams(window.location.hash.slice(1))
-    hashParams.set('definition', definition)
-    window.location.hash = hashParams.toString()
-  }
-
 //////////////////////////////////////////////////////////////////////// INITIAL LOAD
   M.AutoInit()
   updateStatusIcons(JSON.parse(JSON.stringify(loadingStatus)))
   if (initialState.definition) updateLayerDefinitions(initialState.definition)
   if (window.innerWidth < 800) M.toast({html: text.prompts.mobile, classes: "blue custom-toast-placement", displayLength: 8000})
 
-//////////////////////////////////////////////////////////////////////// Event Listeners
   inputForecastDate.addEventListener("change", () => getForecastData())
-  window.addEventListener('resize', () => {
-    Plotly.Plots.resize(chartForecast)
-    Plotly.Plots.resize(chartRetro)
-    Plotly.Plots.resize(chartYearlyVol)
-    Plotly.Plots.resize(chartYearlyStatus)
-    Plotly.Plots.resize(chartFdc)
-  })
+  window.addEventListener('resize', () => [chartForecast, chartRetro, chartYearlyVol, chartYearlyStatus, chartFdc].forEach(chart => Plotly.Plots.resize(chart)))
   view.on("click", event => {
     if (view.zoom < MIN_QUERY_ZOOM) return view.goTo({target: event.mapPoint, zoom: MIN_QUERY_ZOOM});
     M.toast({html: text.prompts.findingRiver, classes: "orange"})
@@ -836,16 +789,6 @@ require([
       })
   })
   reactiveUtils.when(() => view.stationary === true, () => updateHash())
-
-//////////////////////////////////////////////////////////////////////// Modal Functions
-  const showForecastModal = () => {
-    M.Modal.getInstance(modalForecasts).open()
-    M.Modal.getInstance(modalRetro).close()
-  }
-  const showRetroModal = () => {
-    M.Modal.getInstance(modalForecasts).close()
-    M.Modal.getInstance(modalRetro).open()
-  }
 
 //////////////////////////////////////////////////////////////////////// Export alternatives
   window.setRiverId = setRiverId

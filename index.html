@@ -17,10 +17,11 @@
   <!-- Plotly -->
   <script src="https://cdn.plot.ly/plotly-2.35.3.min.js" charset="utf-8"></script>
 
-  <!-- ArcGIS JS -->
-  <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/4.31/esri/themes/light/main.css"/>
-  <script src="https://js.arcgis.com/4.31/"></script>
-
+  <!-- Load Calcite components from CDN -->
+  <script type="module" src="https://js.arcgis.com/calcite-components/3.0.3/calcite.esm.js"></script>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.32/esri/themes/light/main.css"/>
+  <script src="https://js.arcgis.com/4.32/"></script>
+  <script type="module" src="https://js.arcgis.com/map-components/4.32/arcgis-map-components.esm.js"></script>
   <!-- App -->
   <link rel="stylesheet" href="/static/css/main.css"/>
   <script src="/static/js/localization.en-US.js" async></script>
@@ -39,7 +40,7 @@
     <div id="forecastPlot" class="chart"><h4>Enter a River ID or use the map to click on a stream to view data</h4></div>
   </div>
   <div class="modal-footer">
-      <button class="btn btn-success" id="download-forecast-btn" disabled><a id="download-forecast-link" target="_blank">Save Forecast Data (CSV)</a></button>
+    <button class="btn btn-success" id="download-forecast-btn" disabled><a id="download-forecast-link" target="_blank">Save Forecast Data (CSV)</a></button>
     <a class="modal-close waves-effect waves-green btn-flat">Close</a>
   </div>
 </div>
@@ -140,7 +141,24 @@
       </ul>
     </div>
   </div>
-  <div id="map" class="map"></div>
+
+  <arcgis-map item-id="a69f14ea2e784e019f4a4b6835ffd376">
+    <arcgis-zoom position="top-left"></arcgis-zoom>
+    <arcgis-locate position="top-left" scale="5000"></arcgis-locate>
+
+    <arcgis-expand close-on-esc position="top-right">
+      <arcgis-layer-list></arcgis-layer-list>
+    </arcgis-expand>
+    <arcgis-expand close-on-esc position="top-right">
+      <arcgis-basemap-gallery></arcgis-basemap-gallery>
+    </arcgis-expand>
+
+    <arcgis-expand close-on-esc position="bottom-left" mode="floating">
+      <arcgis-legend legend-style="classic"></arcgis-legend>
+    </arcgis-expand>
+
+    <arcgis-scale-bar position="bottom-right" bar-style="line" unit="dual"></arcgis-scale-bar>
+  </arcgis-map>
   <div id="timeSlider"></div>
 </div>
 </body>
