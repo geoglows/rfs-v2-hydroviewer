@@ -187,33 +187,21 @@ require([
       minZoom: 2,
     },
   })
-  const homeBtn = new Home({
-    view: view
-  })
-  const scaleBar = new ScaleBar({
-    view: view,
-    unit: "dual"
-  })
-  const legend = new Legend({
-    view: view
-  })
+  const scaleBar = new ScaleBar({view: view, unit: "dual"})
+  const legend = new Legend({view: view})
+  const basemapGallery = new BasemapGallery({view: view})
+  const layerList = new LayerList({view: view})
   const legendExpand = new Expand({
     view: view,
     content: legend,
     expandTooltip: text.tooltips.legend,
     expanded: false
   })
-  const basemapGallery = new BasemapGallery({
-    view: view
-  })
   const basemapExpand = new Expand({
     view: view,
     content: basemapGallery,
     expandTooltip: text.tooltips.basemap,
     expanded: false
-  })
-  const layerList = new LayerList({
-    view: view
   })
   const layerListExpand = new Expand({
     view: view,
@@ -229,8 +217,6 @@ require([
     loop: true,
     expanded: false,
     mode: "instant",
-    fullTimeExtent: {start: new Date("2025-01-01T00:00:00Z"), end: new Date("2025-03-01T00:00:00Z")},
-    stops: {interval: {value: 1, unit: "months"}}
   });
 
   const filterButton = document.createElement('div');
@@ -243,36 +229,12 @@ require([
   timeSliderButton.innerHTML = `<span class="esri-icon-time-clock"></span>`;
   timeSliderButton.addEventListener('click', () => timeSliderDiv.classList.toggle('show-slider'))
 
-//   const statusSlider = document.createElement('div');
-//   // the number of values is the number of months between 2025-01-01 and 2025-03-01
-//   const nValues = 3
-//   statusSlider.style.width = "500px"
-//   statusSlider.style.height = "80px"
-//   statusSlider.innerHTML = `
-//   <div style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center">
-//     <form style="width: 80%">
-//       <p class="range-field">
-// <!--        <input type="range" min="0" max="100" />-->
-//         <input type="range" min="0" max="${nValues - 1}" />
-//       </p>
-//     </form>
-//   </div>
-// `
-//   const sliderExpand = new Expand({
-//     view: view,
-//     content: statusSlider,
-//     expandTooltip: "Status Slider",
-//     expanded: false
-//   })
-
-  view.ui.add(homeBtn, "top-left");
   view.ui.add(layerListExpand, "top-right")
   view.ui.add(basemapExpand, "top-right")
   view.ui.add(filterButton, "top-left");
   view.ui.add(scaleBar, "bottom-right");
   view.ui.add(legendExpand, "bottom-left");
   view.ui.add(timeSliderButton, "top-left");
-  // view.ui.add(sliderExpand, "top-right");
   view.navigation.browserTouchPanEnabled = true;
   view.when(() => {
     map.layers.add(viirsFloodClassified)
@@ -282,12 +244,11 @@ require([
     map.layers.add(viirsTrueColor)
     map.layers.add(monthlyStatusLayer)
     map.layers.add(rfsLayer)
-    // view.whenLayerView(rfsLayer.findSublayerById(0).layer).then(_ => {
-    //   timeSlider.fullTimeExtent = rfsLayer.findSublayerById(0).layer.timeInfo.fullTimeExtent.expandTo("hours");
-    //   timeSlider.stops = {interval: rfsLayer.findSublayerById(0).layer.timeInfo.interval}
-    // })
+    view.whenLayerView(rfsLayer.findSublayerById(0).layer).then(_ => {
+      timeSlider.fullTimeExtent = rfsLayer.findSublayerById(0).layer.timeInfo.fullTimeExtent.expandTo("hours");
+      timeSlider.stops = {interval: rfsLayer.findSublayerById(0).layer.timeInfo.interval}
+    })
   })  // layers should be added to webmaps after the view is ready
-  reactiveUtils.watch(() => timeSlider.timeExtent, () => monthlyStatusLayer.refresh())
 
   const buildDefinitionExpression = () => {
     const riverCountry = M.FormSelect.getInstance(selectRiverCountry).getSelectedValues()
