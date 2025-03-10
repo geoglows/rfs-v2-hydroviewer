@@ -171,7 +171,8 @@ button > a {
     color: unset;
 }
 
-#timeSlider {
+/*#timeSlider, #timeSlider2 {*/
+.time-sliders {
     position: absolute;
     bottom: 20px;
     width: 80%;
@@ -179,7 +180,7 @@ button > a {
     visibility: hidden;
 }
 
-#timeSlider.show-slider {
+.time-sliders.show-slider {
     visibility: visible;
 }
 

@@ -12,7 +12,8 @@ require(
 
       // manipulated elements
       const inputForecastDate = document.getElementById('forecast-date-calendar')
-      const timeSliderDiv = document.getElementById('timeSlider')
+      const timeSliderForecastDiv = document.getElementById('timeSliderForecast')
+      const timeSliderStatusDiv = document.getElementById('timeSliderStatus')
       const riverName = document.getElementById('river-name')
       // modal elements
       const modalFilter = document.getElementById("filter-modal")
@@ -98,13 +99,59 @@ require(
         minZoom: 2,
       }
 
+      const filterButton = document.createElement('div');
+      filterButton.className = "esri-widget--button esri-widget esri-interactive";
+      filterButton.innerHTML = `<span class="esri-icon-filter"></span>`;
+      filterButton.addEventListener('click', () => M.Modal.getInstance(modalFilter).open());
+
+      const timeSliderButton = document.createElement('div');
+      timeSliderButton.className = "esri-widget--button esri-widget esri-interactive";
+      timeSliderButton.innerHTML = `<span class="esri-icon-time-clock"></span>`;
+      timeSliderButton.addEventListener('click', () => timeSliderForecastDiv.classList.toggle('show-slider'))
+
+      const timeSliderButton2 = document.createElement('div');
+      timeSliderButton2.className = "esri-widget--button esri-widget esri-interactive";
+      timeSliderButton2.innerHTML = `<span class="esri-icon-time-clock"></span>`;
+      timeSliderButton2.addEventListener('click', () => timeSliderStatusDiv.classList.toggle('show-slider'))
+
+      const timeSliderForecast = new TimeSlider({
+        container: "timeSlider",
+        view: view,
+        playRate: 1250,
+        loop: true,
+        expanded: false,
+        mode: "instant",
+      });
+      const timeSliderStatus = new TimeSlider({
+        container: "timeSlider2",
+        playRate: 1250,
+        loop: true,
+        expanded: false,
+        mode: "instant",
+        fullTimeExtent: {
+          start: new Date(2025, 0, 1),
+          end: new Date(2025, 2, 1)
+        },
+        stops: {
+          interval: {
+            value: 1,
+            unit: "months"
+          }
+        }
+      });
+
+      view.navigation.browserTouchPanEnabled = true;
+      view.ui.add(filterButton, "top-left");
+      view.ui.add(timeSliderButton, "top-left");
+      view.ui.add(timeSliderButton2, "top-left");
+
       const rfsLayer = new MapImageLayer({
         url: RFS_LAYER_URL,
         title: "GEOGLOWS River Forecast System v2",
         sublayers: [{id: 0, definitionExpression}]
       })
       const monthlyStatusLayer = new WebTileLayer({
-        urlTemplate: `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/2025-03/{level}/{col}/{row}.png`,
+        urlTemplate: `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/2025-01/{level}/{col}/{row}.png`,
         title: "Monthly Status",
         visible: false,
         maxScale: 9244600,  // zoom level 6
@@ -137,34 +184,18 @@ require(
       })
       map.addMany([goesImageryColorized, viirsThermalAnomalies, viirsTrueColor, viirsWaterStates, viirsFloodClassified, monthlyStatusLayer, rfsLayer])
 
-      const filterButton = document.createElement('div');
-      filterButton.className = "esri-widget--button esri-widget esri-interactive";
-      filterButton.innerHTML = `<span class="esri-icon-filter"></span>`;
-      filterButton.addEventListener('click', () => M.Modal.getInstance(modalFilter).open());
-
-      const timeSliderButton = document.createElement('div');
-      timeSliderButton.className = "esri-widget--button esri-widget esri-interactive";
-      timeSliderButton.innerHTML = `<span class="esri-icon-time-clock"></span>`;
-      timeSliderButton.addEventListener('click', () => timeSliderDiv.classList.toggle('show-slider'))
-
-      const timeSlider = new TimeSlider({
-        container: "timeSlider",
-        view: view,
-        playRate: 1250,
-        timeVisible: true,
-        loop: true,
-        expanded: false,
-        mode: "instant",
-      });
-
-      view.navigation.browserTouchPanEnabled = true;
-      view.ui.add(filterButton, "top-left");
-      view.ui.add(timeSliderButton, "top-left");
-
       view.whenLayerView(rfsLayer.findSublayerById(0).layer).then(_ => {
-        timeSlider.fullTimeExtent = rfsLayer.findSublayerById(0).layer.timeInfo.fullTimeExtent.expandTo("hours");
-        timeSlider.stops = {interval: rfsLayer.findSublayerById(0).layer.timeInfo.interval}
+        timeSliderForecast.fullTimeExtent = rfsLayer.findSublayerById(0).layer.timeInfo.fullTimeExtent.expandTo("hours");
+        timeSliderForecast.stops = {interval: rfsLayer.findSublayerById(0).layer.timeInfo.interval}
       })
+
+      reactiveUtils.watch(() => timeSliderStatus.timeExtent, () => monthlyStatusLayer.refresh())
+      monthlyStatusLayer.getTileUrl = (level, row, col) => {
+        return `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/${timeSliderStatus.timeExtent.start.toISOString().slice(0, 7)}/{level}/{col}/{row}.png`
+          .replace("{level}", level)
+          .replace("{col}", col)
+          .replace("{row}", row)
+      }
 
       reactiveUtils.when(
         () => view.stationary === true,
