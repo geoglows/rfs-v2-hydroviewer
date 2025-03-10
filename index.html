@@ -149,21 +149,28 @@
     <arcgis-zoom position="top-left"></arcgis-zoom>
     <arcgis-locate position="top-left" scale="5000"></arcgis-locate>
 
-    <arcgis-expand close-on-esc position="top-right">
+    <arcgis-expand close-on-esc position="top-right" title="Layer List">
       <arcgis-layer-list></arcgis-layer-list>
     </arcgis-expand>
-    <arcgis-expand close-on-esc position="top-right">
+    <arcgis-expand close-on-esc position="top-right" title="Basemap Gallery">
       <arcgis-basemap-gallery></arcgis-basemap-gallery>
     </arcgis-expand>
 
-    <arcgis-expand close-on-esc position="bottom-left" mode="floating">
+    <arcgis-expand close-on-esc position="bottom-left" mode="floating" data-tooltip="Legend">
       <arcgis-legend legend-style="classic"></arcgis-legend>
     </arcgis-expand>
 
     <arcgis-scale-bar position="bottom-right" bar-style="line" unit="dual"></arcgis-scale-bar>
   </arcgis-map>
-  <div id="timeSliderForecast" class="time-sliders"></div>
-  <div id="timeSliderStatus" class="time-sliders"></div>
+
+  <div id="timeSliderForecastWrapper" class="time-sliders">
+    <div class="time-slider-title">Stream Layer Forecast Time Steps</div>
+    <div id="timeSliderForecast"></div>
+  </div>
+  <div id="timeSliderStatusWrapper" class="time-sliders">
+    <div class="time-slider-title">Monthly Status Layer</div>
+    <div id="timeSliderStatus"></div>
+  </div>
 </div>
 </body>
 </html>

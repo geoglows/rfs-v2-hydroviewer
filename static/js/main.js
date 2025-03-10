@@ -1,6 +1,6 @@
-import {loadStatusManager, updateHash, resetFilterForm, buildFilterExpression, showModal, lang} from "./ui.js";
-import {plotAllForecast, plotAllRetro, clearCharts} from "./plots.js";
-import {fetchForecastPromise, fetchReturnPeriodsPromise, fetchRetroPromise, updateDownloadLinks} from "./data.js";
+import {buildFilterExpression, lang, loadStatusManager, resetFilterForm, showModal, updateHash} from "./ui.js";
+import {clearCharts, plotAllForecast, plotAllRetro} from "./plots.js";
+import {fetchForecastPromise, fetchRetroPromise, fetchReturnPeriodsPromise, updateDownloadLinks} from "./data.js";
 
 require(
   ["esri/layers/MapImageLayer", "esri/layers/ImageryLayer", "esri/layers/TileLayer", "esri/layers/WebTileLayer", "esri/layers/FeatureLayer", "esri/widgets/TimeSlider", "esri/core/reactiveUtils", "esri/intl", "esri/config"],
@@ -12,8 +12,8 @@ require(
 
       // manipulated elements
       const inputForecastDate = document.getElementById('forecast-date-calendar')
-      const timeSliderForecastDiv = document.getElementById('timeSliderForecast')
-      const timeSliderStatusDiv = document.getElementById('timeSliderStatus')
+      const timeSliderForecastDiv = document.getElementById('timeSliderForecastWrapper')
+      const timeSliderStatusDiv = document.getElementById('timeSliderStatusWrapper')
       const riverName = document.getElementById('river-name')
       // modal elements
       const modalFilter = document.getElementById("filter-modal")
@@ -29,13 +29,6 @@ require(
       let riverId = null
       Plotly.setPlotConfig({'locale': lang})
       intl.setLocale(lang)
-      config.request.interceptors.push({
-        urls: /rfs-v2.s3-us-west-2.amazonaws.com/,
-        before: params => {
-          params.url = params.url.split('?')[0]
-          delete params.requestOptions.query // prevent appending the _ts query param so tiles can be cached.
-        }
-      })
       // set the default date to 12 hours before now UTC time
       const now = new Date()
       now.setHours(now.getHours() - 12)
@@ -100,33 +93,42 @@ require(
       }
 
       const filterButton = document.createElement('div');
+      filterButton.setAttribute("title", 'Filter Visible Streams');
       filterButton.className = "esri-widget--button esri-widget esri-interactive";
       filterButton.innerHTML = `<span class="esri-icon-filter"></span>`;
       filterButton.addEventListener('click', () => M.Modal.getInstance(modalFilter).open());
 
-      const timeSliderButton = document.createElement('div');
-      timeSliderButton.className = "esri-widget--button esri-widget esri-interactive";
-      timeSliderButton.innerHTML = `<span class="esri-icon-time-clock"></span>`;
-      timeSliderButton.addEventListener('click', () => timeSliderForecastDiv.classList.toggle('show-slider'))
+      const timeSliderForecastButton = document.createElement('div');
+      timeSliderForecastButton.setAttribute("title", 'Forecast Layer Time steps');
+      timeSliderForecastButton.className = "esri-widget--button esri-widget esri-interactive";
+      timeSliderForecastButton.innerHTML = `<span class="esri-icon-time-clock"></span>`;
+      timeSliderForecastButton.addEventListener('click', () => {
+        timeSliderForecastDiv.classList.toggle('show-slider')
+        timeSliderStatusDiv.classList.remove('show-slider')
+      })
 
-      const timeSliderButton2 = document.createElement('div');
-      timeSliderButton2.className = "esri-widget--button esri-widget esri-interactive";
-      timeSliderButton2.innerHTML = `<span class="esri-icon-time-clock"></span>`;
-      timeSliderButton2.addEventListener('click', () => timeSliderStatusDiv.classList.toggle('show-slider'))
+      const timeSliderStatusButton = document.createElement('div');
+      timeSliderStatusButton.setAttribute("title", 'Monthly Status Layer Time steps');
+      timeSliderStatusButton.className = "esri-widget--button esri-widget esri-interactive";
+      timeSliderStatusButton.innerHTML = `<span class="esri-icon-time-clock"></span>`;
+      timeSliderStatusButton.addEventListener('click', () => {
+        timeSliderForecastDiv.classList.remove('show-slider')
+        timeSliderStatusDiv.classList.toggle('show-slider')
+      })
 
       const timeSliderForecast = new TimeSlider({
-        container: "timeSlider",
+        container: "timeSliderForecast",
         view: view,
         playRate: 1250,
         loop: true,
-        expanded: false,
+        label: "Forecast Layer Time Steps",
         mode: "instant",
       });
       const timeSliderStatus = new TimeSlider({
-        container: "timeSlider2",
+        container: "timeSliderStatus",
         playRate: 1250,
         loop: true,
-        expanded: false,
+        label: "Monthly Status Layer Time Steps",
         mode: "instant",
         fullTimeExtent: {
           start: new Date(2025, 0, 1),
@@ -142,8 +144,8 @@ require(
 
       view.navigation.browserTouchPanEnabled = true;
       view.ui.add(filterButton, "top-left");
-      view.ui.add(timeSliderButton, "top-left");
-      view.ui.add(timeSliderButton2, "top-left");
+      view.ui.add(timeSliderForecastButton, "top-left");
+      view.ui.add(timeSliderStatusButton, "top-left");
 
       const rfsLayer = new MapImageLayer({
         url: RFS_LAYER_URL,
@@ -189,6 +191,7 @@ require(
         timeSliderForecast.stops = {interval: rfsLayer.findSublayerById(0).layer.timeInfo.interval}
       })
 
+      // configure url generating and interceptors for the monthly status tile layer
       reactiveUtils.watch(() => timeSliderStatus.timeExtent, () => monthlyStatusLayer.refresh())
       monthlyStatusLayer.getTileUrl = (level, row, col) => {
         return `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/${timeSliderStatus.timeExtent.start.toISOString().slice(0, 7)}/{level}/{col}/{row}.png`
@@ -196,16 +199,25 @@ require(
           .replace("{col}", col)
           .replace("{row}", row)
       }
+      config.request.interceptors.push({
+        urls: /rfs-v2.s3-us-west-2.amazonaws.com/,
+        before: params => {
+          params.url = params.url.split('?')[0]
+          delete params.requestOptions.query // prevent appending the _ts query param so tiles can be cached.
+        }
+      })
 
-      reactiveUtils.when(
-        () => view.stationary === true,
-        () => updateHash({
-          lon: view.center.longitude,
-          lat: view.center.latitude,
-          zoom: view.zoom,
-          definition: definitionExpression
-        })
-      )
+      // update the url hash with the view location but only when the view is finished changing, not every interval of the active changes
+      reactiveUtils
+        .when(
+          () => view.stationary === true,
+          () => updateHash({
+            lon: view.center.longitude,
+            lat: view.center.latitude,
+            zoom: view.zoom,
+            definition: definitionExpression
+          })
+        )
 
       view.on("click", event => {
         if (view.zoom < MIN_QUERY_ZOOM) return view.goTo({target: event.mapPoint, zoom: MIN_QUERY_ZOOM});
@@ -252,15 +264,13 @@ require(
             plotAllRetro({retro: response, riverid: riverId})
             loadStatus.update({retro: "ready"})
           })
-          .catch(() => {
-            loadStatus.update({retro: "fail"})
-          })
+          .catch(() => loadStatus.update({retro: "fail"}))
       }
       const fetchData = ({riverid, referrer = null}) => {
         riverId = riverid ? riverid : riverId
         if (!riverId) return loadStatus.update({riverid: "fail"})
-        loadStatus.update({riverid: riverId, forecast: "clear", retro: "clear"})
         clearCharts()
+        loadStatus.update({riverid: riverId, forecast: "clear", retro: "clear"})
         updateDownloadLinks(riverId)
         if (referrer) showModal(referrer)
         getForecastData()
