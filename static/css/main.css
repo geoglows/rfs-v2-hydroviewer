@@ -29,7 +29,7 @@ html, body {
     flex-grow: 1;
 }
 
-.map {
+arcgis-map {
     cursor: pointer;
     width: 100%;
     flex-grow: 1;
@@ -78,29 +78,39 @@ html, body {
 .load-status {
     text-align: center;
     font-weight: bold;
-    padding: 0 1em;
     width: 100%;
     display: flex;
     flex-direction: row;
-    justify-content: space-around;
-    margin: 20px;
+    justify-content: center;
 }
 
-.status-load {
-    color: orange;
+.load-status:first-child {
+    background-color: #0084ff;
 }
 
-.status-ready {
-    color: green;
+.modal-header-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    border-bottom: 1px solid lightgrey;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
 }
 
-.status-failed {
-    color: red;
+.status-btn {
+    border: 1px solid black;
+    text-transform: unset;
+    font-weight: bold;
+    width: 150px;
+    color: black;
+    background-color: white;
 }
 
-.status-clear {
-    color: lightgrey;
-    opacity: 25%;
+.status-btn.active {
+    color: white;
+    background-color: green;
 }
 
 .chart {
@@ -108,8 +118,8 @@ html, body {
     text-align: center;
     margin: 10px 0;
     width: 100%;
-    max-width: 1200px;
-    max-height: max(6in, 750px);
+    max-width: 1250px;
+    max-height: max(4in, 575px);
 }
 
 .controls-box {
@@ -123,14 +133,6 @@ html, body {
 .button-group {
     display: flex;
     flex-direction: column;
-}
-
-.download-buttons {
-    justify-content: space-between;
-}
-
-.download-buttons > * {
-    margin: 5px;
 }
 
 /* Override materialize css styles */
@@ -152,12 +154,51 @@ button {
     margin: 5px;
 }
 
+.chart-category-container {
+    width: 100%;
+    visibility: visible;
+    transition: transform 0.5s;
+    height: 100%;
+    max-height: 100%;
+    overflow: scroll;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.chart-category-container.dissolve-backwards {
+    transform: translateX(-100%);
+}
+
 .modal.bottom-sheet {
-    max-height: 75%;
+    max-height: 80%;
 }
 
 button > a {
     color: unset;
+}
+
+.time-sliders {
+    position: absolute;
+    bottom: 20px;
+    width: 80%;
+    left: 10%;
+    visibility: hidden;
+}
+
+.time-sliders.show-slider {
+    visibility: visible;
+}
+
+.time-slider-title {
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    background-color: #f8f9fa;
+}
+
+#charts-modal > .modal-content {
+    padding: 5px;
 }
 
 /* on mobile screens, change the download-buttons class */
@@ -169,11 +210,11 @@ button > a {
         justify-content: center;
     }
 
-    .modal .modal-content {
-        padding: 10px;
-    }
-
     .nav-bar-wrapper {
         padding: 0 13px;
+    }
+
+    .modal-header-bar {
+        flex-direction: column;
     }
 }

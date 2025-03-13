@@ -1,589 +1,309 @@
-require([
-  "esri/WebMap",
-  "esri/views/MapView",
-  "esri/layers/MapImageLayer",
-  "esri/layers/ImageryLayer",
-  "esri/layers/TileLayer",
-  "esri/layers/WebTileLayer",
-  "esri/layers/FeatureLayer",
-  "esri/widgets/Home",
-  "esri/widgets/BasemapGallery",
-  "esri/widgets/ScaleBar",
-  "esri/widgets/Legend",
-  "esri/widgets/Expand",
-  "esri/widgets/LayerList",
-  "esri/core/reactiveUtils",
-  "esri/intl",
-], (WebMap, MapView, MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, FeatureLayer, Home, BasemapGallery, ScaleBar, Legend, Expand, LayerList, reactiveUtils, intl) => {
-  'use strict'
+import {buildFilterExpression, lang, loadStatusManager, resetFilterForm, showChartView, updateHash, hideRiverInput, riverIdInputContainer, riverIdInput} from "./ui.js";
+import {clearCharts, plotAllForecast, plotAllRetro} from "./plots.js";
+import {fetchForecastPromise, fetchRetroPromise, fetchReturnPeriodsPromise, updateDownloadLinks} from "./data.js";
 
-//////////////////////////////////////////////////////////////////////// Constants Variables
-  const REST_ENDPOINT = 'https://geoglows.ecmwf.int/api/v2'
-  const RFS_LAYER_URL = 'https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer'
-  const MIN_QUERY_ZOOM = 11
-  const LOADING_GIF = '../static/img/loading.gif'
-  const riverCountriesJSON = '../static/json/riverCountries.json'
-  const outletCountriesJSON = '../static/json/outletCountries.json'
-  const vpuListJSON = '../static/json/vpuList.json'
+require(
+  ["esri/layers/MapImageLayer", "esri/layers/ImageryLayer", "esri/layers/TileLayer", "esri/layers/WebTileLayer", "esri/layers/FeatureLayer", "esri/widgets/TimeSlider", "esri/core/reactiveUtils", "esri/intl", "esri/config"],
+  (MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, FeatureLayer, TimeSlider, reactiveUtils, intl, config) => {
+    document.querySelector('arcgis-map').addEventListener('arcgisViewReadyChange', () => {
+      //////////////////////////////////////////////////////////////////////// Constants and Elements
+      const RFS_LAYER_URL = 'https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer'
+      const MIN_QUERY_ZOOM = 11
 
-  // parse language from the url path
-  const lang = (window.location.pathname.split("/").filter(x => x && !x.includes(".html") && !x.includes('viewer'))[0] || 'en-US');
-  Plotly.setPlotConfig({'locale': lang})
-  intl.setLocale(lang)
+      // manipulated elements
+      const inputForecastDate = document.getElementById('forecast-date-calendar')
+      const timeSliderForecastDiv = document.getElementById('timeSliderForecastWrapper')
+      const timeSliderStatusDiv = document.getElementById('timeSliderStatusWrapper')
+      const riverName = document.getElementById('river-name')
+      // modal elements
+      const modalFilter = document.getElementById("filter-modal")
 
-  // parse initial state from the hash
-  const hashParams = new URLSearchParams(window.location.hash.slice(1))
-  let lon = !isNaN(parseFloat(hashParams.get('lon'))) ? parseFloat(hashParams.get('lon')) : 10
-  let lat = !isNaN(parseFloat(hashParams.get('lat'))) ? parseFloat(hashParams.get('lat')) : 18
-  let zoom = !isNaN(parseFloat(hashParams.get('zoom'))) ? parseFloat(hashParams.get('zoom')) : 2.75
-  const initialState = {
-    lon: lon,
-    lat: lat,
-    zoom: zoom,
-    definition: hashParams.get('definition') || "",
-  }
 
-//////////////////////////////////////////////////////////////////////// Element Selectors
-  const checkboxLoadForecast = document.getElementById('auto-load-forecasts')
-  const checkboxLoadRetro = document.getElementById('auto-load-retrospective')
-  const inputForecastDate = document.getElementById('forecast-date-calendar')
-  const riverName = document.getElementById('river-name')
-  const selectRiverCountry = document.getElementById('riverCountry')
-  const selectOutletCountry = document.getElementById('outletCountry')
-  const selectVPU = document.getElementById('vpuSelect')
-  const definitionString = document.getElementById("definitionString")
-  const definitionDiv = document.getElementById("definition-expression")
-  const modalCharts = document.getElementById("charts-modal")
-  const modalFilter = document.getElementById("filter-modal")
-  const chartForecast = document.getElementById("forecastPlot")
-  const chartRetro = document.getElementById("retroPlot")
+////////////////////////////////////////////////////////////////////////  Initial state and config
+      const hashParams = new URLSearchParams(window.location.hash.slice(1))
+      const initLon = !isNaN(parseFloat(hashParams.get('lon'))) ? parseFloat(hashParams.get('lon')) : 10
+      const initLat = !isNaN(parseFloat(hashParams.get('lat'))) ? parseFloat(hashParams.get('lat')) : 18
+      const initZoom = !isNaN(parseFloat(hashParams.get('zoom'))) ? parseFloat(hashParams.get('zoom')) : 2.75
+      let definitionExpression = hashParams.get('definition') || ""
+      const loadStatus = loadStatusManager()
+      let riverId = null
+      Plotly.setPlotConfig({'locale': lang})
+      intl.setLocale(lang)
+      // set the default date to 12 hours before now UTC time
+      const now = new Date()
+      now.setHours(now.getHours() - 12)
+      inputForecastDate.value = now.toISOString().split("T")[0]
 
-//////////////////////////////////////////////////////////////////////// Manipulate Default Controls and DOM Elements
-  let loadingStatus = {riverid: "clear", forecast: "clear", retro: "clear"}
-  let riverId
-  let definitionExpression = ""
-
-  // set the default date to 12 hours before now UTC time
-  const now = new Date()
-  now.setHours(now.getHours() - 12)
-  inputForecastDate.value = now.toISOString().split("T")[0]
-
-  fetch(riverCountriesJSON)
-    .then(response => response.json())
-    .then(response => {
-        selectRiverCountry.innerHTML += response.map(c => `<option value="${c}">${c}</option>`).join('')
-        M.FormSelect.init(selectRiverCountry)
+//////////////////////////////////////////////////////////////////////// Data Search Promises
+      const searchLayerByClickPromise = event => {
+        return new Promise((resolve, reject) => {
+          rfsLayer
+            .findSublayerById(0)
+            .queryFeatures({
+              geometry: event.mapPoint,
+              distance: 125,
+              units: "meters",
+              spatialRelationship: "intersects",
+              outFields: ["*"],
+              returnGeometry: true,
+              definitionExpression,
+            })
+            .then(response => {
+              if (!response.features.length) {
+                M.toast({html: text.prompts.tryRiverAgain, classes: "red", displayDuration: 5000})
+                return reject()
+              }
+              if (response.features[0].attributes.comid === "Null" || !response.features[0].attributes.comid) {
+                loadStatus.update({riverid: null})
+                M.toast({html: text.prompts.tryRiverAgain, classes: "red", displayDuration: 5000})
+                console.error(error)
+                return reject()
+              }
+              return response
+            })
+            .then(response => resolve(response))
+            .catch(() => reject())
+        })
       }
-    )
-  fetch(outletCountriesJSON)
-    .then(response => response.json())
-    .then(response => {
-        selectOutletCountry.innerHTML += response.map(c => `<option value="${c}">${c}</option>`).join('')
-        M.FormSelect.init(selectOutletCountry)
+
+//////////////////////////////////////////////////////////////////////// Layer Filtering and Events
+      const updateLayerDefinitions = string => {
+        definitionExpression = string || buildFilterExpression()
+        rfsLayer.findSublayerById(0).definitionExpression = definitionExpression
+        M.Modal.getInstance(modalFilter).close()
+        updateHash({definition: definitionExpression})
       }
-    )
-  fetch(vpuListJSON)
-    .then(response => response.json())
-    .then(response => {
-        selectVPU.innerHTML += response.map(v => `<option value="${v}">${v}</option>`).join('')
-        M.FormSelect.init(selectVPU)
+      const resetDefinitionExpression = () => {
+        definitionExpression = ""
+        resetFilterForm()
+        updateLayerDefinitions("")
+        updateHash({definition: definitionExpression})
       }
-    )
 
-////////////////////////////////////////////////////////////////////////  Create Layer, Map, View
-  const rfsLayer = new MapImageLayer({
-    url: RFS_LAYER_URL,
-    title: "GEOGLOWS River Forecast System v2",
-    sublayers: [{
-      id: 0,
-      definitionExpression: definitionExpression,
-    }]
-  })
+//////////////////////////////////////////////////////////////////////// Create map, view, layers, and map events
+      const mapContainer = document.querySelector('arcgis-map')
+      const map = mapContainer.map
+      const view = mapContainer.view
+      view.zoom = initZoom
+      view.center = [initLon, initLat]
+      view.constraints = {
+        rotationEnabled: false,
+        snapToZoom: false,
+        minZoom: 2,
+      }
 
-  const viirsFloodClassified = new WebTileLayer({
-    urlTemplate: "https://floods.ssec.wisc.edu/tiles/RIVER-FLDglobal-composite/{level}/{col}/{row}.png",
-    title: "NOAA-20 VIIRS Flood Composite",
-    copyright: "University of Wisconsin-Madison SSEC",
-    visible: false,
-  });
-  const viirsTrueColor = new ImageryLayer({
-    portalItem: {id: "c873f4c13aa54b25b01270df9358dc64"},
-    title: "NOAA-20 VIIRS True Color Corrected Reflectance",
-    visible: false,
-  })
-  const viirsWaterStates = new ImageryLayer({
-    portalItem: {id: "3695712d28354952923d2a26a176b767"},
-    title: "NOAA-20 VIIRS Water States",
-    visible: false,
-  })
-  const viirsThermalAnomalies = new FeatureLayer({
-    portalItem: {id: "dece90af1a0242dcbf0ca36d30276aa3"},
-    title: "NOAA-20 VIIRS Thermal Anomalies",
-    visible: false,
-  })
-  const goesImageryColorized = new TileLayer({
-    portalItem: {id: "37a875ff3611496883b7ccca97f0f5f4"},
-    title: "GOES Weather Satellite Colorized Infrared Imagery",
-    visible: false,
-  })
+      const filterButton = document.createElement('div');
+      filterButton.setAttribute("title", 'Filter Visible Streams');
+      filterButton.className = "esri-widget--button esri-widget esri-interactive";
+      filterButton.innerHTML = `<span class="esri-icon-filter"></span>`;
+      filterButton.addEventListener('click', () => M.Modal.getInstance(modalFilter).open());
 
-  const map = new WebMap({
-    portalItem: {id: "a69f14ea2e784e019f4a4b6835ffd376"},
-    title: "Environment Basemap",
-    spatialReference: {wkid: 102100},
-    legendEnabled: true,
-  })
-  const view = new MapView({
-    container: "map",
-    map: map,
-    zoom: initialState.zoom,
-    center: [initialState.lon, initialState.lat],
-    constraints: {
-      rotationEnabled: false,
-      snapToZoom: false,
-      minZoom: 0,
-    },
-  })
-  const homeBtn = new Home({
-    view: view
-  })
-  const scaleBar = new ScaleBar({
-    view: view,
-    unit: "dual"
-  })
-  const legend = new Legend({
-    view: view
-  })
-  const legendExpand = new Expand({
-    view: view,
-    content: legend,
-    expandTooltip: text.tooltips.legend,
-    expanded: false
-  })
-  const basemapGallery = new BasemapGallery({
-    view: view
-  })
-  const basemapExpand = new Expand({
-    view: view,
-    content: basemapGallery,
-    expandTooltip: text.tooltips.basemap,
-    expanded: false
-  })
-  const layerList = new LayerList({
-    view: view
-  })
-  const layerListExpand = new Expand({
-    view: view,
-    content: layerList,
-    expandTooltip: text.tooltips.layerList,
-    expanded: false
-  })
+      const timeSliderForecastButton = document.createElement('div');
+      timeSliderForecastButton.setAttribute("title", 'Forecast Layer Time steps');
+      timeSliderForecastButton.className = "esri-widget--button esri-widget esri-interactive";
+      timeSliderForecastButton.innerHTML = `<span class="esri-icon-time-clock"></span>`;
+      timeSliderForecastButton.addEventListener('click', () => {
+        timeSliderForecastDiv.classList.toggle('show-slider')
+        timeSliderStatusDiv.classList.remove('show-slider')
+      })
 
-  const filterButton = document.createElement('div');
-  filterButton.className = "esri-widget--button esri-widget esri-interactive";
-  filterButton.innerHTML = `<span class="esri-icon-filter"></span>`;
-  filterButton.addEventListener('click', () => M.Modal.getInstance(modalFilter).open());
+      const timeSliderStatusButton = document.createElement('div');
+      timeSliderStatusButton.setAttribute("title", 'Monthly Status Layer Time steps');
+      timeSliderStatusButton.className = "esri-widget--button esri-widget esri-interactive";
+      timeSliderStatusButton.innerHTML = `<span class="esri-icon-time-clock"></span>`;
+      timeSliderStatusButton.addEventListener('click', () => {
+        timeSliderForecastDiv.classList.remove('show-slider')
+        timeSliderStatusDiv.classList.toggle('show-slider')
+      })
 
-  view.ui.add(homeBtn, "top-left");
-  view.ui.add(layerListExpand, "top-right")
-  view.ui.add(basemapExpand, "top-right")
-  view.ui.add(filterButton, "top-left");
-  view.ui.add(scaleBar, "bottom-right");
-  view.ui.add(legendExpand, "bottom-left");
-  view.navigation.browserTouchPanEnabled = true;
-  view.when(() => {
-    map.layers.add(viirsFloodClassified)
-    map.layers.add(goesImageryColorized)
-    map.layers.add(viirsThermalAnomalies)
-    map.layers.add(viirsWaterStates)
-    map.layers.add(viirsTrueColor)
-    map.layers.add(rfsLayer)
-  })  // layers should be added to webmaps after the view is ready
+      const timeSliderForecast = new TimeSlider({
+        container: "timeSliderForecast",
+        view: view,
+        playRate: 1250,
+        loop: true,
+        label: "Forecast Layer Time Steps",
+        mode: "instant",
+      });
+      const timeSliderStatus = new TimeSlider({
+        container: "timeSliderStatus",
+        playRate: 1250,
+        loop: true,
+        label: "Monthly Status Layer Time Steps",
+        mode: "instant",
+        fullTimeExtent: {
+          start: new Date(2025, 0, 1),
+          end: new Date(2025, 2, 1)
+        },
+        stops: {
+          interval: {
+            value: 1,
+            unit: "months"
+          }
+        }
+      });
 
-  const buildDefinitionExpression = () => {
-    const riverCountry = M.FormSelect.getInstance(selectRiverCountry).getSelectedValues()
-    const outletCountry = M.FormSelect.getInstance(selectOutletCountry).getSelectedValues()
-    const vpu = M.FormSelect.getInstance(selectVPU).getSelectedValues()
-    const customString = definitionString.value
-    if (!riverCountry.length && !outletCountry.length && !vpu.length && customString === "") return M.Modal.getInstance(modalFilter).close()
+      view.navigation.browserTouchPanEnabled = true;
+      view.ui.add(filterButton, "top-left");
+      view.ui.add(timeSliderForecastButton, "top-left");
+      view.ui.add(timeSliderStatusButton, "top-left");
 
-    let definitions = []
-    if (riverCountry.length) riverCountry.forEach(c => definitions.push(`rivercountry='${c}'`))
-    if (outletCountry.length) outletCountry.forEach(c => definitions.push(`outletcountry='${c}'`))
-    if (vpu.length) vpu.forEach(v => definitions.push(`vpu=${v}`))
-    if (customString !== "") definitions.push(customString)
-    definitionExpression = definitions.join(" OR ")
-    return definitionExpression
-  }
-  const updateLayerDefinitions = expression => {
-    expression = expression === undefined ? buildDefinitionExpression() : expression
-    rfsLayer.findSublayerById(0).definitionExpression = expression
-    definitionExpression = expression
-    definitionDiv.value = expression
-    M.Modal.getInstance(modalFilter).close()
-    setHashDefinition(expression)
-  }
-  const resetDefinitionExpression = () => {
-    // reset the selected values to All on each dropdown
-    selectRiverCountry.value = ""
-    selectOutletCountry.value = ""
-    selectVPU.value = ""
-    M.FormSelect.init(selectRiverCountry)
-    M.FormSelect.init(selectOutletCountry)
-    M.FormSelect.init(selectVPU)
-    definitionString.value = ""
-    // reset the definition expression to empty
-    definitionExpression = ""
-    rfsLayer.findSublayerById(0).definitionExpression = definitionExpression
-    definitionDiv.value = definitionExpression
-    // update the hash
-    setHashDefinition(definitionExpression)
-  }
+      const rfsLayer = new MapImageLayer({
+        url: RFS_LAYER_URL,
+        title: "GEOGLOWS River Forecast System v2",
+        sublayers: [{id: 0, definitionExpression}]
+      })
+      const monthlyStatusLayer = new WebTileLayer({
+        urlTemplate: `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/2025-01/{level}/{col}/{row}.png`,
+        title: "Monthly Status",
+        visible: false,
+        maxScale: 9244600,  // zoom level 6
+      })
+      const viirsFloodClassified = new WebTileLayer({
+        urlTemplate: "https://floods.ssec.wisc.edu/tiles/RIVER-FLDglobal-composite/{level}/{col}/{row}.png",
+        title: "NOAA-20 VIIRS Flood Composite",
+        copyright: "University of Wisconsin-Madison SSEC",
+        visible: false,
+      });
+      const viirsTrueColor = new ImageryLayer({
+        portalItem: {id: "c873f4c13aa54b25b01270df9358dc64"},
+        title: "NOAA-20 VIIRS True Color Corrected Reflectance",
+        visible: false,
+      })
+      const viirsWaterStates = new ImageryLayer({
+        portalItem: {id: "3695712d28354952923d2a26a176b767"},
+        title: "NOAA-20 VIIRS Water States",
+        visible: false,
+      })
+      const viirsThermalAnomalies = new FeatureLayer({
+        portalItem: {id: "dece90af1a0242dcbf0ca36d30276aa3"},
+        title: "NOAA-20 VIIRS Thermal Anomalies",
+        visible: false,
+      })
+      const goesImageryColorized = new TileLayer({
+        portalItem: {id: "37a875ff3611496883b7ccca97f0f5f4"},
+        title: "GOES Weather Satellite Colorized Infrared Imagery",
+        visible: false,
+      })
+      map.addMany([goesImageryColorized, viirsThermalAnomalies, viirsTrueColor, viirsWaterStates, viirsFloodClassified, monthlyStatusLayer, rfsLayer])
+
+      view.whenLayerView(rfsLayer.findSublayerById(0).layer).then(_ => {
+        timeSliderForecast.fullTimeExtent = rfsLayer.findSublayerById(0).layer.timeInfo.fullTimeExtent.expandTo("hours");
+        timeSliderForecast.stops = {interval: rfsLayer.findSublayerById(0).layer.timeInfo.interval}
+      })
+
+      // configure url generating and interceptors for the monthly status tile layer
+      reactiveUtils.watch(() => timeSliderStatus.timeExtent, () => monthlyStatusLayer.refresh())
+      monthlyStatusLayer.getTileUrl = (level, row, col) => {
+        return `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/${timeSliderStatus.timeExtent.start.toISOString().slice(0, 7)}/{level}/{col}/{row}.png`
+          .replace("{level}", level)
+          .replace("{col}", col)
+          .replace("{row}", row)
+      }
+      config.request.interceptors.push({
+        urls: /rfs-v2.s3-us-west-2.amazonaws.com/,
+        before: params => {
+          params.url = params.url.split('?')[0]
+          delete params.requestOptions.query // prevent appending the _ts query param so tiles can be cached.
+        }
+      })
+
+      // update the url hash with the view location but only when the view is finished changing, not every interval of the active changes
+      reactiveUtils
+        .when(
+          () => view.stationary === true,
+          () => updateHash({
+            lon: view.center.longitude,
+            lat: view.center.latitude,
+            zoom: view.zoom,
+            definition: definitionExpression
+          })
+        )
+
+      view.on("click", event => {
+        if (view.zoom < MIN_QUERY_ZOOM) return view.goTo({target: event.mapPoint, zoom: MIN_QUERY_ZOOM});
+        M.toast({html: text.prompts.findingRiver, classes: "orange"})
+        loadStatus.update({riverid: "load", forecast: "clear", retro: "clear"})
+        searchLayerByClickPromise(event)
+          .then(response => {
+            view.graphics.removeAll()
+            view.graphics.add({
+              geometry: response.features[0].geometry,
+              symbol: {
+                type: "simple-line",
+                color: [0, 0, 255],
+                width: 3
+              }
+            })
+            showChartView('forecast')
+            fetchData({riverid: response.features[0].attributes.comid})
+          })
+      })
 
 //////////////////////////////////////////////////////////////////////// GET DATA FROM API AND MANAGING PLOTS
-  const searchLayerByClickPromise = (event) => {
-    return new Promise((resolve, reject) => {
-      rfsLayer
-        .findSublayerById(0)
-        .queryFeatures({
-          geometry: event.mapPoint,
-          distance: 125,
-          units: "meters",
-          spatialRelationship: "intersects",
-          outFields: ["*"],
-          returnGeometry: true,
-          definitionExpression: definitionExpression,
-        })
-        .then(response => {
-          if (!response.features.length) {
-            M.toast({html: text.prompts.tryRiverAgain, classes: "red", displayDuration: 5000})
-            return reject()
-          }
-          if (response.features[0].attributes.comid === "Null" || !response.features[0].attributes.comid) {
-            updateStatusIcons({riverid: "fail"})
-            M.toast({html: text.prompts.tryRiverAgain, classes: "red", displayDuration: 5000})
-            console.error(error)
-            return reject()
-          }
-          return response
-        })
-        .then(response => resolve(response))
-        .catch(() => reject())
-    })
-  }
-  const fetchForecastPromise = riverid => {
-    return new Promise((resolve, reject) => {
-      fetch(`${REST_ENDPOINT}/forecast/${riverid}/?format=json&date=${inputForecastDate.value.replaceAll("-", "")}`)
-        .then(response => response.json())
-        .then(response => resolve(response))
-        .catch(() => reject())
-    })
-  }
-  const fetchReturnPeriodsPromise = riverid => {
-    return new Promise((resolve, reject) => {
-      fetch(`${REST_ENDPOINT}/returnperiods/${riverid}/?format=json`)
-        .then(response => response.json())
-        .then(response => resolve(response))
-        .catch(() => reject())
-    })
-  }
-  const fetchRetroPromise = riverid => {
-    return new Promise((resolve, reject) => {
-      fetch(`${REST_ENDPOINT}/retrospective/${riverid}/?format=json`)
-        .then(response => response.json())
-        .then(response => resolve(response))
-        .catch(() => reject())
-    })
-  }
-  const returnPeriodShapes = ({rp, x0, x1, maxFlow}) => {
-    const returnPeriodColors = {
-      '2': 'rgb(254, 240, 1)',
-      '5': 'rgb(253, 154, 1)',
-      '10': 'rgb(255, 56, 5)',
-      '25': 'rgb(255, 0, 0)',
-      '50': 'rgb(128, 0, 106)',
-      '100': 'rgb(128, 0, 246)',
-    }
-    const visible = maxFlow > rp.return_periods['2'] ? true : 'legendonly'
-    const box = (y0, y1, name) => {
-      return {
-        x: [x0, x1, x1, x0],
-        y: [y0, y0, y1, y1],
-        fillcolor: returnPeriodColors[name],
-        fill: 'toself',
-        line: {width: 0},
-        mode: 'lines',
-        opacity: 0.5,
-        legendgroup: 'returnperiods',
-        legendgrouptitle: {text: `Return Periods m³/s`},
-        showlegend: true,
-        visible: visible,
-        name: `${name}: ${rp.return_periods[name].toFixed(2)} m³/s`,
+      const getForecastData = riverid => {
+        riverId = riverid ? riverid : riverId
+        if (!riverId) return
+        loadStatus.update({forecast: "load"})
+        const date = inputForecastDate.value.replaceAll("-", "")
+        Promise
+          .all([fetchForecastPromise({riverid: riverId, date}), fetchReturnPeriodsPromise(riverId)])
+          .then(responses => {
+            plotAllForecast({forecast: responses[0], rp: responses[1], riverid: riverId})
+            loadStatus.update({forecast: "ready"})
+          })
+          .catch(() => {
+            loadStatus.update({forecast: "fail"})
+          })
       }
-    }
-    return Object
-      .keys(rp.return_periods)
-      .map((key, index, array) => {
-        const y0 = rp.return_periods[key]
-        const y1 = index === array.length - 1 ? Math.max(rp.return_periods[key] * 1.15, maxFlow * 1.15) : rp.return_periods[array[index + 1]]
-        return box(y0, y1, key)
-      })
-      .concat([{legendgroup: 'returnperiods', legendgrouptitle: {text: `Return Periods m³/s`}}])
-  }
-  const plotForecast = ({forecast, rp, riverid}) => {
-    chartForecast.innerHTML = ""
-    const maxForecast = Math.max(...forecast.flow_median)
-    const returnPeriods = returnPeriodShapes({rp, x0: forecast.datetime[0], x1: forecast.datetime[forecast.datetime.length - 1], maxFlow: maxForecast})
-    Plotly.newPlot(
-      chartForecast,
-      [
-        {
-          x: forecast.datetime.concat(forecast.datetime.slice().toReversed()),
-          y: forecast.flow_uncertainty_lower.concat(forecast.flow_uncertainty_upper.slice().toReversed()),
-          name: `${text.plots.fcLineUncertainty}`,
-          fill: 'toself',
-          fillcolor: 'rgba(44,182,255,0.6)',
-          line: {color: 'rgba(0,0,0,0)'}
-        },
-        {
-          x: forecast.datetime,
-          y: forecast.flow_uncertainty_lower,
-          line: {color: 'rgb(0,166,255)'},
-          showlegend: false,
-          name: '',
-        },
-        {
-          x: forecast.datetime,
-          y: forecast.flow_uncertainty_upper,
-          line: {color: 'rgb(0,166,255)'},
-          showlegend: false,
-          name: '',
-        },
-        {
-          x: forecast.datetime,
-          y: forecast.flow_median,
-          name: `${text.plots.fcLineMedian}`,
-          line: {color: 'black'}
-        },
-        ...returnPeriods,
-      ],
-      {
-        title: `${text.plots.fcTitle} ${riverid}`,
-        xaxis: {title: `${text.plots.fcXaxis} (UTC +00:00)`},
-        yaxis: {title: `${text.plots.fcYaxis} (m³/s)`},
-        legend: {'orientation': 'h'},
+      const getRetrospectiveData = () => {
+        if (!riverId) return
+        clearCharts('retrospective')
+        loadStatus.update({retro: "load"})
+        fetchRetroPromise(riverId)
+          .then(response => {
+            plotAllRetro({retro: response, riverid: riverId})
+            loadStatus.update({retro: "ready"})
+          })
+          .catch(() => loadStatus.update({retro: "fail"}))
       }
-    )
-  }
-  const plotRetro = response => {
-    const defaultDateRange = ['2015-01-01', new Date().toISOString().split("T")[0]]
-    chartRetro.innerHTML = ``
-    Plotly.newPlot(
-      chartRetro,
-      [
-        {
-          x: response.datetime,
-          y: response[riverId],
+      const fetchData = ({riverid}) => {
+        riverId = riverid ? riverid : riverId
+        if (!riverId) return loadStatus.update({riverid: null})
+        clearCharts()
+        loadStatus.update({riverid: riverId, forecast: "clear", retro: "clear"})
+        updateDownloadLinks(riverId)
+        getForecastData()
+        getRetrospectiveData()
+      }
+      const setRiverId = id => {
+        if (!id) {
+          let possibleId = riverIdInput.value
+          if (!/^\d{9}$/.test(possibleId)) return alert(text.prompts.invalidRiverID)
+          id = possibleId
         }
-      ],
-      {
-        title: `${text.plots.retroTitle} ${riverId}`,
-        yaxis: {title: `${text.plots.retroYaxis} (m³/s)`},
-        xaxis: {
-          title: `${text.plots.retroXaxis} (UTC +00:00)`,
-          autorange: false,
-          range: defaultDateRange,
-          rangeslider: {},
-          rangeselector: {
-            buttons: [
-              {
-                count: 1,
-                label: `1 ${text.words.year}`,
-                step: 'year',
-                stepmode: 'backward'
-              },
-              {
-                count: 5,
-                label: `5 ${text.words.years}`,
-                step: 'year',
-                stepmode: 'backward'
-              },
-              {
-                count: 10,
-                label: `10 ${text.words.years}`,
-                step: 'year',
-                stepmode: 'backward'
-              },
-              {
-                count: 30,
-                label: `30 ${text.words.years}`,
-                step: 'year',
-                stepmode: 'backward'
-              },
-              {
-                label: `${text.words.all}`,
-                count: response.datetime.length,
-                step: 'day',
-              }
-            ]
-          },
-          type: 'date'
-        }
+        riverId = id
+        fetchData({riverid: riverId})
       }
-    )
-  }
-  const getForecastData = riverid => {
-    riverId = riverid ? riverid : riverId
-    if (!riverId) return
-    updateStatusIcons({forecast: "load"})
-    chartForecast.innerHTML = `<img alt="loading signal" src=${LOADING_GIF}>`
-    Promise.all([fetchForecastPromise(riverId), fetchReturnPeriodsPromise(riverId)])
-      .then(responses => {
-        plotForecast({forecast: responses[0], rp: responses[1], riverid: riverId})
-        updateStatusIcons({forecast: "ready"})
-      })
-      .catch(() => {
-        updateStatusIcons({forecast: "fail"})
-        giveForecastRetryButton(riverId)
-      })
-  }
-  const getRetrospectiveData = () => {
-    if (!riverId) return
-    updateStatusIcons({retro: "load"})
-    chartRetro.innerHTML = `<img alt="loading signal" src=${LOADING_GIF}>`
-    fetchRetroPromise(riverId)
-      .then(response => {
-        plotRetro(response)
-        updateStatusIcons({retro: "ready"})
-      })
-      .catch(() => {
-        updateStatusIcons({retro: "fail"})
-        giveRetrospectiveRetryButton(riverId)
-      })
-  }
-  const fetchData = riverid => {
-    riverId = riverid ? riverid : riverId
-    if (!riverId) return updateStatusIcons({riverid: "fail"})
-    M.Modal.getInstance(modalCharts).open()
-    updateStatusIcons({riverid: "ready", forecast: "clear", retro: "clear"})
-    clearChartDivs()
-    updateDownloadLinks("set")
-    checkboxLoadForecast.checked ? getForecastData() : giveForecastRetryButton(riverId)
-    checkboxLoadRetro.checked ? getRetrospectiveData() : giveRetrospectiveRetryButton(riverId)
-  }
-  const setRiverId = () => {
-    riverId = prompt(text.prompts.enterRiverID)
-    if (!riverId) return
-    if (!/^\d{9}$/.test(riverId)) return alert(text.prompts.invalidRiverID)
-    fetchData(parseInt(riverId))
-  }
-
-//////////////////////////////////////////////////////////////////////// Update
-  const updateStatusIcons = status => {
-    for (let key in status) {
-      loadingStatus[key] = status[key]
-    }
-    document.getElementById("request-status").innerHTML = [
-      'riverid', 'forecast', 'retro'
-    ].map(key => {
-      let message = text.status.clear
-      switch (loadingStatus[key]) {
-        case "load":
-          message = text.status.load
-          break
-        case "ready":
-          message = key === "riverid" ? riverId : text.status.ready
-          break
-        case "fail":
-          message = text.status.fail
-          break
-      }
-      return `<span class="status-${loadingStatus[key]}">${text.words[key]}: ${message}</span>`
-    }).join(' - ')
-  }
-  const clearChartDivs = (chartTypes) => {
-    if (chartTypes === "forecast" || chartTypes === null) {
-      chartForecast.innerHTML = ""
-    }
-    if (chartTypes === "retrospective" || chartTypes === null) {
-      chartRetro.innerHTML = ""
-    }
-  }
-  const giveForecastRetryButton = riverid => {
-    clearChartDivs({chartTypes: "forecast"})
-    chartForecast.innerHTML = `<button class="btn btn-warning" onclick="window.getForecastData(${riverid})">${text.inputs.forecast}</button>`
-  }
-  const giveRetrospectiveRetryButton = riverid => {
-    clearChartDivs({chartTypes: "historical"})
-    chartRetro.innerHTML = `<button class="btn btn-warning" onclick="window.getRetrospectiveData(${riverid})">${text.inputs.retro}</button>`
-  }
-  const updateDownloadLinks = type => {
-    if (type === "clear") {
-      document.getElementById("download-forecast-link").href = ""
-      document.getElementById("download-retrospective-link").href = ""
-      document.getElementById("download-forecast-btn").disabled = true
-      document.getElementById("download-retrospective-btn").disabled = true
-    } else if (type === "set") {
-      document.getElementById("download-forecast-link").href = `${REST_ENDPOINT}/forecast/${riverId}`
-      document.getElementById("download-retrospective-link").href = `${REST_ENDPOINT}/retrospective/${riverId}`
-      document.getElementById("download-forecast-btn").disabled = false
-      document.getElementById("download-retrospective-btn").disabled = false
-    }
-  }
-
-//////////////////////////////////////////////////////////////////////// HASH UPDATES
-  const updateHash = () => {
-    const hashParams = new URLSearchParams(window.location.hash.slice(1))
-    hashParams.set('lon', view.center.longitude.toFixed(2))
-    hashParams.set('lat', view.center.latitude.toFixed(2))
-    hashParams.set('zoom', view.zoom.toFixed(2))
-    hashParams.set('definition', definitionExpression)
-    window.location.hash = hashParams.toString()
-  }
-  const setHashDefinition = definition => {
-    const hashParams = new URLSearchParams(window.location.hash.slice(1))
-    hashParams.set('definition', definition)
-    window.location.hash = hashParams.toString()
-  }
 
 //////////////////////////////////////////////////////////////////////// INITIAL LOAD
-  M.AutoInit()
-  if (initialState.definition) updateLayerDefinitions(initialState.definition)
-  if (window.innerWidth < 800) M.toast({html: text.prompts.mobile, classes: "blue custom-toast-placement", displayLength: 8000})
-
-//////////////////////////////////////////////////////////////////////// Event Listeners
-  inputForecastDate.addEventListener("change", () => getForecastData())
-  window.addEventListener('resize', () => {
-    Plotly.Plots.resize(chartForecast)
-    Plotly.Plots.resize(chartRetro)
-  })
-  view.on("click", event => {
-    if (view.zoom < MIN_QUERY_ZOOM) return view.goTo({target: event.mapPoint, zoom: MIN_QUERY_ZOOM});
-    M.toast({html: text.prompts.findingRiver, classes: "orange"})
-    updateStatusIcons({riverid: "load", forecast: "clear", retro: "clear"})
-    searchLayerByClickPromise(event)
-      .then(response => {
-        riverId = response.features[0].attributes.comid
-        view.graphics.removeAll()
-        view.graphics.add({
-          geometry: response.features[0].geometry,
-          symbol: {
-            type: "simple-line",
-            color: [0, 0, 255],
-            width: 3
-          }
-        })
-        fetchData(riverId)
+      M.AutoInit()
+      loadStatus.update()
+      if (window.innerWidth < 800) M.toast({html: text.prompts.mobile, classes: "blue custom-toast-placement", displayLength: 7500})
+      inputForecastDate.addEventListener("change", () => getForecastData())
+      riverIdInput.addEventListener("keydown", event => {
+        if (event.key !== "Enter") return
+        let possibleId = riverIdInput.value
+        if (!riverIdInputContainer.classList.contains("hide") && /^\d{9}$/.test(possibleId)) {
+          hideRiverInput()
+          setRiverId(possibleId)
+        } else alert(text.prompts.invalidRiverID)
       })
-  })
-  // view.watch('extent', () => updateHash())
-  reactiveUtils.when(() => view.stationary === true, () => updateHash())
 
 //////////////////////////////////////////////////////////////////////// Export alternatives
-  window.setRiverId = setRiverId
-  window.getForecastData = getForecastData
-  window.getRetrospectiveData = getRetrospectiveData
-  window.updateLayerDefinitions = updateLayerDefinitions
-  window.resetDefinitionExpression = resetDefinitionExpression
-  window.layer = rfsLayer
-})
+      window.setRiverId = setRiverId
+      window.getForecastData = getForecastData
+      window.getRetrospectiveData = getRetrospectiveData
+      window.updateLayerDefinitions = updateLayerDefinitions
+      window.resetDefinitionExpression = resetDefinitionExpression
+    })
+  })
