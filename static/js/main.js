@@ -107,14 +107,14 @@ require(
         timeSliderStatusDiv.classList.remove('show-slider')
       })
 
-      const timeSliderStatusButton = document.createElement('div');
-      timeSliderStatusButton.setAttribute("title", 'Monthly Status Layer Time steps');
-      timeSliderStatusButton.className = "esri-widget--button esri-widget esri-interactive";
-      timeSliderStatusButton.innerHTML = `<span class="esri-icon-time-clock"></span>`;
-      timeSliderStatusButton.addEventListener('click', () => {
-        timeSliderForecastDiv.classList.remove('show-slider')
-        timeSliderStatusDiv.classList.toggle('show-slider')
-      })
+      // const timeSliderStatusButton = document.createElement('div');
+      // timeSliderStatusButton.setAttribute("title", 'Monthly Status Layer Time steps');
+      // timeSliderStatusButton.className = "esri-widget--button esri-widget esri-interactive";
+      // timeSliderStatusButton.innerHTML = `<span class="esri-icon-time-clock"></span>`;
+      // timeSliderStatusButton.addEventListener('click', () => {
+      //   timeSliderForecastDiv.classList.remove('show-slider')
+      //   timeSliderStatusDiv.classList.toggle('show-slider')
+      // })
 
       const timeSliderForecast = new TimeSlider({
         container: "timeSliderForecast",
@@ -124,40 +124,40 @@ require(
         label: "Forecast Layer Time Steps",
         mode: "instant",
       });
-      const timeSliderStatus = new TimeSlider({
-        container: "timeSliderStatus",
-        playRate: 1250,
-        loop: true,
-        label: "Monthly Status Layer Time Steps",
-        mode: "instant",
-        fullTimeExtent: {
-          start: new Date(2025, 0, 1),
-          end: new Date(2025, 2, 1)
-        },
-        stops: {
-          interval: {
-            value: 1,
-            unit: "months"
-          }
-        }
-      });
+      // const timeSliderStatus = new TimeSlider({
+      //   container: "timeSliderStatus",
+      //   playRate: 1250,
+      //   loop: true,
+      //   label: "Monthly Status Layer Time Steps",
+      //   mode: "instant",
+      //   fullTimeExtent: {
+      //     start: new Date(2025, 0, 1),
+      //     end: new Date(2025, 2, 1)
+      //   },
+      //   stops: {
+      //     interval: {
+      //       value: 1,
+      //       unit: "months"
+      //     }
+      //   }
+      // });
 
       view.navigation.browserTouchPanEnabled = true;
       view.ui.add(filterButton, "top-left");
       view.ui.add(timeSliderForecastButton, "top-left");
-      view.ui.add(timeSliderStatusButton, "top-left");
+      // view.ui.add(timeSliderStatusButton, "top-left");
 
       const rfsLayer = new MapImageLayer({
         url: RFS_LAYER_URL,
         title: "GEOGLOWS River Forecast System v2",
         sublayers: [{id: 0, definitionExpression}]
       })
-      const monthlyStatusLayer = new WebTileLayer({
-        urlTemplate: `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/2025-01/{level}/{col}/{row}.png`,
-        title: "Monthly Status",
-        visible: false,
-        maxScale: 9244600,  // zoom level 6
-      })
+      // const monthlyStatusLayer = new WebTileLayer({
+      //   urlTemplate: `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/2025-01/{level}/{col}/{row}.png`,
+      //   title: "Monthly Status",
+      //   visible: false,
+      //   maxScale: 9244600,  // zoom level 6
+      // })
       const viirsFloodClassified = new WebTileLayer({
         urlTemplate: "https://floods.ssec.wisc.edu/tiles/RIVER-FLDglobal-composite/{level}/{col}/{row}.png",
         title: "NOAA-20 VIIRS Flood Composite",
@@ -184,7 +184,8 @@ require(
         title: "GOES Weather Satellite Colorized Infrared Imagery",
         visible: false,
       })
-      map.addMany([goesImageryColorized, viirsThermalAnomalies, viirsTrueColor, viirsWaterStates, viirsFloodClassified, monthlyStatusLayer, rfsLayer])
+      // map.addMany([goesImageryColorized, viirsThermalAnomalies, viirsTrueColor, viirsWaterStates, viirsFloodClassified, monthlyStatusLayer, rfsLayer])
+      map.addMany([goesImageryColorized, viirsThermalAnomalies, viirsTrueColor, viirsWaterStates, viirsFloodClassified, rfsLayer])
 
       view.whenLayerView(rfsLayer.findSublayerById(0).layer).then(_ => {
         timeSliderForecast.fullTimeExtent = rfsLayer.findSublayerById(0).layer.timeInfo.fullTimeExtent.expandTo("hours");
@@ -193,19 +194,19 @@ require(
 
       // configure url generating and interceptors for the monthly status tile layer
       reactiveUtils.watch(() => timeSliderStatus.timeExtent, () => monthlyStatusLayer.refresh())
-      monthlyStatusLayer.getTileUrl = (level, row, col) => {
-        return `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/${timeSliderStatus.timeExtent.start.toISOString().slice(0, 7)}/{level}/{col}/{row}.png`
-          .replace("{level}", level)
-          .replace("{col}", col)
-          .replace("{row}", row)
-      }
-      config.request.interceptors.push({
-        urls: /rfs-v2.s3-us-west-2.amazonaws.com/,
-        before: params => {
-          params.url = params.url.split('?')[0]
-          delete params.requestOptions.query // prevent appending the _ts query param so tiles can be cached.
-        }
-      })
+      // monthlyStatusLayer.getTileUrl = (level, row, col) => {
+      //   return `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/${timeSliderStatus.timeExtent.start.toISOString().slice(0, 7)}/{level}/{col}/{row}.png`
+      //     .replace("{level}", level)
+      //     .replace("{col}", col)
+      //     .replace("{row}", row)
+      // }
+      // config.request.interceptors.push({
+      //   urls: /rfs-v2.s3-us-west-2.amazonaws.com/,
+      //   before: params => {
+      //     params.url = params.url.split('?')[0]
+      //     delete params.requestOptions.query // prevent appending the _ts query param so tiles can be cached.
+      //   }
+      // })
 
       // update the url hash with the view location but only when the view is finished changing, not every interval of the active changes
       reactiveUtils
