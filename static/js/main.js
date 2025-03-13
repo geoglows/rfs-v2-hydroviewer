@@ -1,4 +1,4 @@
-import {buildFilterExpression, lang, loadStatusManager, resetFilterForm, showModal, updateHash} from "./ui.js";
+import {buildFilterExpression, lang, loadStatusManager, resetFilterForm, showChartView, updateHash, hideRiverInput, riverIdInputContainer, riverIdInput} from "./ui.js";
 import {clearCharts, plotAllForecast, plotAllRetro} from "./plots.js";
 import {fetchForecastPromise, fetchRetroPromise, fetchReturnPeriodsPromise, updateDownloadLinks} from "./data.js";
 
@@ -54,7 +54,7 @@ require(
                 return reject()
               }
               if (response.features[0].attributes.comid === "Null" || !response.features[0].attributes.comid) {
-                loadStatus.update({riverid: "fail"})
+                loadStatus.update({riverid: null})
                 M.toast({html: text.prompts.tryRiverAgain, classes: "red", displayDuration: 5000})
                 console.error(error)
                 return reject()
@@ -225,7 +225,6 @@ require(
         loadStatus.update({riverid: "load", forecast: "clear", retro: "clear"})
         searchLayerByClickPromise(event)
           .then(response => {
-            riverId = response.features[0].attributes.comid
             view.graphics.removeAll()
             view.graphics.add({
               geometry: response.features[0].geometry,
@@ -235,7 +234,8 @@ require(
                 width: 3
               }
             })
-            fetchData({riverid: riverId, referrer: "forecast"})
+            showChartView('forecast')
+            fetchData({riverid: response.features[0].attributes.comid})
           })
       })
 
@@ -266,21 +266,23 @@ require(
           })
           .catch(() => loadStatus.update({retro: "fail"}))
       }
-      const fetchData = ({riverid, referrer = null}) => {
+      const fetchData = ({riverid}) => {
         riverId = riverid ? riverid : riverId
-        if (!riverId) return loadStatus.update({riverid: "fail"})
+        if (!riverId) return loadStatus.update({riverid: null})
         clearCharts()
         loadStatus.update({riverid: riverId, forecast: "clear", retro: "clear"})
         updateDownloadLinks(riverId)
-        if (referrer) showModal(referrer)
         getForecastData()
         getRetrospectiveData()
       }
-      const setRiverId = referrer => {
-        riverId = parseInt(prompt(text.prompts.enterRiverID))
-        if (!riverId) return
-        if (!/^\d{9}$/.test(riverId)) return alert(text.prompts.invalidRiverID)
-        fetchData({riverid: riverId, referrer: referrer})
+      const setRiverId = id => {
+        if (!id) {
+          let possibleId = riverIdInput.value
+          if (!/^\d{9}$/.test(possibleId)) return alert(text.prompts.invalidRiverID)
+          id = possibleId
+        }
+        riverId = id
+        fetchData({riverid: riverId})
       }
 
 //////////////////////////////////////////////////////////////////////// INITIAL LOAD
@@ -288,6 +290,14 @@ require(
       loadStatus.update()
       if (window.innerWidth < 800) M.toast({html: text.prompts.mobile, classes: "blue custom-toast-placement", displayLength: 7500})
       inputForecastDate.addEventListener("change", () => getForecastData())
+      riverIdInput.addEventListener("keydown", event => {
+        if (event.key !== "Enter") return
+        let possibleId = riverIdInput.value
+        if (!riverIdInputContainer.classList.contains("hide") && /^\d{9}$/.test(possibleId)) {
+          hideRiverInput()
+          setRiverId(possibleId)
+        } else alert(text.prompts.invalidRiverID)
+      })
 
 //////////////////////////////////////////////////////////////////////// Export alternatives
       window.setRiverId = setRiverId

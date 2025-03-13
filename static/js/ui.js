@@ -13,9 +13,11 @@ const selectVPU = document.getElementById('vpuSelect')
 const definitionString = document.getElementById("definitionString")
 const definitionDiv = document.getElementById("definition-expression")
 // modals
-const divModalForecasts = document.getElementById("forecast-modal")
-const divModalRetro = document.getElementById("retro-modal")
+const divModalCharts = document.getElementById("charts-modal")
 // charts
+const divSelectedRiverId = document.getElementById("selected-river-id")
+const riverIdInputContainer = document.getElementById('enter-river-id-container')
+const riverIdInput = document.getElementById("river-id")
 const divChartForecast = document.getElementById("forecastPlot")
 const divChartRetro = document.getElementById("retroPlot")
 const divChartYearlyVol = document.getElementById("yearlyVolPlot")
@@ -41,16 +43,18 @@ fetch(vpuListJSON)
     selectVPU.innerHTML += response.map(v => `<option value="${v}">${v}</option>`).join('')
     M.FormSelect.init(selectVPU)
   })
-const showModal = (modal) => {
-  switch (modal) {
-    case "forecast":
-      M.Modal.getInstance(divModalForecasts).open()
-      M.Modal.getInstance(divModalRetro).close()
-      break
-    case "retro":
-      M.Modal.getInstance(divModalForecasts).close()
-      M.Modal.getInstance(divModalRetro).open()
-      break
+const showChartView = (modal) => {
+  M.Modal.getInstance(divModalCharts).open()
+  if (modal === 'forecast') {
+    document.getElementById("forecastChartSpace").classList.remove('dissolve-backwards')
+    document.getElementById("retroChartSpace").classList.add('dissolve-backwards')
+    document.getElementById('showForecastCharts').classList.add('active')
+    document.getElementById('showRetroCharts').classList.remove('active')
+  } else if (modal === 'retro') {
+    document.getElementById("forecastChartSpace").classList.add('dissolve-backwards')
+    document.getElementById("retroChartSpace").classList.remove('dissolve-backwards')
+    document.getElementById('showForecastCharts').classList.remove('active')
+    document.getElementById('showRetroCharts').classList.add('active')
   }
 }
 const resetFilterForm = () => {
@@ -93,56 +97,50 @@ const updateHash = ({lon, lat, zoom, definition}) => {
 const loadStatusManager = () => {
   const loadingStatusDivs = Array.from(document.getElementsByClassName("load-status"))
   let status = {
-    riverid: "clear",
+    riverid: null,
     forecast: "clear",
     retro: "clear",
   }
-  let messages = {
-    riverid: "",
-    forecast: "",
-    retro: "",
+
+  const statusIcons = {
+    'clear': "",
+    'ready': "&check;",
+    'fail': "&times;",
+    'load': '&darr;'
   }
 
   const loadingImageTag = `<img src="${LOADING_GIF}" alt='loading'>`
 
   const update = object => {
     for (let key in object) status[key] = object[key]
-
     // place loading icons but only if that load message is new to avoid flickering/rerendering that tag
     if (status.forecast === "load" && "forecast" in object) divChartForecast.innerHTML = loadingImageTag
     if (status.retro === "load" && "retro" in object) divChartRetro.innerHTML = loadingImageTag
-    updateMessages()
-    display()
-  }
+    divSelectedRiverId.innerText = status.riverid ? status.riverid : ""
 
-  const updateMessages = () => {
-    messages.riverid = status.riverid === "clear" ? text.inputs.enterRiverId : `${text.words.riverid}: ${typeof status.riverid === "number" ? status.riverid : text.status[status.riverid]}`
-    messages.forecast = `${text.words.forecast}: ${text.status[status.forecast]}`
-    messages.retro = `${text.words.retro}: ${text.status[status.retro]}`
+    document.getElementById("forecast-load-icon").innerHTML = statusIcons[status.forecast]
+    document.getElementById("retro-load-icon").innerHTML = statusIcons[status.retro]
   }
-
-  const display = () => {
-    loadingStatusDivs
-      .forEach(el => el.innerHTML = ['riverid', 'forecast', 'retro']
-        .map(key => {
-          const modalFunction = key === "forecast" ? "showModal('forecast')" : key === "retro" ? "showModal('retro')" : "setRiverId()";
-          return `<button class="btn-flat status-btn status-${status[key]}" onclick="${modalFunction}">${messages[key]}</button>`;
-        })
-        .join('')
-      )
-  }
-
-  updateMessages()
 
   return {
     update
   }
 }
 
+const toggleVisibleRiverInput = () => riverIdInputContainer.classList.toggle("hide")
+const hideRiverInput = () => {
+  riverIdInputContainer.classList.add("hide")
+  riverIdInput.value = ""
+}
+
 //// Export Functions
-window.showModal = showModal
+window.showChartView = showChartView
+window.toggleVisibleRiverInput = toggleVisibleRiverInput
+
 export {
-  loadStatusManager, showModal, updateHash, resetFilterForm, buildFilterExpression,
+  loadStatusManager, showChartView, updateHash, resetFilterForm, buildFilterExpression,
+  hideRiverInput, toggleVisibleRiverInput,
+  riverIdInput, riverIdInputContainer,
   divChartForecast, divChartRetro, divChartYearlyVol, divChartStatus, divChartFdc,
   lang
 }

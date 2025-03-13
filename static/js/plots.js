@@ -88,7 +88,10 @@ const plotForecast = ({forecast, rp, riverid, chartDiv}) => {
     {
       title: `${text.plots.fcTitle} ${riverid}`,
       xaxis: {title: `${text.plots.fcXaxis} (UTC +00:00)`},
-      yaxis: {title: `${text.plots.fcYaxis} (m³/s)`},
+      yaxis: {
+        title: `${text.plots.fcYaxis} (m³/s)`,
+        range: [0, null]
+      },
       legend: {'orientation': 'h'},
     }
   )

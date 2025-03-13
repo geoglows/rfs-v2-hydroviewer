@@ -22,8 +22,10 @@
   <script src="https://js.arcgis.com/4.32/"></script>
   <script type="module" src="https://js.arcgis.com/calcite-components/3.0.3/calcite.esm.js"></script>
   <script type="module" src="https://js.arcgis.com/map-components/4.32/arcgis-map-components.esm.js"></script>
+
   <!-- App -->
   <link rel="stylesheet" href="/static/css/main.css"/>
+  <link rel="stylesheet" href="/static/css/materialize.overrides.css"/>
   <script src="/static/js/localization.en-US.js" async></script>
   <script type="module" src="/static/js/ui.js"></script>
   <script type="module" src="/static/js/plots.js"></script>
@@ -32,38 +34,40 @@
 </head>
 
 <body>
-<div id="forecast-modal" class="modal bottom-sheet" style="height: 75%">
-  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
-    <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%">
-      <div style="flex-grow: 1; max-width: 150px"></div>
-      <h4 style="margin: 0; text-align: center">River Forecast</h4>
-      <input type="date" id="forecast-date-calendar" name="forecast-date-calendar" min="2024-07-01" onkeydown="return false" style="max-width: 150px;">
+<div id="charts-modal" class="modal">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
+    <div class="modal-header-bar">
+      <h4 id="selected-river-id" style="margin: 0; width: 180px"></h4>
+      <div class="load-status" style="flex: 0 1 0">
+        <button id="showForecastCharts" class="btn status-btn active" onclick="showChartView('forecast')">Forecast<span id="forecast-load-icon"></span></button>
+        <button id="showRetroCharts" class="btn status-btn" onclick="showChartView('retro')">Retro<span class="hide-on-small-only">spective</span><span id="retro-load-icon"></span></button>
+        <button class="btn btn-flat status-btn" onclick="toggleVisibleRiverInput()">Enter <span class="hide-on-small-only">River </span>ID</button>
+      </div>
+      <input type="date" id="forecast-date-calendar" name="forecast-date-calendar" min="2024-07-01" onkeydown="return false" style="width: 180px; margin:0;">
     </div>
-    <div class="load-status"></div>
-    <div id="forecastPlot" class="chart"><h4>Enter a River ID or use the map to click on a stream to view data</h4></div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn btn-success" id="download-forecast-btn" disabled><a id="download-forecast-link" target="_blank">Save Forecast Data (CSV)</a></button>
-    <a class="modal-close waves-effect waves-green btn-flat">Close</a>
-  </div>
-</div>
-<div id="retro-modal" class="modal bottom-sheet" style="height: 75%">
-  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
-    <h4 style="margin: 0">Retrospective Report</h4>
-    <div class="load-status"></div>
-    <div id="retroPlot" class="chart"><h4>Enter a River ID or use the map to click on a stream to view data</h4></div>
-    <div id="yearlyVolPlot" class="chart"></div>
-    <div id="yearlyStatusPlot" class="chart"></div>
-    <div id="fdcPlot" class="chart"></div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn btn-success" id="download-retrospective-btn" disabled>
-      <a id="download-retrospective-link" target="_blank">Save Retrospective Data (CSV)</a>
-    </button>
-    <a href="#" class="modal-close waves-effect waves-green btn-flat">Close</a>
+    <div id="enter-river-id-container" class="hide" style="width: 350px; background-color: lightgoldenrodyellow; display: flex; align-items: center; justify-content: center;">
+      <input type="number" id="river-id" placeholder="Enter 9 Digit River ID" style="width: 200px; margin: 10px">
+      <button class="waves-effect waves-light btn" onclick="setRiverId()">Submit</button>
+    </div>
+    <div class="chart-spaces chart-category-container" style="position: relative; height: 100%">
+      <div id="forecastChartSpace" class="chart-category-container" style="position: absolute">
+        <div id="forecastPlot" class="chart"><h4>Enter a River ID or use the map to click on a stream to view data</h4></div>
+      </div>
+      <div id="retroChartSpace" class="chart-category-container dissolve-backwards" style="position: absolute">
+        <div id="retroPlot" class="chart"><h4>Enter a River ID or use the map to click on a stream to view data</h4></div>
+        <div id="yearlyVolPlot" class="chart"></div>
+        <div id="yearlyStatusPlot" class="chart"></div>
+        <div id="fdcPlot" class="chart"></div>
+      </div>
+    </div>
+    <div class="modal-footer" style="margin: 0; padding: 0">
+      <button class="btn btn-success" id="download-forecast-btn" disabled><a id="download-forecast-link" target="_blank">Save Forecast Data (CSV)</a></button>
+      <button class="btn btn-success" id="download-retrospective-btn" disabled><a id="download-retrospective-link" target="_blank">Save Retrospective Data (CSV)</a></button>
+      <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+    </div>
   </div>
 </div>
-<div id="filter-modal" class="modal bottom-sheet" style="height: 75%">
+<div id="filter-modal" class="modal bottom-sheet">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
     <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%">
       <h4>Filter Streams on Map</h4>
@@ -102,7 +106,7 @@
     <a class="modal-close waves-effect waves-green btn-flat">Close</a>
   </div>
 </div>
-<div id="about-modal" class="modal bottom-sheet" style="height: 75%">
+<div id="about-modal" class="modal bottom-sheet">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
     <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%">
       <h4>About</h4>
@@ -134,8 +138,7 @@
       <span class="hide-on-small-only">GEOGLOWS </span>R<span class="hide-on-small-only">iver </span>F<span class="hide-on-small-only">orecast </span>S<span class="hide-on-small-only">ystem</span>
     </h4>
     <div>
-      <a data-tooltip="View Forecast" data-position="bottom" class="btn modal-trigger tooltipped" href="#forecast-modal"><i class="material-icons">timeline</i></a>
-      <a data-tooltip="Retrospective Report" data-position="bottom" class="btn modal-trigger tooltipped" href="#retro-modal"><i class="material-icons">assessment</i></a>
+      <a data-tooltip="View Charts" data-position="bottom" class="btn modal-trigger tooltipped" href="#charts-modal"><i class="material-icons">timeline</i></a>
       <a data-tooltip="Learn More" data-position="bottom" class="btn modal-trigger tooltipped" href="#about-modal"><i class="material-icons">help</i></a>
       <a data-tooltip="Language" data-position="bottom" class="btn dropdown-trigger tooltipped" href="#" data-target="language-select"><i class="material-icons">translate</i></a>
       <ul id="language-select" class="dropdown-content">
@@ -150,7 +153,7 @@
     <arcgis-locate position="top-left" scale="5000"></arcgis-locate>
 
     <arcgis-expand close-on-esc position="top-right" title="Layer List">
-      <arcgis-layer-list></arcgis-layer-list>
+      <arcgis-layer-list class="large-icon"></arcgis-layer-list>
     </arcgis-expand>
     <arcgis-expand close-on-esc position="top-right" title="Basemap Gallery">
       <arcgis-basemap-gallery></arcgis-basemap-gallery>
