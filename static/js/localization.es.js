@@ -3,10 +3,31 @@ window.text = {
     "riverid": "ID del Río",
     "forecast": "Pronóstico",
     "retro": "Histórico",
-    "year": "año",
-    "years": "años",
-    "all": "Todos"
+    "returnPeriods": "Períodos de Retorno",
+    "month": "Mes",
+    "months": "Meses",
+    "year": "Año",
+    "years": "Años",
+    "all": "Todos",
+    "flow": "Caudal",
+    "percentile": "Percentil",
+    "dailyAverage": "Promedio Diario",
+    "monthlyAverage": "Promedio Mensual",
+    "fiveYearAverage": "Promedio de 5 Años",
+    "annualVolume": "Volumen Anual",
+    "millionMetersCubed": "Millones de Metros Cúbicos",
+    "monthlyStatusCategories": "Categorías de Estado Mensual",
+    "monthlyAverageFlows": "Promedios Mensuales de Caudal",
+    "flowDurationCurve": "Curva de Duración de Flujo",
+    "fdc": "CDF",
   },
+  "statusLabels": [
+    "Muy Mojado",
+    "Mojado",
+    "Normal",
+    "Seco",
+    "Muy Seco",
+  ],
   "prompts": {
     "mobile": "Desliza para mover. Pellizca para hacer zoom. Toca para seleccionar ríos. Desliza este mensaje para descartarlo.",
     "tryRiverAgain": "Río no encontrado. Intenta acercarte y ser preciso al hacer clic en el arroyo.",
@@ -14,15 +35,7 @@ window.text = {
     "invalidRiverID": "Error: Los números de ID de Río deben ser números de 9 dígitos.",
     "findingRiver": "Identificando segmento del río. Los gráficos se cargarán pronto."
   },
-  "status": {
-    "load": "Cargando",
-    "ready": "Listo",
-    "fail": "Fallido",
-    "clear": "ninguno",
-    "unknown": "Nombre de Río Desconocido"
-  },
   "tooltips": {
-    "home": "Ir a Inicio",
     "basemap": "Cambiar Mapa Base",
     "filter": "Filtrar Datos",
     "scale": "Barra de Escala",
@@ -33,13 +46,16 @@ window.text = {
     "retro": "Mostrar Gráficos Históricos"
   },
   "plots": {
-    "fcTitle": "Pronóstico del Río para",
     "fcXaxis": "Fecha",
     "fcYaxis": "Caudal",
     "fcLineUncertainty": "Incertidumbre",
     "fcLineMedian": "Flujo Predicho",
-    "retroTitle": "Caudal Histórico para",
     "retroXaxis": "Fecha",
-    "retroYaxis": "Caudal"
+    "retroYaxis": "Caudal",
+    "fcTitle": "Pronóstico para",
+    "retroTitle": "Caudal Histórico para",
+    "volumeTitle": "Volumen Anual Acumulado de Caudal para Río: ",
+    "statusTitle": "Estado Anual por Mes para Río: ",
+    "fdcTitle": "Curvas de Duración de Flujo para Río: ",
   }
 }

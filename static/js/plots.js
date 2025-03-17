@@ -7,7 +7,6 @@ const sortedArrayToPercentiles = array => percentiles.toReversed().map(p => arra
 const secondsPerYear = 60 * 60 * 24 * 365.25
 const statusPercentiles = [0, 13, 28, 72, 87]
 const statusColors = ['rgb(44, 125, 205)', 'rgb(142, 206, 238)', 'rgb(231,226,188)', 'rgb(255, 168, 133)', 'rgb(205, 35, 63)']
-const statusLabels = ['Very Wet', 'Wet', 'Normal', 'Dry', 'Very Dry']
 
 const months = Array.from({length: 12}).map((_, idx) => (idx + 1).toString().padStart(2, '0'))
 const monthNames = months.map(m => new Date(2021, parseInt(m, 10) - 1, 1).toLocaleString(lang, {month: 'short'}))
@@ -33,7 +32,7 @@ const returnPeriodShapes = ({rp, x0, x1, maxFlow}) => {
       mode: 'lines',
       opacity: 0.5,
       legendgroup: 'returnperiods',
-      legendgrouptitle: {text: `Return Periods m³/s`},
+      legendgrouptitle: {text: `${text.words.returnPeriods} m³/s`},
       showlegend: true,
       visible: visible,
       name: `${name}: ${rp.return_periods[name].toFixed(2)} m³/s`,
@@ -46,7 +45,7 @@ const returnPeriodShapes = ({rp, x0, x1, maxFlow}) => {
       const y1 = index === array.length - 1 ? Math.max(rp.return_periods[key] * 1.15, maxFlow * 1.15) : rp.return_periods[array[index + 1]]
       return box(y0, y1, key)
     })
-    .concat([{legendgroup: 'returnperiods', legendgrouptitle: {text: `Return Periods m³/s`}}])
+    .concat([{legendgroup: 'returnperiods', legendgrouptitle: {text: `${text.words.returnPeriods} m³/s`}}])
 }
 const plotForecast = ({forecast, rp, riverid, chartDiv}) => {
   chartDiv.innerHTML = ""
@@ -86,7 +85,7 @@ const plotForecast = ({forecast, rp, riverid, chartDiv}) => {
       ...returnPeriods,
     ],
     {
-      title: `${text.plots.fcTitle} ${riverid}`,
+      title: `${text.plots.fcTitle}${riverid}`,
       xaxis: {title: `${text.plots.fcXaxis} (UTC +00:00)`},
       yaxis: {
         title: `${text.plots.fcYaxis} (m³/s)`,
@@ -105,13 +104,13 @@ const plotRetrospective = ({daily, monthly, riverid, chartDiv}) => {
         x: daily.datetime,
         y: daily[riverid],
         type: 'lines',
-        name: 'Daily Average',
+        name: `${text.words.dailyAverage}`,
       },
       {
         x: Object.keys(monthly),
         y: Object.values(monthly),
         type: 'lines',
-        name: 'Monthly Average',
+        name: `${text.words.monthlyAverage}`,
         line: {color: 'rgb(0, 166, 255)'},
         visible: 'legendonly'
       }
@@ -176,7 +175,7 @@ const plotYearlyVolumes = ({yearly, averages, riverid, chartDiv}) => {
         x: yearly.map(x => x.year),
         y: yearly.map(y => y.value),
         type: 'line',
-        name: 'Annual Volume',
+        name: `${text.words.annualVolume}`,
         marker: {color: 'rgb(0, 166, 255)'}
       },
       ...averages?.map((x, idx) => {
@@ -185,20 +184,20 @@ const plotYearlyVolumes = ({yearly, averages, riverid, chartDiv}) => {
           y: [x.average, x.average],
           type: 'scatter',
           mode: 'lines',
-          legendgroup: '5 Yearly Averages',
+          legendgroup: `${text.words.fiveYearAverage}`,
           showlegend: idx === 0,
-          name: '5 Yearly Averages',
+          name: `${text.words.fiveYearAverage}`,
           marker: {color: 'red'},
         }
       }) || []
     ],
     {
-      title: `Yearly Cumulative Discharge Volume at River ${riverid}`,
+      title: `${text.plots.volumeTitle}${riverid}`,
       legend: {orientation: 'h'},
       hovermode: 'x',
-      xaxis: {title: 'Year (Complete Years Only)'},
+      xaxis: {title: `${text.words.year}`},
       yaxis: {
-        title: 'Million Cubic Meters (m³ * 10^6)',
+        title: `${text.words.millionMetersCubed} (m³ * 10^6)`,
         range: [0, null]
       }
     }
@@ -214,9 +213,9 @@ const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, rive
     [
       // shaded regions for thresholds based on percentiles
       ...statusColors.map((color, idx) => {
-        const label = statusLabels[idx]
-        const nextLabel = statusLabels[idx + 1]
-        const lastEntry = idx === statusLabels.length - 1
+        const label = text.statusLabels[idx]
+        const nextLabel = text.statusLabels[idx + 1]
+        const lastEntry = idx === text.statusLabels.length - 1
         return {
           x: months.concat(...months.toReversed()),
           y: statuses[label].concat(lastEntry ? Array.from({length: 12}).fill(0) : statuses[nextLabel].toReversed()),
@@ -225,8 +224,8 @@ const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, rive
           name: label,
           line: {width: 0},
           fillcolor: color,
-          legendgroup: 'Monthly Status Categories',
-          legendgrouptitle: {text: 'Monthly Status Categories'},
+          legendgroup: `${text.words.monthlyStatusCategories}`,
+          legendgrouptitle: {text: `${text.words.monthlyStatusCategories}`},
         }
       }),
       // long term or total monthly average
@@ -234,7 +233,7 @@ const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, rive
         x: monthlyAverages.map(x => x.month),
         y: monthlyAverages.map(y => y.value),
         mode: 'lines',
-        name: 'Monthly Average Flows',
+        name: `${text.words.monthlyAverageFlows}`,
         visible: 'legendonly',
         line: {color: 'rgb(0,0,0)', width: 3},
       },
@@ -248,7 +247,7 @@ const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, rive
         return {
           x: months,
           y: values,
-          name: `Year ${year}`,
+          name: `${text.words.year} ${year}`,
           visible: idx === 0 ? true : 'legendonly',
           mode: 'lines',
           line: {width: 2, color: 'black'}
@@ -256,15 +255,15 @@ const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, rive
       })
     ],
     {
-      title: `Annual Status by Month for River ${riverid}`,
+      title: `${text.plots.statusTitle}${riverid}`,
       xaxis: {
-        title: 'Month',
+        title: `${text.words.month}`,
         tickvals: months,
         ticktext: monthNames,
       },
       hovermode: 'x',
       yaxis: {
-        title: 'Flow (m³/s)',
+        title: `${text.words.flow} (m³/s)`,
         range: [0, null]
       },
     }
@@ -279,7 +278,7 @@ const plotFdc = ({fdc, monthlyFdc, riverid, chartDiv}) => {
         x: percentiles,
         y: fdc,
         type: 'lines',
-        name: 'Flow Duration Curve',
+        name: `${text.words.flowDurationCurve}`,
       },
       ...Object
         .keys(monthlyFdc)
@@ -289,15 +288,15 @@ const plotFdc = ({fdc, monthlyFdc, riverid, chartDiv}) => {
             x: percentiles,
             y: monthlyFdc[m],
             type: 'line',
-            name: `FDC: Month ${monthNames[idx]}`,
+            name: `${text.words.fdc} ${monthNames[idx]}`,
           }
         })
     ],
     {
-      title: `Flow Duration Curves at River ${riverid}`,
-      xaxis: {title: 'Percentile (%)'},
+      title: `${text.plots.fdcTitle}${riverid}`,
+      xaxis: {title: `${text.words.percentile} (%)`},
       yaxis: {
-        title: 'Flow (m³/s)',
+        title: `${text.words.flow} (m³/s)`,
         range: [0, null]
       },
       legend: {orientation: 'h'},
@@ -324,13 +323,9 @@ const plotAllRetro = ({retro, riverid}) => {
   let yearlyVolumes = []
   let monthlyAverageTimeseries = {}
   let monthlyFdc = {}
-  let monthlyStatusValues = {
-    'Very Wet': [],
-    'Wet': [],
-    'Normal': [],
-    'Dry': [],
-    'Very Dry': [],
-  }
+  let monthlyStatusValues = {}
+  text.statusLabels.forEach(label => monthlyStatusValues[label] = [])
+
 
   let monthlyValues = retro.datetime.reduce((acc, currentValue, currentIndex) => {
     const date = new Date(currentValue)

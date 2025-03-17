@@ -193,7 +193,7 @@ require(
       })
 
       // configure url generating and interceptors for the monthly status tile layer
-      reactiveUtils.watch(() => timeSliderStatus.timeExtent, () => monthlyStatusLayer.refresh())
+      // reactiveUtils.watch(() => timeSliderStatus.timeExtent, () => monthlyStatusLayer.refresh())
       // monthlyStatusLayer.getTileUrl = (level, row, col) => {
       //   return `https://rfs-v2.s3-us-west-2.amazonaws.com/map-tiles/basin-status/${timeSliderStatus.timeExtent.start.toISOString().slice(0, 7)}/{level}/{col}/{row}.png`
       //     .replace("{level}", level)
