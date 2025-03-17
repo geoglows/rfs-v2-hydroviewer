@@ -22,11 +22,11 @@ window.text = {
     "fdc": "CDF",
   },
   "statusLabels": [
-    "Muy Seco",
-    "Seco",
-    "Normal",
-    "Mojado",
     "Muy Mojado",
+    "Mojado",
+    "Normal",
+    "Seco",
+    "Muy Seco",
   ],
   "prompts": {
     "mobile": "Desliza para mover. Pellizca para hacer zoom. Toca para seleccionar ríos. Desliza este mensaje para descartarlo.",

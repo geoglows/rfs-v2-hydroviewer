@@ -22,11 +22,11 @@ window.text = {
     "fdc": "FDC",
   },
   "statusLabels": [
-    "Very Dry",
-    "Dry",
-    "Normal",
-    "Wet",
     "Very Wet",
+    "Wet",
+    "Normal",
+    "Dry",
+    "Very Dry",
   ],
   "prompts": {
     "mobile": "Swipe to pan. Pinch to Zoom. Tap to select rivers. Swipe this message to dismiss.",
