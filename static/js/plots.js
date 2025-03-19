@@ -21,7 +21,7 @@ const returnPeriodShapes = ({rp, x0, x1, maxFlow}) => {
     '50': 'rgb(128, 0, 106)',
     '100': 'rgb(128, 0, 246)',
   }
-  const visible = maxFlow > rp.return_periods['2'] ? true : 'legendonly'
+  const visible = maxFlow > rp['2'] ? true : 'legendonly'
   const box = (y0, y1, name) => {
     return {
       x: [x0, x1, x1, x0],
@@ -35,50 +35,50 @@ const returnPeriodShapes = ({rp, x0, x1, maxFlow}) => {
       legendgrouptitle: {text: `${text.words.returnPeriods} m³/s`},
       showlegend: true,
       visible: visible,
-      name: `${name}: ${rp.return_periods[name].toFixed(2)} m³/s`,
+      name: `${name}: ${rp[name].toFixed(2)} m³/s`,
     }
   }
   return Object
-    .keys(rp.return_periods)
+    .keys(rp)
     .map((key, index, array) => {
-      const y0 = rp.return_periods[key]
-      const y1 = index === array.length - 1 ? Math.max(rp.return_periods[key] * 1.15, maxFlow * 1.15) : rp.return_periods[array[index + 1]]
+      const y0 = rp[key]
+      const y1 = index === array.length - 1 ? Math.max(rp[key] * 1.15, maxFlow * 1.15) : rp[array[index + 1]]
       return box(y0, y1, key)
     })
     .concat([{legendgroup: 'returnperiods', legendgrouptitle: {text: `${text.words.returnPeriods} m³/s`}}])
 }
 const plotForecast = ({forecast, rp, riverid, chartDiv}) => {
   chartDiv.innerHTML = ""
-  const maxForecast = Math.max(...forecast.flow_median)
-  const returnPeriods = returnPeriodShapes({rp, x0: forecast.datetime[0], x1: forecast.datetime[forecast.datetime.length - 1], maxFlow: maxForecast})
+  const maxForecast = Math.max(...forecast.q)
+  const returnPeriods = returnPeriodShapes({rp, x0: forecast.time[0], x1: forecast.time[forecast.time.length - 1], maxFlow: maxForecast})
   Plotly.newPlot(
     chartDiv,
     [
       {
-        x: forecast.datetime.concat(forecast.datetime.slice().toReversed()),
-        y: forecast.flow_uncertainty_lower.concat(forecast.flow_uncertainty_upper.slice().toReversed()),
+        x: forecast.time.concat(forecast.time.slice().toReversed()),
+        y: forecast.q_uncertainty_lower.concat(forecast.q_uncertainty_upper.slice().toReversed()),
         name: `${text.plots.fcLineUncertainty}`,
         fill: 'toself',
         fillcolor: 'rgba(44,182,255,0.6)',
         line: {color: 'rgba(0,0,0,0)'}
       },
       {
-        x: forecast.datetime,
-        y: forecast.flow_uncertainty_lower,
+        x: forecast.time,
+        y: forecast.q_uncertainty_lower,
         line: {color: 'rgb(0,166,255)'},
         showlegend: false,
         name: '',
       },
       {
-        x: forecast.datetime,
-        y: forecast.flow_uncertainty_upper,
+        x: forecast.time,
+        y: forecast.q_uncertainty_upper,
         line: {color: 'rgb(0,166,255)'},
         showlegend: false,
         name: '',
       },
       {
-        x: forecast.datetime,
-        y: forecast.flow_median,
+        x: forecast.time,
+        y: forecast.q,
         name: `${text.plots.fcLineMedian}`,
         line: {color: 'black'}
       },
@@ -101,8 +101,8 @@ const plotRetrospective = ({daily, monthly, riverid, chartDiv}) => {
     chartDiv,
     [
       {
-        x: daily.datetime,
-        y: daily[riverid],
+        x: daily.time,
+        y: daily.q,
         type: 'lines',
         name: `${text.words.dailyAverage}`,
       },
@@ -157,7 +157,7 @@ const plotRetrospective = ({daily, monthly, riverid, chartDiv}) => {
             },
             {
               label: `${text.words.all}`,
-              count: daily.datetime.length,
+              count: daily.time.length,
               step: 'day',
             }
           ]
@@ -326,15 +326,14 @@ const plotAllRetro = ({retro, riverid}) => {
   let monthlyStatusValues = {}
   text.statusLabels.forEach(label => monthlyStatusValues[label] = [])
 
-
-  let monthlyValues = retro.datetime.reduce((acc, currentValue, currentIndex) => {
+  let monthlyValues = retro.time.reduce((acc, currentValue, currentIndex) => {
     const date = new Date(currentValue)
     const datestring = date.toISOString().slice(0, 7)
     if (!acc[datestring]) acc[datestring] = []
-    acc[datestring].push(retro[riverid][currentIndex])
+    acc[datestring].push(retro.q[currentIndex])
     return acc
   }, {})
-  const fdc = sortedArrayToPercentiles(retro[riverid].toSorted((a, b) => a - b))
+  const fdc = sortedArrayToPercentiles(retro.q.toSorted((a, b) => a - b))
   const years = Array.from(new Set(Object.keys(monthlyValues).map(k => k.split('-')[0]))).sort((a, b) => a - b)
 
   Object
