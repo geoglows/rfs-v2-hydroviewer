@@ -60,10 +60,16 @@
         <div id="fdcPlot" class="chart"></div>
       </div>
     </div>
-    <div class="modal-footer" style="margin: 0; padding: 0">
-      <button class="btn btn-success" id="download-forecast-btn" disabled><a id="download-forecast-link" target="_blank">Guardar Datos Pronósticos (CSV)</a></button>
-      <button class="btn btn-success" id="download-retrospective-btn" disabled><a id="download-retrospective-link" target="_blank">Guardar Datos Históricos (CSV)</a></button>
-      <a class="modal-close waves-effect waves-green btn-flat">Cerrar</a>
+    <div class="modal-footer" style="margin: 0; padding: 0; display: flex;align-items: center;justify-content: space-between;">
+      <label>
+        <input type="checkbox" class="filled-in" checked="checked" id="useBC"/>
+        <span>Use Bias Corrected?</span>
+      </label>
+      <div>
+        <button class="btn btn-success" id="download-forecast-btn" disabled><a id="download-forecast-link" target="_blank">Guardar Datos Pronósticos (CSV)</a></button>
+        <button class="btn btn-success" id="download-retrospective-btn" disabled><a id="download-retrospective-link" target="_blank">Guardar Datos Históricos (CSV)</a></button>
+        <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+      </div>
     </div>
   </div>
 </div>
@@ -86,7 +92,7 @@
         <select id="vpuSelect" class="browser default" multiple></select>
       </div>
       <div>
-        <label for="definitionString">Ingresar filtros SQL personalizados (<a href="https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer/0">Visitar Esri Living Atlas</a> for all attribute options)</label>
+        <label for="definitionString">Ingresar filtros SQL personalizados (<a href="https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer/0">Visitar Esri Living Atlas</a> para todas las opciones)</label>
         <input type="text" id="definitionString" placeholder=""/>
       </div>
       <div>

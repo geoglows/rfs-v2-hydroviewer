@@ -1,8 +1,10 @@
 const REST_ENDPOINT = 'https://geoglows.ecmwf.int/api/v2'
 
+const useBC = () => document.getElementById('useBC').checked
+
 const fetchForecastPromise = ({riverid, date}) => {
   return new Promise((resolve, reject) => {
-    fetch(`${REST_ENDPOINT}/forecast/${riverid}/?format=json&date=${date}`)
+    fetch(`${REST_ENDPOINT}/forecast/${riverid}/?format=json&date=${date}&bias_corrected=${useBC()}`)
       .then(response => response.json())
       .then(response => resolve(response))
       .catch(() => reject())
@@ -10,7 +12,7 @@ const fetchForecastPromise = ({riverid, date}) => {
 }
 const fetchReturnPeriodsPromise = riverid => {
   return new Promise((resolve, reject) => {
-    fetch(`${REST_ENDPOINT}/returnperiods/${riverid}/?format=json`)
+    fetch(`${REST_ENDPOINT}/returnperiods/${riverid}/?format=json&bias_corrected=${useBC()}`)
       .then(response => response.json())
       .then(response => resolve(response))
       .catch(() => reject())
@@ -18,7 +20,7 @@ const fetchReturnPeriodsPromise = riverid => {
 }
 const fetchRetroPromise = riverid => {
   return new Promise((resolve, reject) => {
-    fetch(`${REST_ENDPOINT}/retrospective/${riverid}/?format=json`)
+    fetch(`${REST_ENDPOINT}/retrospective/${riverid}/?format=json&bias_corrected=${useBC()}`)
       .then(response => response.json())
       .then(response => resolve(response))
       .catch(() => reject())

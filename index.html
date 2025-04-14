@@ -60,10 +60,16 @@
         <div id="fdcPlot" class="chart"></div>
       </div>
     </div>
-    <div class="modal-footer" style="margin: 0; padding: 0">
-      <button class="btn btn-success" id="download-forecast-btn" disabled><a id="download-forecast-link" target="_blank">Save Forecast Data (CSV)</a></button>
-      <button class="btn btn-success" id="download-retrospective-btn" disabled><a id="download-retrospective-link" target="_blank">Save Retrospective Data (CSV)</a></button>
-      <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+    <div class="modal-footer" style="margin: 0; padding: 0; display: flex;align-items: center;justify-content: space-between;">
+      <label>
+        <input type="checkbox" class="filled-in" checked="checked" id="useBC"/>
+        <span>Use Bias Corrected?</span>
+      </label>
+      <div>
+        <button class="btn btn-success" id="download-forecast-btn" disabled><a id="download-forecast-link" target="_blank">Save Forecast Data (CSV)</a></button>
+        <button class="btn btn-success" id="download-retrospective-btn" disabled><a id="download-retrospective-link" target="_blank">Save Retrospective Data (CSV)</a></button>
+        <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+      </div>
     </div>
   </div>
 </div>
