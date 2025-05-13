@@ -273,7 +273,7 @@ require(
         clearCharts()
         loadStatus.update({riverid: riverId, forecast: "clear", retro: "clear"})
         updateDownloadLinks(riverId)
-        getForecastData()
+        // getForecastData()
         getRetrospectiveData()
       }
       const setRiverId = id => {
