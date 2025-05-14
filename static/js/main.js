@@ -154,7 +154,7 @@ require(
         sublayers: [{id: 0, definitionExpression}]
       })
       const monthlyStatusLayer = new WebTileLayer({
-        urlTemplate: `http://geoglows-v2.s3-website-us-west-2.amazonaws.com/maptiles/hydrosos/2025-01/{level}/{col}/{row}.png`,
+        urlTemplate: `https://d2sl0kux8qc7kl.cloudfront.net/maptiles/hydrosos/year=2025/month=01/{level}/{col}/{row}.png`,
         title: "HydroSOS Monthly Status Indicators",
         visible: false,
         maxScale: 9244600,  // zoom level 6
@@ -197,10 +197,10 @@ require(
       monthlyStatusLayer.getTileUrl = (level, row, col) => {
         const year = timeSliderStatus.timeExtent.start.toISOString().slice(0, 4)
         const month = timeSliderStatus.timeExtent.start.toISOString().slice(5, 7)
-        return `http://geoglows-v2.s3-website-us-west-2.amazonaws.com/maptiles/hydrosos/year=${year}/month=${month}/${level}/${col}/${row}.png`
+        return `https://d2sl0kux8qc7kl.cloudfront.net/maptiles/hydrosos/year=${year}/month=${month}/${level}/${col}/${row}.png`
       }
       config.request.interceptors.push({
-        urls: /geoglows-v2.s3-website-us-west-2.amazonaws.com/,
+        urls: /d2sl0kux8qc7kl.cloudfront.net/,
         before: params => {
           params.url = params.url.split('?')[0]
           delete params.requestOptions.query // prevent appending the _ts query param so tiles can be cached.
