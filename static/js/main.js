@@ -124,7 +124,6 @@ require(
         label: "Forecast Layer Time Steps",
         mode: "instant",
       });
-      now.set
       const timeSliderStatus = new TimeSlider({
         container: "timeSliderHydroSOS",
         playRate: 1250,
@@ -133,7 +132,7 @@ require(
         mode: "instant",
         fullTimeExtent: {
           start: new Date(1990, 0, 1),
-          end: now.setHours(now.getHours() - 24 * 10)
+          end: new Date(now.getFullYear(), now.getMonth() - (now.getDate() > 10 ? 1 : 2), 1)
         },
         stops: {
           interval: {
@@ -142,6 +141,7 @@ require(
           }
         }
       });
+      timeSliderStatus.when(() => timeSliderStatus.previous())  // go to the most recent time, not earliest, once the slider is ready
 
       view.navigation.browserTouchPanEnabled = true;
       view.ui.add(filterButton, "top-left");
