@@ -36,12 +36,12 @@
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
     <div class="modal-header-bar">
       <h4 id="selected-river-id"></h4>
-      <div class="load-status" style="flex: 0 1 0">
+      <div class="load-status">
         <button id="showForecastCharts" class="btn status-btn active" onclick="showChartView('forecast')">Forecast<span id="forecast-load-icon"></span></button>
         <button id="showRetroCharts" class="btn status-btn" onclick="showChartView('retro')">Retro<span class="hide-on-small-only">spective</span><span id="retro-load-icon"></span></button>
         <button class="btn btn-flat status-btn" onclick="toggleVisibleRiverInput()">Enter <span class="hide-on-small-only">River </span>ID</button>
       </div>
-      <input type="date" id="forecast-date-calendar" name="forecast-date-calendar" min="2024-07-01" onkeydown="return false" style="width: 180px; margin:0;">
+      <input type="date" id="forecast-date-calendar" name="forecast-date-calendar" min="2024-07-01" onkeydown="return false">
     </div>
     <div id="enter-river-id-container" class="hide">
       <input type="number" id="river-id" placeholder="Enter 9 Digit River ID">
@@ -75,11 +75,9 @@
   </div>
 </div>
 <div id="filter-modal" class="modal bottom-sheet">
-  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
-    <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%">
-      <h4>Filter Streams on Map</h4>
-      <div><a href="https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer/0">Visit the Esri Living Atlas</a> for all attribute options</div>
-    </div>
+  <div class="modal-content">
+    <h4>Filter Streams on Map</h4>
+    <div><a href="https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer/0">Visit the Esri Living Atlas</a> for all attribute options</div>
     <div style="width: 100%">
       <div>
         <label for="outletCountry">River Outlet Country</label>
@@ -111,9 +109,7 @@
 </div>
 <div id="about-modal" class="modal bottom-sheet">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
-    <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%">
-      <h4>About</h4>
-    </div>
+    <h4>About</h4>
     <div style="width: 100%; max-width: 800px">
       <p>
         To learn more about the GEOGLOWS project, visit <a href="https://www.geoglows.org" target="_blank">geoglows.org</a>.
@@ -138,7 +134,7 @@
   <div class="modal-content">
     <h4>Settings</h4>
     <hr>
-    <h5>Charting Options</h5>
+    <h5>Chart Options</h5>
     <div class="options-wrapper">
       <label>
         <input type="checkbox" class="filled-in" id="settingsShowEnsembleMembers"/>
@@ -152,7 +148,7 @@
 </div>
 
 <div class="body-wrapper">
-  <div class="nav-bar-wrapper" style="background-color: #81d4fa">
+  <div class="nav-bar-wrapper">
     <h4 style="font-size: 2rem; font-weight: bolder">
       <span class="hide-on-small-only">GEOGLOWS </span>R<span class="hide-on-small-only">iver </span>F<span class="hide-on-small-only">orecast </span>S<span class="hide-on-small-only">ystem</span>
     </h4>

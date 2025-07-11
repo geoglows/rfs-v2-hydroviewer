@@ -23,10 +23,10 @@ html, body {
     flex-direction: row;
     align-items: center;
     padding: 0 25px;
-    background-color: #f8f9fa;
     border-bottom: 1px solid #e9ecef;
     height: 75px;
     flex-grow: 1;
+    background-color: #81d4fa
 }
 
 arcgis-map {
@@ -80,6 +80,7 @@ arcgis-map {
     font-weight: bold;
     width: 100%;
     display: flex;
+    flex: 0 1 0;
     flex-direction: row;
     justify-content: center;
 }
@@ -229,6 +230,11 @@ input.river-id {
 
 table.forecast-probability-table td, table.forecast-probability-table th {
     text-align: center;
+}
+
+#forecast-date-calendar {
+    width: 180px;
+    margin: 0;
 }
 
 #enter-river-id-container {
