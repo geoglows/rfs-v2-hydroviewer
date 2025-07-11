@@ -13,20 +13,18 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-
   <!-- Plotly -->
   <script src="https://cdn.plot.ly/plotly-2.35.3.min.js" charset="utf-8"></script>
-
-  <!-- Load Calcite components from CDN -->
-  <link rel="stylesheet" href="https://js.arcgis.com/4.32/esri/themes/light/main.css"/>
-  <script src="https://js.arcgis.com/4.32/"></script>
-  <script type="module" src="https://js.arcgis.com/calcite-components/3.0.3/calcite.esm.js"></script>
-  <script type="module" src="https://js.arcgis.com/map-components/4.32/arcgis-map-components.esm.js"></script>
-
+  <!-- ArcGIS JS -->
+  <script type="module" src="https://js.arcgis.com/calcite-components/3.2.1/calcite.esm.js"></script>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.33/esri/themes/light/main.css"/>
+  <script src="https://js.arcgis.com/4.33/"></script>
+  <script type="module" src="https://js.arcgis.com/4.33/map-components/"></script>
   <!-- App -->
   <link rel="stylesheet" href="/static/css/main.css"/>
   <link rel="stylesheet" href="/static/css/materialize.overrides.css"/>
-  <script src="/static/js/localization.en-US.js" async></script>
+  <script type="application/javascript" src="/static/js/localization.en-US.js" async></script>
+  <script type="module" src="/static/js/settings.js"></script>
   <script type="module" src="/static/js/ui.js"></script>
   <script type="module" src="/static/js/plots.js"></script>
   <script type="module" src="/static/js/data.js"></script>
@@ -37,7 +35,7 @@
 <div id="charts-modal" class="modal">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
     <div class="modal-header-bar">
-      <h4 id="selected-river-id" style="margin: 0; width: 180px"></h4>
+      <h4 id="selected-river-id"></h4>
       <div class="load-status" style="flex: 0 1 0">
         <button id="showForecastCharts" class="btn status-btn active" onclick="showChartView('forecast')">Forecast<span id="forecast-load-icon"></span></button>
         <button id="showRetroCharts" class="btn status-btn" onclick="showChartView('retro')">Retro<span class="hide-on-small-only">spective</span><span id="retro-load-icon"></span></button>
@@ -45,31 +43,34 @@
       </div>
       <input type="date" id="forecast-date-calendar" name="forecast-date-calendar" min="2024-07-01" onkeydown="return false" style="width: 180px; margin:0;">
     </div>
-    <div id="enter-river-id-container" class="hide" style="width: 350px; background-color: lightgoldenrodyellow; display: flex; align-items: center; justify-content: center;">
-      <input type="number" id="river-id" placeholder="Enter 9 Digit River ID" style="width: 200px; margin: 10px">
+    <div id="enter-river-id-container" class="hide">
+      <input type="number" id="river-id" placeholder="Enter 9 Digit River ID">
       <button class="waves-effect waves-light btn" onclick="setRiverId()">Submit</button>
     </div>
     <div class="chart-spaces chart-category-container" style="position: relative; height: 100%">
-      <div id="forecastChartSpace" class="chart-category-container" style="position: absolute">
-        <div id="forecastPlot" class="chart"><h4>Enter a River ID or use the map to click on a stream to view data</h4></div>
+      <div id="forecastChartSpace" class="chart-category-container">
+        <div id="forecastPlot" class="chart">
+          <h4>Enter a River ID or use the map to click on a stream to view data</h4>
+        </div>
+        <div id="forecastTable" class="chart"></div>
       </div>
-      <div id="retroChartSpace" class="chart-category-container dissolve-backwards" style="position: absolute">
-        <div id="retroPlot" class="chart"><h4>Enter a River ID or use the map to click on a stream to view data</h4></div>
+      <div id="retroChartSpace" class="chart-category-container dissolve-backwards">
+        <div id="retroPlot" class="chart">
+          <h4>Enter a River ID or use the map to click on a stream to view data</h4>
+        </div>
         <div id="yearlyVolPlot" class="chart"></div>
         <div id="yearlyStatusPlot" class="chart"></div>
         <div id="fdcPlot" class="chart"></div>
       </div>
     </div>
-    <div class="modal-footer" style="margin: 0; padding: 0; display: flex;align-items: center;justify-content: space-between;">
-      <label>
-        <input type="checkbox" class="filled-in" id="useBC"/>
-        <span>Use Bias Corrected?</span>
-      </label>
-      <div>
-        <button class="btn btn-success" id="download-forecast-btn" disabled><a id="download-forecast-link" target="_blank">Save Forecast Data (CSV)</a></button>
-        <button class="btn btn-success" id="download-retrospective-btn" disabled><a id="download-retrospective-link" target="_blank">Save Retrospective Data (CSV)</a></button>
-        <a class="modal-close waves-effect waves-green btn-flat">Close</a>
-      </div>
+    <div class="modal-footer">
+      <button class="btn btn-success" id="download-forecast-btn" disabled>
+        <a id="download-forecast-link" target="_blank">Save Forecast Data (CSV)</a>
+      </button>
+      <button class="btn btn-success" id="download-retrospective-btn" disabled>
+        <a id="download-retrospective-link" target="_blank">Save Retrospective Data (CSV)</a>
+      </button>
+      <a class="modal-close waves-effect waves-green btn-flat">Close</a>
     </div>
   </div>
 </div>
@@ -77,6 +78,7 @@
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
     <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%">
       <h4>Filter Streams on Map</h4>
+      <div><a href="https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer/0">Visit the Esri Living Atlas</a> for all attribute options</div>
     </div>
     <div style="width: 100%">
       <div>
@@ -92,8 +94,7 @@
         <select id="vpuSelect" class="browser default" multiple></select>
       </div>
       <div>
-        <label for="definitionString">Enter Custom SQL Filters (<a href="https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer/0">Visit the Esri Living
-          Atlas</a> for all attribute options)</label>
+        <label for="definitionString">Enter Custom SQL Filters</label>
         <input type="text" id="definitionString" placeholder=""/>
       </div>
       <div>
@@ -133,6 +134,22 @@
     <a class="modal-close waves-effect waves-green btn-flat">Close</a>
   </div>
 </div>
+<div id="settings-modal" class="modal">
+  <div class="modal-content">
+    <h4>Settings</h4>
+    <hr>
+    <h5>Charting Options</h5>
+    <div class="options-wrapper">
+      <label>
+        <input type="checkbox" class="filled-in" id="settingsShowEnsembleMembers"/>
+        <span>Show forecast ensemble members</span>
+      </label>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+  </div>
+</div>
 
 <div class="body-wrapper">
   <div class="nav-bar-wrapper" style="background-color: #81d4fa">
@@ -142,6 +159,7 @@
     <div>
       <a data-tooltip="View Charts" data-position="bottom" class="btn modal-trigger tooltipped" href="#charts-modal"><i class="material-icons">timeline</i></a>
       <a data-tooltip="Learn More" data-position="bottom" class="btn modal-trigger tooltipped" href="#about-modal"><i class="material-icons">help</i></a>
+      <a data-tooltip="Settings" data-position="bottom" class="btn modal-trigger tooltipped" href="#settings-modal"><i class="material-icons">settings</i></a>
       <a data-tooltip="Language" data-position="bottom" class="btn dropdown-trigger tooltipped" href="#" data-target="language-select"><i class="material-icons">translate</i></a>
       <ul id="language-select" class="dropdown-content">
         <li><a href="#" data-lang="en-US">English</a></li>

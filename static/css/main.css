@@ -160,10 +160,11 @@ button {
     transition: transform 0.5s;
     height: 100%;
     max-height: 100%;
-    overflow: scroll;
+    overflow: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
+    position: absolute
 }
 
 .chart-category-container.dissolve-backwards {
@@ -201,8 +202,45 @@ button > a {
     padding: 5px;
 }
 
+.options-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.modal-footer {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: right;
+    gap: 10px;
+}
+
+input.river-id {
+    width: 200px;
+    margin: 10px
+}
+
+#selected-river-id {
+    margin: 0;
+    width: 180px;
+}
+
+table.forecast-probability-table td, table.forecast-probability-table th {
+    text-align: center;
+}
+
+#enter-river-id-container {
+    width: 350px;
+    background-color: lightgoldenrodyellow;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /* on mobile screens, change the download-buttons class */
-@media (max-width: 600px) {
+@media (max-width: 800px) {
     .download-buttons {
         display: flex;
         align-items: center;
@@ -216,5 +254,9 @@ button > a {
 
     .modal-header-bar {
         flex-direction: column;
+    }
+
+    .hide-on-small-only {
+        display: none;
     }
 }

@@ -19,6 +19,7 @@ const divSelectedRiverId = document.getElementById("selected-river-id")
 const riverIdInputContainer = document.getElementById('enter-river-id-container')
 const riverIdInput = document.getElementById("river-id")
 const divChartForecast = document.getElementById("forecastPlot")
+const divTableForecast = document.getElementById("forecastTable")
 const divChartRetro = document.getElementById("retroPlot")
 const divChartYearlyVol = document.getElementById("yearlyVolPlot")
 const divChartStatus = document.getElementById("yearlyStatusPlot")
@@ -114,7 +115,10 @@ const loadStatusManager = () => {
   const update = object => {
     for (let key in object) status[key] = object[key]
     // place loading icons but only if that load message is new to avoid flickering/rerendering that tag
-    if (status.forecast === "load" && "forecast" in object) divChartForecast.innerHTML = loadingImageTag
+    if (status.forecast === "load" && "forecast" in object) {
+      divChartForecast.innerHTML = loadingImageTag
+      divTableForecast.innerHTML = ''
+    }
     if (status.retro === "load" && "retro" in object) divChartRetro.innerHTML = loadingImageTag
     divSelectedRiverId.innerText = status.riverid ? status.riverid : ""
 
@@ -141,6 +145,6 @@ export {
   loadStatusManager, showChartView, updateHash, resetFilterForm, buildFilterExpression,
   hideRiverInput, toggleVisibleRiverInput,
   riverIdInput, riverIdInputContainer,
-  divChartForecast, divChartRetro, divChartYearlyVol, divChartStatus, divChartFdc,
+  divChartForecast, divTableForecast, divChartRetro, divChartYearlyVol, divChartStatus, divChartFdc,
   lang
 }

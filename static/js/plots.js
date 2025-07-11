@@ -1,4 +1,4 @@
-import {divChartForecast, divChartRetro, divChartYearlyVol, divChartStatus, divChartFdc, lang} from './ui.js'
+import {divChartFdc, divChartForecast, divChartRetro, divChartStatus, divChartYearlyVol, divTableForecast, lang} from './ui.js'
 
 //////////////////////////////////////////////////////////////////////// Constants and configs
 const defaultDateRange = ['2015-01-01', new Date().toISOString().split("T")[0]]
@@ -6,21 +6,26 @@ const percentiles = Array.from({length: 51}, (_, i) => i * 2)
 const sortedArrayToPercentiles = array => percentiles.toReversed().map(p => array[Math.floor(array.length * p / 100) - (p === 100 ? 1 : 0)])
 const secondsPerYear = 60 * 60 * 24 * 365.25
 const statusPercentiles = [0, 13, 28, 72, 87]
-const statusColors = ['rgb(44, 125, 205)', 'rgb(142, 206, 238)', 'rgb(231,226,188)', 'rgb(255, 168, 133)', 'rgb(205, 35, 63)']
-
+const statusColors = [
+  'rgb(44, 125, 205)',
+  'rgb(142, 206, 238)',
+  'rgb(231,226,188)',
+  'rgb(255, 168, 133)',
+  'rgb(205, 35, 63)'
+]
+const returnPeriodColors = {
+  '2': 'rgb(254, 240, 1)',
+  '5': 'rgb(253, 154, 1)',
+  '10': 'rgb(255, 56, 5)',
+  '25': 'rgb(255, 0, 0)',
+  '50': 'rgb(128, 0, 106)',
+  '100': 'rgb(128, 0, 246)',
+}
 const months = Array.from({length: 12}).map((_, idx) => (idx + 1).toString().padStart(2, '0'))
 const monthNames = months.map(m => new Date(2021, parseInt(m, 10) - 1, 1).toLocaleString(lang, {month: 'short'}))
 
 //////////////////////////////////////////////////////////////////////// Plots
 const returnPeriodShapes = ({rp, x0, x1, maxFlow}) => {
-  const returnPeriodColors = {
-    '2': 'rgb(254, 240, 1)',
-    '5': 'rgb(253, 154, 1)',
-    '10': 'rgb(255, 56, 5)',
-    '25': 'rgb(255, 0, 0)',
-    '50': 'rgb(128, 0, 106)',
-    '100': 'rgb(128, 0, 246)',
-  }
   const visible = maxFlow > rp.return_periods['2'] ? true : 'legendonly'
   const box = (y0, y1, name) => {
     return {
@@ -32,7 +37,7 @@ const returnPeriodShapes = ({rp, x0, x1, maxFlow}) => {
       mode: 'lines',
       opacity: 0.5,
       legendgroup: 'returnperiods',
-      legendgrouptitle: {text: `${text.words.returnPeriods} m³/s`},
+      legendgrouptitle: {text: `${text.words.returnPeriods}`},
       showlegend: true,
       visible: visible,
       name: `${name}: ${rp.return_periods[name].toFixed(2)} m³/s`,
@@ -94,6 +99,73 @@ const plotForecast = ({forecast, rp, riverid, chartDiv}) => {
       legend: {'orientation': 'h'},
     }
   )
+}
+const plotForecastMembers = ({forecast, rp, riverid, chartDiv}) => {
+  chartDiv.innerHTML = ""
+  const memberTraces = Object
+    .keys(forecast)
+    .filter(key => key.startsWith('ensemble_'))
+    .map((key, idx) => {
+      const memberNumber = parseInt(key.replace('ensemble_', ''))
+      return {
+        x: forecast.datetime,
+        y: forecast[key],
+        // name: "Ensemble Members",  // todo: translate
+        name: text.words.ensMembers,
+        showlegend: memberNumber === 1,
+        type: 'scatter',
+        mode: 'lines',
+        line: {width: 0.5, color: `rgb(0, 166, 255)`},
+        legendgroup: 'forecastmembers',
+      }
+    })
+  const maxForecast = Math.max(...memberTraces.map(trace => Math.max(...trace.y)))
+  const returnPeriods = returnPeriodShapes({rp, x0: forecast.datetime[0], x1: forecast.datetime[forecast.datetime.length - 1], maxFlow: maxForecast})
+  Plotly.newPlot(
+    chartDiv,
+    [...memberTraces, ...returnPeriods,],
+    {
+      title: `${text.plots.fcMembersTitle}${riverid}`,
+      xaxis: {title: `${text.plots.fcXaxis} (UTC +00:00)`},
+      yaxis: {
+        title: `${text.plots.fcYaxis} (m³/s)`,
+        range: [0, null]
+      },
+      legend: {'orientation': 'h'},
+    }
+  )
+}
+const forecastProbabilityTable = ({forecast, rp}) => {
+  const memberKeys = Object.keys(forecast).filter(key => key.startsWith('ensemble_'))
+  // groupby day so that each column is 1 day regardless of the sub time step for each of the ensemble_* arrays in memberKeys
+  // makes an array containing 1 array per memberKey. each subarray has 1 value per day. shape is [memberKeys.length, numberOfDays]
+  // stepsPerDay is known in advance, not determined by inspection
+  const stepsPerDay = 8
+  const arrayDailyBreakPoints = Array.from({length: Math.ceil(forecast.datetime.length / stepsPerDay)}, (_, i) => i * stepsPerDay)
+  const dailyArrays = memberKeys.map(key => {
+    return arrayDailyBreakPoints.map(startIdx => Math.max(...forecast[key].slice(startIdx, startIdx + stepsPerDay)))
+  })
+  const dailyDateStrings = forecast
+    .datetime
+    .filter((_, index) => index % stepsPerDay === 0)
+    .map(date => new Date(date).toLocaleDateString(lang, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      timeZone: 'UTC'
+    }))
+  const headerRow = `<tr><th>${text.words.returnPeriods}</th>${dailyDateStrings.map(date => `<th>${date}</th>`).join('')}</tr>`
+
+  const returnPeriods = ['2', '5', '10', '25', '50', '100']
+  const bodyRows = returnPeriods.map(rpKey => {
+    const rpThreshold = rp.return_periods[rpKey]
+    const percentages = dailyDateStrings.map((_, index) => {
+      const countAboveThreshold = dailyArrays.reduce((count, dailyArray) => {return count + (dailyArray[index] > rpThreshold ? 1 : 0)}, 0)
+      return (countAboveThreshold / memberKeys.length * 100).toFixed(0)
+    })
+    return `<tr><td>${rpKey} (${rpThreshold.toFixed(0)} m³/s)</td>${percentages.map(p => `<td style="background-color: ${returnPeriodColors[rpKey].replace('rgb', 'rgba').replace(')', `, ${p === "0" ? 0 : 0.25 + 0.75 * (p / 100)})`)}">${p}%</td>`).join('')}</tr>`
+  })
+  return `<table class="forecast-probability-table"><thead>${headerRow}</thead><tbody>${bodyRows.join('')}</tbody></table>`
 }
 const plotRetrospective = ({daily, monthly, riverid, chartDiv}) => {
   chartDiv.innerHTML = ""
@@ -376,8 +448,9 @@ const plotAllRetro = ({retro, riverid}) => {
   plotStatuses({statuses: monthlyStatusValues, monthlyAverages, monthlyAverageTimeseries, riverid, chartDiv: divChartStatus})
   plotFdc({fdc, monthlyFdc, riverid, chartDiv: divChartFdc})
 }
-const plotAllForecast = ({forecast, rp, riverid}) => {
-  plotForecast({forecast, rp, riverid, chartDiv: divChartForecast})
+const plotAllForecast = ({forecast, rp, riverid, showMembers}) => {
+  showMembers ? plotForecastMembers({forecast, rp, riverid, chartDiv: divChartForecast}) : plotForecast({forecast, rp, riverid, chartDiv: divChartForecast})
+  divTableForecast.innerHTML = showMembers ? forecastProbabilityTable({forecast, rp}) : ''
 }
 
 //////////////////////////////////////////////////////////////////////// Event Listeners

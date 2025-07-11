@@ -20,6 +20,7 @@ window.text = {
     "monthlyAverageFlows": "Promedios Mensuales de Caudal",
     "flowDurationCurve": "Curva de Duración de Flujo",
     "fdc": "CDF",
+    "ensMembers": "Miembros del Ensamble",
   },
   "statusLabels": [
     "Muy Mojado",
@@ -50,6 +51,7 @@ window.text = {
     "fcYaxis": "Caudal",
     "fcLineUncertainty": "Incertidumbre",
     "fcLineMedian": "Flujo Predicho",
+    "fcMembersTitle": "Miembros del Pronóstico para Río: ", // todo
     "retroXaxis": "Fecha",
     "retroYaxis": "Caudal",
     "fcTitle": "Pronóstico para",

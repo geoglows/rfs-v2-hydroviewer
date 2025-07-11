@@ -1,6 +1,7 @@
 import {buildFilterExpression, lang, loadStatusManager, resetFilterForm, showChartView, updateHash, hideRiverInput, riverIdInputContainer, riverIdInput} from "./ui.js";
 import {clearCharts, plotAllForecast, plotAllRetro} from "./plots.js";
-import {fetchForecastPromise, fetchRetroPromise, fetchReturnPeriodsPromise, updateDownloadLinks} from "./data.js";
+import {fetchForecastPromise, fetchForecastMembersPromise, fetchRetroPromise, fetchReturnPeriodsPromise, updateDownloadLinks} from "./data.js";
+import {useForecastMembers} from "./settings.js";
 
 require(
   ["esri/layers/MapImageLayer", "esri/layers/ImageryLayer", "esri/layers/TileLayer", "esri/layers/WebTileLayer", "esri/layers/FeatureLayer", "esri/widgets/TimeSlider", "esri/core/reactiveUtils", "esri/intl", "esri/config"],
@@ -9,7 +10,6 @@ require(
       //////////////////////////////////////////////////////////////////////// Constants and Elements
       const RFS_LAYER_URL = 'https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer'
       const MIN_QUERY_ZOOM = 11
-
       // manipulated elements
       const inputForecastDate = document.getElementById('forecast-date-calendar')
       const timeSliderForecastDiv = document.getElementById('timeSliderForecastWrapper')
@@ -299,10 +299,12 @@ require(
         if (!riverId) return
         loadStatus.update({forecast: "load"})
         const date = inputForecastDate.value.replaceAll("-", "")
+        const showMembers = useForecastMembers()
+        const forecastFetcher = showMembers ? fetchForecastMembersPromise : fetchForecastPromise
         Promise
-          .all([fetchForecastPromise({riverid: riverId, date}), fetchReturnPeriodsPromise(riverId)])
+          .all([forecastFetcher({riverid: riverId, date}), fetchReturnPeriodsPromise(riverId)])
           .then(responses => {
-            plotAllForecast({forecast: responses[0], rp: responses[1], riverid: riverId})
+            plotAllForecast({forecast: responses[0], rp: responses[1], riverid: riverId, showMembers})
             loadStatus.update({forecast: "ready"})
           })
           .catch(() => {

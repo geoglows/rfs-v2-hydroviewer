@@ -20,6 +20,7 @@ window.text = {
     "monthlyAverageFlows": "Monthly Average Flows",
     "flowDurationCurve": "Flow Duration Curve",
     "fdc": "FDC",
+    "ensMembers": "Ensemble Members",
   },
   "statusLabels": [
     "Very Wet",
@@ -46,6 +47,7 @@ window.text = {
     "fcYaxis": "Discharge",
     "fcLineUncertainty": "Uncertainty",
     "fcLineMedian": "Predicted Flow",
+    "fcMembersTitle": "Forecast Members for River: ",
     "retroXaxis": "Date",
     "retroYaxis": "Discharge",
     "fcTitle": "Forecast for River: ",
