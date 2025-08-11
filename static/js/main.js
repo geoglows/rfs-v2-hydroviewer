@@ -1,11 +1,11 @@
-import {buildFilterExpression, lang, loadStatusManager, resetFilterForm, showChartView, updateHash, hideRiverInput, riverIdInputContainer, riverIdInput} from "./ui.js";
+import {buildFilterExpression, hideRiverInput, lang, loadStatusManager, resetFilterForm, riverIdInput, riverIdInputContainer, showChartView, updateHash} from "./ui.js";
 import {clearCharts, plotAllForecast, plotAllRetro} from "./plots.js";
-import {fetchForecastPromise, fetchForecastMembersPromise, fetchRetroPromise, fetchReturnPeriodsPromise, updateDownloadLinks} from "./data.js";
+import {fetchForecastMembersPromise, fetchForecastPromise, fetchRetroPromise, fetchReturnPeriodsPromise, updateDownloadLinks} from "./data.js";
 import {useForecastMembers} from "./settings.js";
 
 require(
-  ["esri/layers/MapImageLayer", "esri/layers/ImageryLayer", "esri/layers/TileLayer", "esri/layers/WebTileLayer", "esri/layers/FeatureLayer", "esri/widgets/TimeSlider", "esri/core/reactiveUtils", "esri/intl", "esri/config"],
-  (MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, FeatureLayer, TimeSlider, reactiveUtils, intl, config) => {
+  ["esri/layers/MapImageLayer", "esri/layers/ImageryLayer", "esri/layers/TileLayer", "esri/layers/WebTileLayer", "esri/layers/FeatureLayer", "esri/layers/ImageryTileLayer", "esri/widgets/TimeSlider", "esri/core/reactiveUtils", "esri/intl", "esri/config"],
+  (MapImageLayer, ImageryLayer, TileLayer, WebTileLayer, FeatureLayer, ImageryTileLayer, TimeSlider, reactiveUtils, intl, config) => {
     document.querySelector('arcgis-map').addEventListener('arcgisViewReadyChange', () => {
       //////////////////////////////////////////////////////////////////////// Constants and Elements
       const RFS_LAYER_URL = 'https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer'
@@ -146,13 +146,13 @@ require(
       })
       const timeSliderStatus = new TimeSlider({
         container: "timeSliderHydroSOS",
-        playRate: 1250,
+        playRate: 3000,
         loop: true,
         label: "HydroSOS Monthly Status Layer Time Steps",
         mode: "instant",
         fullTimeExtent: {
           start: new Date(1990, 0, 1),
-          end: new Date(now.getFullYear(), now.getMonth() - (now.getDate() > 10 ? 1 : 2), 1)
+          end: new Date(now.getFullYear(), now.getMonth() - (now.getDate() > 6 ? 1 : 2), 1)
         },
         stops: {
           interval: {
@@ -161,7 +161,7 @@ require(
           }
         }
       });
-      timeSliderStatus.when(() => timeSliderStatus.previous())  // go to the most recent time, not earliest, once the slider is ready
+      timeSliderStatus.when(() => timeSliderStatus.previous())  // once the slider is ready go to the most recent time (end) not earliest (start)
 
       view.navigation.browserTouchPanEnabled = true;
       view.ui.add(filterButton, "top-left");
@@ -180,11 +180,10 @@ require(
         sublayers: [{id: 0, definitionExpression: 'returnperiod > 1'}],
         visible: false,
       })
-      const monthlyStatusLayer = new WebTileLayer({
-        urlTemplate: `https://d2sl0kux8qc7kl.cloudfront.net/maptiles/hydrosos/year=2025/month=01/{level}/{col}/{row}.png`,
+      let cogMonthlyStatusLayer = new ImageryTileLayer({
+        url: "https://d2sl0kux8qc7kl.cloudfront.net/hydrosos/cogs/2025-07.tif",
         title: "HydroSOS Monthly Status Indicators",
         visible: false,
-        maxScale: 9244600,  // zoom level 6
       })
       const viirsFloodClassified = new WebTileLayer({
         urlTemplate: "https://floods.ssec.wisc.edu/tiles/RIVER-FLDglobal-composite/{level}/{col}/{row}.png",
@@ -212,7 +211,7 @@ require(
         title: "GOES Weather Satellite Colorized Infrared Imagery",
         visible: false,
       })
-      map.addMany([goesImageryColorized, viirsThermalAnomalies, viirsTrueColor, viirsWaterStates, viirsFloodClassified, monthlyStatusLayer, rfsFfi, rfsLayer])
+      map.addMany([goesImageryColorized, viirsThermalAnomalies, viirsTrueColor, viirsWaterStates, viirsFloodClassified, rfsFfi, cogMonthlyStatusLayer, rfsLayer])
 
       // handle interactions with the rfs layer
       view.whenLayerView(rfsLayer.findSublayerById(0).layer).then(_ => {
@@ -247,18 +246,19 @@ require(
       })
 
       // handle interactions with the monthly status tile layer
-      reactiveUtils.watch(() => timeSliderStatus.timeExtent, () => monthlyStatusLayer.refresh())
-      monthlyStatusLayer.getTileUrl = (level, row, col) => {
+      reactiveUtils.watch(() => timeSliderStatus.timeExtent, () => {
         const year = timeSliderStatus.timeExtent.start.toISOString().slice(0, 4)
         const month = timeSliderStatus.timeExtent.start.toISOString().slice(5, 7)
-        return `https://d2sl0kux8qc7kl.cloudfront.net/maptiles/hydrosos/year=${year}/month=${month}/${level}/${col}/${row}.png`
-      }
-      config.request.interceptors.push({
-        urls: /d2sl0kux8qc7kl.cloudfront.net/,
-        before: params => {
-          params.url = params.url.split('?')[0]
-          delete params.requestOptions.query // prevent appending the _ts query param so tiles can be cached.
-        }
+        const layerPickerIndex = map.layers.indexOf(cogMonthlyStatusLayer)
+        const layerWasVisible = cogMonthlyStatusLayer.visible
+        // todo: delete/recreate causes an error when changing dates quickly but you can't edit the url and trigger a re-load
+        map.remove(cogMonthlyStatusLayer)
+        cogMonthlyStatusLayer = new ImageryTileLayer({
+          url: `https://d2sl0kux8qc7kl.cloudfront.net/hydrosos/cogs/${year}-${month}.tif`,
+          title: "HydroSOS Monthly Status Indicators",
+          visible: layerWasVisible,
+        })
+        map.add(cogMonthlyStatusLayer, layerPickerIndex)
       })
 
       // update the url hash with the view location but only when the view is finished changing, not every interval of the active changes
