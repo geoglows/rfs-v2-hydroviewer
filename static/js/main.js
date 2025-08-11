@@ -181,7 +181,7 @@ require(
         visible: false,
       })
       let cogMonthlyStatusLayer = new ImageryTileLayer({
-        url: "",
+        url: "https://d2sl0kux8qc7kl.cloudfront.net/hydrosos/cogs/2025-07.tif",
         title: "HydroSOS Monthly Status Indicators",
         visible: false,
       })
@@ -250,11 +250,13 @@ require(
         const year = timeSliderStatus.timeExtent.start.toISOString().slice(0, 4)
         const month = timeSliderStatus.timeExtent.start.toISOString().slice(5, 7)
         const layerPickerIndex = map.layers.indexOf(cogMonthlyStatusLayer)
+        const layerWasVisible = cogMonthlyStatusLayer.visible
+        // todo: delete/recreate causes an error when changing dates quickly but you can't edit the url and trigger a re-load
         map.remove(cogMonthlyStatusLayer)
         cogMonthlyStatusLayer = new ImageryTileLayer({
           url: `https://d2sl0kux8qc7kl.cloudfront.net/hydrosos/cogs/${year}-${month}.tif`,
           title: "HydroSOS Monthly Status Indicators",
-          visible: cogMonthlyStatusLayer.visible,
+          visible: layerWasVisible,
         })
         map.add(cogMonthlyStatusLayer, layerPickerIndex)
       })
