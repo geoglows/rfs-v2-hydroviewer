@@ -105,12 +105,11 @@ const plotForecastMembers = ({forecast, rp, riverid, chartDiv}) => {
   const memberTraces = Object
     .keys(forecast)
     .filter(key => key.startsWith('ensemble_'))
-    .map((key, idx) => {
+    .map(key => {
       const memberNumber = parseInt(key.replace('ensemble_', ''))
       return {
         x: forecast.datetime,
         y: forecast[key],
-        // name: "Ensemble Members",  // todo: translate
         name: text.words.ensMembers,
         showlegend: memberNumber === 1,
         type: 'scatter',
@@ -296,7 +295,6 @@ const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, rive
           name: label,
           line: {width: 0},
           fillcolor: color,
-          legendgroup: `${text.words.monthlyStatusCategories}`,
           legendgrouptitle: {text: `${text.words.monthlyStatusCategories}`},
         }
       }),
@@ -307,7 +305,7 @@ const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, rive
         mode: 'lines',
         name: `${text.words.monthlyAverageFlows}`,
         visible: 'legendonly',
-        line: {color: 'rgb(0,0,0)', width: 3},
+        line: {color: 'rgb(0,0,0)', width: 3, dash: 'dash'},
       },
       // each individual year's monthly averages
       ...years.toReversed().map((year, idx) => {
@@ -361,6 +359,7 @@ const plotFdc = ({fdc, monthlyFdc, riverid, chartDiv}) => {
             y: monthlyFdc[m],
             type: 'line',
             name: `${text.words.fdc} ${monthNames[idx]}`,
+            visible: 'legendonly',
           }
         })
     ],
