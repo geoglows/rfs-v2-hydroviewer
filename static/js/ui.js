@@ -1,8 +1,5 @@
 /// URLs
 export const RFS_LAYER_URL = 'https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer'
-export const riverCountriesJSON = '../static/json/riverCountries.json'
-export const outletCountriesJSON = '../static/json/outletCountries.json'
-export const vpuListJSON = '../static/json/vpuList.json'
 
 //// DOM Elements
 // filter inputs
@@ -12,10 +9,6 @@ export const selectVPU = document.getElementById('vpuSelect')
 export const definitionString = document.getElementById("definitionString")
 export const definitionDiv = document.getElementById("definition-expression")
 export const inputForecastDate = document.getElementById('forecast-date-calendar')
-export const timeSliderForecastDiv = document.getElementById('timeSliderForecastWrapper')
-export const timeSliderFfiDiv = document.getElementById('timeSliderFfiWrapper')
-export const timeSliderStatusDiv = document.getElementById('timeSliderHydroSOSWrapper')
-export const riverName = document.getElementById('river-name')
 // modals
 export const divModalCharts = document.getElementById("charts-modal")
 export const modalFilter = document.getElementById("filter-modal")

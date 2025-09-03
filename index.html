@@ -80,39 +80,6 @@
     </div>
   </div>
 </div>
-<div id="filter-modal" class="modal">
-  <div class="modal-content">
-    <h4>Filter Streams on Map</h4>
-    <div><a href="https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer/0">Visit the Esri Living Atlas</a> for all attribute options</div>
-    <div style="width: 100%">
-      <div>
-        <label for="outletCountry">River Outlet Country</label>
-        <select id="outletCountry" class="browser default" multiple></select>
-      </div>
-      <div>
-        <label for="riverCountry">River Country</label>
-        <select id="riverCountry" class="browser default" multiple></select>
-      </div>
-      <div>
-        <label for="vpuSelect">VPU Number</label>
-        <select id="vpuSelect" class="browser default" multiple></select>
-      </div>
-      <div>
-        <label for="definitionString">Enter Custom SQL Filters</label>
-        <input type="text" id="definitionString" placeholder=""/>
-      </div>
-      <div>
-        <label for="definition-expression">Definition Currently Displayed</label>
-        <input type="text" id="definition-expression" disabled/>
-      </div>
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn" onclick="updateLayerDefinitions()">Apply Filters</button>
-    <button class="btn btn-secondary" onclick="resetDefinitionExpression()">Clear Filters</button>
-    <a class="modal-close waves-effect waves-green btn-flat">Close</a>
-  </div>
-</div>
 <div id="about-modal" class="modal">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
     <h4>About</h4>
@@ -155,6 +122,41 @@
     </div>
   </div>
   <div class="modal-footer">
+    <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+  </div>
+</div>
+
+<!-- For the Map -->
+<div id="filter-modal" data-category="map" class="modal">
+  <div class="modal-content">
+    <h4>Filter Streams on Map</h4>
+    <div><a href="https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer/0">Visit the Esri Living Atlas</a> for all attribute options</div>
+    <div style="width: 100%">
+      <div>
+        <label for="outletCountry">River Outlet Country</label>
+        <select id="outletCountry" class="browser default" multiple></select>
+      </div>
+      <div>
+        <label for="riverCountry">River Country</label>
+        <select id="riverCountry" class="browser default" multiple></select>
+      </div>
+      <div>
+        <label for="vpuSelect">VPU Number</label>
+        <select id="vpuSelect" class="browser default" multiple></select>
+      </div>
+      <div>
+        <label for="definitionString">Enter Custom SQL Filters</label>
+        <input type="text" id="definitionString" placeholder=""/>
+      </div>
+      <div>
+        <label for="definition-expression">Definition Currently Displayed</label>
+        <input type="text" id="definition-expression" disabled/>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" onclick="updateLayerDefinitions()">Apply Filters</button>
+    <button class="btn btn-secondary" onclick="resetDefinitionExpression()">Clear Filters</button>
     <a class="modal-close waves-effect waves-green btn-flat">Close</a>
   </div>
 </div>
@@ -257,15 +259,15 @@
     <arcgis-scale-bar position="bottom-right" bar-style="line" unit="dual"></arcgis-scale-bar>
   </arcgis-map>
 
-  <div id="timeSliderForecastWrapper" class="time-sliders">
+  <div id="timeSliderForecastWrapper" data-category="map" class="time-sliders">
     <div class="time-slider-title">Stream Layer Forecast Time Steps</div>
     <div id="timeSliderForecast"></div>
   </div>
-  <div id="timeSliderFfiWrapper" class="time-sliders">
+  <div id="timeSliderFfiWrapper" data-category="map" class="time-sliders">
     <div class="time-slider-title">Flash Flood Forecast Time Steps</div>
     <div id="timeSliderFfi"></div>
   </div>
-  <div id="timeSliderHydroSOSWrapper" class="time-sliders">
+  <div id="timeSliderHydroSOSWrapper" data-category="map" class="time-sliders">
     <div class="time-slider-title">HydroSOS Monthly Status Indicators</div>
     <div id="timeSliderHydroSOS"></div>
   </div>

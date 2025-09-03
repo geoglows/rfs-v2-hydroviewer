@@ -18,6 +18,3 @@ riverIdInput.addEventListener("keydown", event => {
     selectedRiverId.setAndFetch(possibleId)
   } else alert(text.prompts.invalidRiverID)
 })
-
-//////////////////////////////////////////////////////////////////////// Export alternatives
-window.setRiverId = selectedRiverId.setAndFetch

@@ -39,7 +39,7 @@ const loadStatusManager = (() => {
     'load': '&darr;'
   }
 
-  const loadingImageTag = `<img src="../static/img/loading.gif" alt="loading">`
+  const loadingImageTag = `<img src="/static/img/loading.gif" alt="loading">`
 
   const update = object => {
     for (let key in object) status[key] = object[key]
@@ -77,3 +77,6 @@ export {
   loadStatusManager, selectedRiverId,
   useForecastMembers, useBiasCorrected,
 }
+
+// set global variables for html inline
+window.setRiverId = selectedRiverId.setAndFetch

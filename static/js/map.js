@@ -1,24 +1,13 @@
-import {
-  buildFilterExpression,
-  inputForecastDate,
-  lang,
-  modalFilter,
-  resetFilterForm,
-  RFS_LAYER_URL,
-  selectOutletCountry,
-  selectRiverCountry,
-  selectVPU,
-  showChartView,
-  timeSliderFfiDiv,
-  timeSliderForecastDiv,
-  timeSliderStatusDiv,
-  updateHash
-} from "./ui.js";
+import {buildFilterExpression, inputForecastDate, lang, modalFilter, resetFilterForm, RFS_LAYER_URL, selectOutletCountry, selectRiverCountry, selectVPU, showChartView, updateHash,} from "./ui.js";
 import {loadStatusManager, selectedRiverId} from "./state.js";
+import riverCountries from "/static/json/riverCountries.json" with {type: "json"};
+import outletCountries from "/static/json/outletCountries.json" with {type: "json"};
+import vpuList from "/static/json/vpuList.json" with {type: "json"};
 
-import riverCountries from "../json/riverCountries.json" with {type: "json"};
-import outletCountries from "../json/outletCountries.json" with {type: "json"};
-import vpuList from "../json/vpuList.json" with {type: "json"};
+const timeSliderForecastDiv = document.getElementById('timeSliderForecastWrapper')
+const timeSliderFfiDiv = document.getElementById('timeSliderFfiWrapper')
+const timeSliderStatusDiv = document.getElementById('timeSliderHydroSOSWrapper')
+const riverName = document.getElementById('river-name')
 
 selectRiverCountry.innerHTML += riverCountries.map(c => `<option value="${c}">${c}</option>`).join('')
 selectOutletCountry.innerHTML += outletCountries.map(c => `<option value="${c}">${c}</option>`).join('')
