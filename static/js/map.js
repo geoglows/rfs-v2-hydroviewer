@@ -40,10 +40,9 @@ require(
       const initLat = !isNaN(parseFloat(hashParams.get('lat'))) ? parseFloat(hashParams.get('lat')) : 18
       const initZoom = !isNaN(parseFloat(hashParams.get('zoom'))) ? parseFloat(hashParams.get('zoom')) : 2.75
       let definitionExpression = hashParams.get('definition') || ""
-      Plotly.setPlotConfig({'locale': lang})
       intl.setLocale(lang)
-      // set the default date to 12 hours before now UTC time
-      const now = new Date()
+
+      const now = new Date()  // the default date is 12 hours before UTC now, typical lag for computing forecasts each day
       now.setHours(now.getHours() - 12)
       inputForecastDate.value = now.toISOString().split("T")[0]
 

@@ -27,15 +27,17 @@
   <link rel="stylesheet" href="/static/css/main.css"/>
   <link rel="stylesheet" href="/static/css/materialize.overrides.css"/>
   <script type="application/javascript" src="/static/js/locales/en-US.js" async></script>
-  <script type="module" src="/static/js/state.js"></script>
-  <script type="module" src="/static/js/ui.js"></script>
-  <script type="module" src="/static/js/plots.js"></script>
-  <script type="module" src="/static/js/data.js"></script>
-  <script type="module" src="/static/js/map.js"></script>
-  <script type="module" src="/static/js/main.js"></script>
+  <script type="module" defer src="/static/js/bookmarks.js"></script>
+  <script type="module" defer src="/static/js/state.js"></script>
+  <script type="module" defer src="/static/js/ui.js"></script>
+  <script type="module" defer src="/static/js/plots.js"></script>
+  <script type="module" defer src="/static/js/data.js"></script>
+  <script type="module" defer src="/static/js/map.js"></script>
+  <script type="module" defer src="/static/js/main.js"></script>
 </head>
 
 <body>
+<!-- Main User Interface Modals -->
 <div id="charts-modal" class="modal">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
     <div class="modal-header-bar">
@@ -74,31 +76,6 @@
       <button class="btn btn-success" id="download-retrospective-btn" disabled>
         <a id="download-retrospective-link" target="_blank">Save Retrospective Data (CSV)</a>
       </button>
-      <a class="modal-close waves-effect waves-green btn-flat">Close</a>
-    </div>
-  </div>
-</div>
-<div id="bookmarks-modal" class="modal">
-  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
-    <div class="modal-header-bar">
-      <h4>Saved Rivers</h4>
-    </div>
-    <div>
-      <div id="bookmarks-table">
-        <table class="striped">
-          <thead>
-            <tr>
-              <th data-field="riverId">River ID</th>
-              <th data-field="riverName">River Name</th>
-              <th data-field="actions">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="bookmarks-tbody">
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div class="modal-footer">
       <a class="modal-close waves-effect waves-green btn-flat">Close</a>
     </div>
   </div>
@@ -182,6 +159,68 @@
   </div>
 </div>
 
+<!-- River Bookmarking -->
+<div id="bookmarks-modal" class="modal" data-category="river-bookmarks">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
+    <div class="modal-header-bar">
+      <h4>Saved Rivers</h4>
+    </div>
+    <div>
+      <div id="bookmarks-table">
+        <table class="striped responsive-table bordered">
+          <thead>
+          <tr>
+            <th data-field="riverId" style="width: 100px">River ID</th>
+            <th data-field="riverName" style="width: 250px">River Name</th>
+            <th data-field="actions" style="width: 130px">Actions</th>
+          </tr>
+          </thead>
+          <tbody id="bookmarks-tbody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <a data-tooltip="Save River" data-position="bottom" class="btn modal-trigger tooltipped" href="#add-river-bookmark"><i class="material-icons">add</i></a>
+      <a data-tooltip="Restore Default Bookmarks" data-position="bottom" class="btn tooltipped" onclick="bookmarks.restoreDefaults()"><i class="material-icons">restore</i></a>
+      <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+    </div>
+  </div>
+</div>
+<div id="add-river-bookmark" class="modal" data-category="river-bookmarks">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
+    <div class="modal-header-bar">
+    </div>
+    <div>
+      <table>
+        <thead>
+        <tr>
+          <th data-field="riverId"><label for="save-river-id">River ID</label></th>
+          <th data-field="riverName"><label for="save-river-name">River Name</label></th>
+          <th data-field="actions">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td data-field="riverId">
+            <input id="save-river-id" type="number" contenteditable="true" onchange="this.value = this.value.slice(0, 9)" placeholder="9 Digit River ID">
+          </td>
+          <td data-field="riverName">
+            <input id="save-river-name" contenteditable="true" onchange="this.innerText = this.innerText.slice(0, 30)" placeholder="River name">
+          </td>
+          <td data-field="actions">
+            <button class="btn green" onclick="bookmarks.submitForm()">Add Bookmark</button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+    </div>
+  </div>
+</div>
+
 <div class="body-wrapper">
   <div class="nav-bar-wrapper">
     <h4 style="font-size: 2rem; font-weight: bolder">
@@ -189,7 +228,7 @@
     </h4>
     <div>
       <a data-tooltip="View Charts" data-position="bottom" class="btn modal-trigger tooltipped" href="#charts-modal"><i class="material-icons">timeline</i></a>
-      <a data-tooltip="Saved Rivers" data-position="bottom" class="btn modal-trigger tooltipped" href="#bookmarks-modal"><i class="material-icons">bookmark</i></a>
+      <a data-tooltip="Saved Rivers" data-category="river-bookmarks" data-position="bottom" class="btn modal-trigger tooltipped" href="#bookmarks-modal"><i class="material-icons">bookmark</i></a>
       <a data-tooltip="Learn More" data-position="bottom" class="btn modal-trigger tooltipped" href="#about-modal"><i class="material-icons">help</i></a>
       <a data-tooltip="Settings" data-position="bottom" class="btn modal-trigger tooltipped" href="#settings-modal"><i class="material-icons">settings</i></a>
       <a data-tooltip="Language" data-position="bottom" class="btn dropdown-trigger tooltipped" href="#" data-target="language-select"><i class="material-icons">translate</i></a>
