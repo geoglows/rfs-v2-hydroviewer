@@ -39,7 +39,7 @@ export const bookmarks = (() => {
         <td>${b.name}</td>
         <td>
           <a data-position="bottom" class="btn modal-trigger" onclick="M.Modal.getInstance(document.getElementById('bookmarks-modal')).close(); setRiverId('${b.id}')"><i class="material-icons">timeline</i></a>
-          <a data-position="bottom" class="btn red" onclick="bookmarks.remove('${b.id}'); this.parentElement.parentElement.remove();"><i class="material-icons">delete</i></a>
+          <a data-position="bottom" class="btn red" onclick="bookmarks.remove(${b.id}); this.parentElement.parentElement.remove();"><i class="material-icons">delete</i></a>
         </td>
       </tr>`
       })
@@ -53,15 +53,15 @@ export const bookmarks = (() => {
     const id = newRiverIdInput.value.trim()
     const name = newRiverNameInput.value.trim() || `River ${id}`
     if (!/^\d{9}$/.test(id)) {
-      M.toast({html: 'Please enter a valid 9-digit River ID.', classes: 'yellow', displayLength: 6000})
+      M.toast({html: 'Please enter a valid 9-digit River ID.', classes: 'orange', displayLength: 6000})
       return
     }
     if (bookmarks.find(r => r.id === id)) {
-      M.toast({html: 'This River ID is already bookmarked.', classes: 'yellow', displayLength: 6000})
+      M.toast({html: 'This River ID is already bookmarked.', classes: 'orange', displayLength: 6000})
       return
     }
     if (name.length === 0) {
-      M.toast({html: 'Please enter a name for the bookmark.', classes: 'yellow', displayLength: 6000})
+      M.toast({html: 'Please enter a name for the bookmark.', classes: 'orange', displayLength: 6000})
       return
     }
     add({id: parseInt(id), name: name})

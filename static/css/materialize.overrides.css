@@ -1,5 +1,5 @@
 /* Materialize CSS Overrides */
-.modal {
+.always-large-modal {
     width: 85%;
     max-width: 1400px;
     height: 80%;

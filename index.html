@@ -38,7 +38,7 @@
 
 <body>
 <!-- Main User Interface Modals -->
-<div id="charts-modal" class="modal">
+<div id="charts-modal" class="modal always-large-modal">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
     <div class="modal-header-bar">
       <h4 id="selected-river-id"></h4>
@@ -164,60 +164,53 @@
 
 <!-- River Bookmarking -->
 <div id="bookmarks-modal" class="modal" data-category="river-bookmarks">
-  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center;">
     <div class="modal-header-bar">
       <h4>Saved Rivers</h4>
-    </div>
-    <div>
-      <div id="bookmarks-table">
-        <table class="striped responsive-table bordered">
-          <thead>
-          <tr>
-            <th data-field="riverId" style="width: 100px">River ID</th>
-            <th data-field="riverName" style="width: 250px">River Name</th>
-            <th data-field="actions" style="width: 130px">Actions</th>
-          </tr>
-          </thead>
-          <tbody id="bookmarks-tbody">
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <a data-tooltip="Save River" data-position="bottom" class="btn modal-trigger tooltipped" href="#add-river-bookmark"><i class="material-icons">add</i></a>
+      <div style="flex-grow: 1"></div>
+      <a data-tooltip="Save River" data-position="bottom" class="btn modal-trigger tooltipped" href="#add-river-bookmark" style="margin-inline: 5px"><i class="material-icons">add</i></a>
       <a data-tooltip="Restore Default Bookmarks" data-position="bottom" class="btn tooltipped" onclick="bookmarks.restoreDefaults()"><i class="material-icons">restore</i></a>
       <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+    </div>
+    <div id="bookmarks-table" style="width: 100%">
+      <table class="striped responsive-table bordered">
+        <thead>
+        <tr>
+          <th data-field="riverId" style="width: 20%; max-width: 175px">River ID</th>
+          <th data-field="riverName" style="width: 60%; max-width: 525px">River Name</th>
+          <th data-field="actions" style="width: 20%; max-width: 175px">Actions</th>
+        </tr>
+        </thead>
+        <tbody id="bookmarks-tbody">
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
 <div id="add-river-bookmark" class="modal" data-category="river-bookmarks">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
-    <div class="modal-header-bar">
-    </div>
-    <div>
-      <table>
-        <thead>
-        <tr>
-          <th data-field="riverId"><label for="save-river-id">River ID</label></th>
-          <th data-field="riverName"><label for="save-river-name">River Name</label></th>
-          <th data-field="actions">Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr>
-          <td data-field="riverId">
-            <input id="save-river-id" type="number" contenteditable="true" onchange="this.value = this.value.slice(0, 9)" placeholder="9 Digit River ID">
-          </td>
-          <td data-field="riverName">
-            <input id="save-river-name" contenteditable="true" onchange="this.innerText = this.innerText.slice(0, 30)" placeholder="River name">
-          </td>
-          <td data-field="actions">
-            <button class="btn green" onclick="bookmarks.submitForm()">Add Bookmark</button>
-          </td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
+    <table>
+      <thead>
+      <tr>
+        <th data-field="riverId"><label for="save-river-id">River ID</label></th>
+        <th data-field="riverName"><label for="save-river-name">River Name</label></th>
+        <th data-field="actions">Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td data-field="riverId">
+          <input id="save-river-id" type="number" contenteditable="true" onchange="this.value = this.value.slice(0, 9)" placeholder="9 Digit River ID">
+        </td>
+        <td data-field="riverName">
+          <input id="save-river-name" contenteditable="true" onchange="this.innerText = this.innerText.slice(0, 30)" placeholder="River name">
+        </td>
+        <td data-field="actions">
+          <button class="btn green" onclick="bookmarks.submitForm()">Add Bookmark</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
     <div class="modal-footer">
       <a class="modal-close waves-effect waves-green btn-flat">Close</a>
     </div>
