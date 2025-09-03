@@ -92,12 +92,10 @@ const getRetrospectiveData = () => {
 }
 const fetchData = riverid => {
   if (!riverid) return loadStatusManager.update({riverid: null})
-  clearCharts()
-  // todo can we consolidate the location of updateDownloadLinks, clearCharts, etc into selectedRiverId.set?
   loadStatusManager.update({riverid: riverid, forecast: "clear", retro: "clear"})
-  updateDownloadLinks(riverid)
   getForecastData(riverid)
   getRetrospectiveData()
+  M.Modal.getInstance(document.getElementById('charts-modal')).open()
 }
 
 export {

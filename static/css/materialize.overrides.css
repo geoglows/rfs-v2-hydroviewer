@@ -6,10 +6,3 @@
     max-height: 90%;
     padding: 10px;
 }
-
-.modal.bottom-sheet {
-    width: 100%;
-    max-width: 100%;
-    height: max-content;
-    max-height: 65%;
-}

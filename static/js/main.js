@@ -1,40 +1,16 @@
-import {
-  hideRiverInput,
-  inputForecastDate,
-  outletCountriesJSON,
-  riverCountriesJSON,
-  riverIdInput,
-  riverIdInputContainer,
-  selectOutletCountry,
-  selectRiverCountry,
-  selectVPU,
-  vpuListJSON
-} from "./ui.js";
-import {getForecastData, getRetrospectiveData} from "./data.js";
+import {hideRiverInput, inputForecastDate, riverIdInput, riverIdInputContainer} from "./ui.js";
+import {getForecastData} from "./data.js";
 import {loadStatusManager, selectedRiverId} from "./state.js";
-
-//// Initialize Modal Values
-fetch(riverCountriesJSON)
-  .then(response => response.json())
-  .then(response => {
-    selectRiverCountry.innerHTML += response.map(c => `<option value="${c}">${c}</option>`).join('')
-    M.FormSelect.init(selectRiverCountry)
-  })
-fetch(outletCountriesJSON)
-  .then(response => response.json())
-  .then(response => {
-    selectOutletCountry.innerHTML += response.map(c => `<option value="${c}">${c}</option>`).join('')
-    M.FormSelect.init(selectOutletCountry)
-  })
-fetch(vpuListJSON)
-  .then(response => response.json())
-  .then(response => {
-    selectVPU.innerHTML += response.map(v => `<option value="${v}">${v}</option>`).join('')
-    M.FormSelect.init(selectVPU)
-  })
+import {riverBookmarks} from "./bookmarks.js";
 
 //////////////////////////////////////////////////////////////////////// INITIAL LOAD
-M.AutoInit()
+M.AutoInit();
+
+// on opening the #bookmarks-modal, populate the table of bookmarks
+M.Modal.init(document.getElementById('bookmarks-modal'), {
+  onOpenStart: () => document.getElementById('bookmarks-tbody').innerHTML = riverBookmarks.table()
+})
+
 loadStatusManager.update()
 if (window.innerWidth < 800) M.toast({html: text.prompts.mobile, classes: "blue custom-toast-placement", displayLength: 7500})
 inputForecastDate.addEventListener("change", () => getForecastData())
@@ -49,5 +25,3 @@ riverIdInput.addEventListener("keydown", event => {
 
 //////////////////////////////////////////////////////////////////////// Export alternatives
 window.setRiverId = selectedRiverId.setAndFetch
-window.getForecastData = getForecastData
-window.getRetrospectiveData = getRetrospectiveData

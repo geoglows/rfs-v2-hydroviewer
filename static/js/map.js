@@ -1,5 +1,31 @@
-import {buildFilterExpression, inputForecastDate, lang, resetFilterForm, RFS_LAYER_URL, showChartView, updateHash} from "./ui.js";
+import {
+  buildFilterExpression,
+  inputForecastDate,
+  lang,
+  modalFilter,
+  resetFilterForm,
+  RFS_LAYER_URL,
+  selectOutletCountry,
+  selectRiverCountry,
+  selectVPU,
+  showChartView,
+  timeSliderFfiDiv,
+  timeSliderForecastDiv,
+  timeSliderStatusDiv,
+  updateHash
+} from "./ui.js";
 import {loadStatusManager, selectedRiverId} from "./state.js";
+
+import riverCountries from "../json/riverCountries.json" with {type: "json"};
+import outletCountries from "../json/outletCountries.json" with {type: "json"};
+import vpuList from "../json/vpuList.json" with {type: "json"};
+
+selectRiverCountry.innerHTML += riverCountries.map(c => `<option value="${c}">${c}</option>`).join('')
+selectOutletCountry.innerHTML += outletCountries.map(c => `<option value="${c}">${c}</option>`).join('')
+selectVPU.innerHTML += vpuList.map(v => `<option value="${v}">${v}</option>`).join('')
+M.FormSelect.init(selectRiverCountry)
+M.FormSelect.init(selectOutletCountry)
+M.FormSelect.init(selectVPU)
 
 require(
   ["esri/layers/MapImageLayer", "esri/layers/ImageryLayer", "esri/layers/TileLayer", "esri/layers/WebTileLayer", "esri/layers/FeatureLayer", "esri/layers/ImageryTileLayer", "esri/widgets/TimeSlider", "esri/core/reactiveUtils", "esri/intl", "esri/config"],

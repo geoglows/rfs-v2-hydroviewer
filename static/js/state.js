@@ -1,5 +1,6 @@
 import {divChartForecast, divChartRetro, divSelectedRiverId, divTableForecast, riverIdInput} from "./ui.js";
 import {fetchData, updateDownloadLinks} from "./data.js";
+import {clearCharts} from "./plots.js";
 
 const selectedRiverId = (() => {
   let riverId = null
@@ -11,10 +12,11 @@ const selectedRiverId = (() => {
       newId = possibleId
     }
     riverId = newId
+    updateDownloadLinks(riverId)
+    clearCharts()
   }
   const setAndFetch = newId => {
     set(newId)
-    updateDownloadLinks(riverId)
     fetchData(newId)
   }
 
@@ -24,7 +26,6 @@ const selectedRiverId = (() => {
 })()
 
 const loadStatusManager = (() => {
-  const loadingStatusDivs = Array.from(document.getElementsByClassName("load-status"))
   let status = {
     riverid: null,
     forecast: "clear",
@@ -74,5 +75,5 @@ checkUseBiasCorrected.checked = localStorage.getItem('useBiasCorrected') === 'tr
 
 export {
   loadStatusManager, selectedRiverId,
-  useForecastMembers, useBiasCorrected
+  useForecastMembers, useBiasCorrected,
 }

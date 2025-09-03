@@ -400,7 +400,6 @@ const plotAllRetro = ({retro, riverid}) => {
   let monthlyStatusValues = {}
   text.statusLabels.forEach(label => monthlyStatusValues[label] = [])
 
-
   let monthlyValues = retro.datetime.reduce((acc, currentValue, currentIndex) => {
     const date = new Date(currentValue)
     const datestring = date.toISOString().slice(0, 7)

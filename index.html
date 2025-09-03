@@ -78,7 +78,32 @@
     </div>
   </div>
 </div>
-<div id="filter-modal" class="modal bottom-sheet">
+<div id="bookmarks-modal" class="modal">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
+    <div class="modal-header-bar">
+      <h4>Saved Rivers</h4>
+    </div>
+    <div>
+      <div id="bookmarks-table">
+        <table class="striped">
+          <thead>
+            <tr>
+              <th data-field="riverId">River ID</th>
+              <th data-field="riverName">River Name</th>
+              <th data-field="actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="bookmarks-tbody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+    </div>
+  </div>
+</div>
+<div id="filter-modal" class="modal">
   <div class="modal-content">
     <h4>Filter Streams on Map</h4>
     <div><a href="https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer/0">Visit the Esri Living Atlas</a> for all attribute options</div>
@@ -111,7 +136,7 @@
     <a class="modal-close waves-effect waves-green btn-flat">Close</a>
   </div>
 </div>
-<div id="about-modal" class="modal bottom-sheet">
+<div id="about-modal" class="modal">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
     <h4>About</h4>
     <div style="width: 100%; max-width: 800px">
@@ -164,6 +189,7 @@
     </h4>
     <div>
       <a data-tooltip="View Charts" data-position="bottom" class="btn modal-trigger tooltipped" href="#charts-modal"><i class="material-icons">timeline</i></a>
+      <a data-tooltip="Saved Rivers" data-position="bottom" class="btn modal-trigger tooltipped" href="#bookmarks-modal"><i class="material-icons">bookmark</i></a>
       <a data-tooltip="Learn More" data-position="bottom" class="btn modal-trigger tooltipped" href="#about-modal"><i class="material-icons">help</i></a>
       <a data-tooltip="Settings" data-position="bottom" class="btn modal-trigger tooltipped" href="#settings-modal"><i class="material-icons">settings</i></a>
       <a data-tooltip="Language" data-position="bottom" class="btn dropdown-trigger tooltipped" href="#" data-target="language-select"><i class="material-icons">translate</i></a>
