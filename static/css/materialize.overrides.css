@@ -6,3 +6,7 @@
     max-height: 90%;
     padding: 10px;
 }
+
+.modal .modal-content {
+    padding: 20px;
+}

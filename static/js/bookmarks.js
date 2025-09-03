@@ -29,8 +29,10 @@ export const riverBookmarks = (() => {
         <td>${b.id}</td>
         <td>${b.name}</td>
         <td>
-          <button class="btn blue" onclick=" M.Modal.getInstance(document.getElementById('bookmarks-modal')).close(); setRiverId('${b.id}')">View</button>
-          <button class="btn red" onclick="remove('${b.id}'); this.parentElement.parentElement.remove();">Remove</button>
+<!--          <button class="btn blue" onclick=" M.Modal.getInstance(document.getElementById('bookmarks-modal')).close(); setRiverId('${b.id}')">View</button>-->
+<!--          <button class="btn red" onclick="remove('${b.id}'); this.parentElement.parentElement.remove();">Remove</button>-->
+          <a data-tooltip="View Charts" data-position="bottom" class="btn modal-trigger tooltipped" onclick="M.Modal.getInstance(document.getElementById('bookmarks-modal')).close(); setRiverId('${b.id}')"><i class="material-icons">timeline</i></a>
+          <a data-tooltip="Remove Bookmark" data-position="bottom" class="btn red tooltipped" onclick="riverBookmarks.remove('${b.id}'); this.parentElement.parentElement.remove();"><i class="material-icons">delete</i></a>
         </td>
       </tr>`
       })
@@ -45,6 +47,6 @@ export const riverBookmarks = (() => {
   if (bookmarks.length === 0) restoreDefaults() // on first load, populate with defaults
 
   return {
-    add, remove, clear, list, table, restoreDefaults
+    cache, add, remove, clear, list, table, restoreDefaults
   }
 })()
