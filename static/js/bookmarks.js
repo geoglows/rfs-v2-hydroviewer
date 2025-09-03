@@ -28,8 +28,10 @@ export const riverBookmarks = (() => {
         return `<tr>
         <td>${b.id}</td>
         <td>${b.name}</td>
-        <td><button class="btn blue" onclick=" M.Modal.getInstance(document.getElementById('bookmarks-modal')).close(); setRiverId('${b.id}')">View</button></td>
-        <td><button class="btn red" onclick="remove('${b.id}'); this.parentElement.parentElement.remove();">Remove</button></td>
+        <td>
+          <button class="btn blue" onclick=" M.Modal.getInstance(document.getElementById('bookmarks-modal')).close(); setRiverId('${b.id}')">View</button>
+          <button class="btn red" onclick="remove('${b.id}'); this.parentElement.parentElement.remove();">Remove</button>
+        </td>
       </tr>`
       })
       .join('')
