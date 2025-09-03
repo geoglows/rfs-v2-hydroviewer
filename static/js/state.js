@@ -1,6 +1,7 @@
 import {divChartForecast, divChartRetro, divSelectedRiverId, divTableForecast, riverIdInput} from "./ui.js";
 import {fetchData, updateDownloadLinks} from "./data.js";
 import {clearCharts} from "./plots.js";
+import {bookmarks} from "./bookmarks.js";
 
 const selectedRiverId = (() => {
   let riverId = null
@@ -30,6 +31,7 @@ const loadStatusManager = (() => {
     riverid: null,
     forecast: "clear",
     retro: "clear",
+    bookmarked: false,
   }
 
   const statusIcons = {
@@ -38,6 +40,10 @@ const loadStatusManager = (() => {
     'fail': "&times;",
     'load': '&darr;'
   }
+
+  const bookmarkRiverButton = document.getElementById('save-current-river')
+  const isBookmarkedIcon = '<i class="material-icons">favorite</i>'
+  const unBookmarkIcon = '<i class="material-icons">favorite_border</i>'
 
   const loadingImageTag = `<img src="/static/img/loading.gif" alt="loading">`
 
@@ -53,10 +59,18 @@ const loadStatusManager = (() => {
 
     document.getElementById("forecast-load-icon").innerHTML = statusIcons[status.forecast]
     document.getElementById("retro-load-icon").innerHTML = statusIcons[status.retro]
+    refreshBookmarkIcon()
+  }
+
+  const refreshBookmarkIcon = () => {
+    status.bookmarked = bookmarks.isBookmarked(status.riverid)
+    bookmarkRiverButton.innerHTML = status.bookmarked ? isBookmarkedIcon : unBookmarkIcon
+    bookmarkRiverButton.onclick = () => bookmarks.toggle(status.riverid)
   }
 
   return {
-    update
+    update,
+    refreshBookmarkIcon
   }
 })()
 
