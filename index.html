@@ -26,11 +26,12 @@
   <!-- App -->
   <link rel="stylesheet" href="/static/css/main.css"/>
   <link rel="stylesheet" href="/static/css/materialize.overrides.css"/>
-  <script type="application/javascript" src="/static/js/localization.en-US.js" async></script>
-  <script type="module" src="/static/js/settings.js"></script>
+  <script type="application/javascript" src="/static/js/locales/en-US.js" async></script>
+  <script type="module" src="/static/js/state.js"></script>
   <script type="module" src="/static/js/ui.js"></script>
   <script type="module" src="/static/js/plots.js"></script>
   <script type="module" src="/static/js/data.js"></script>
+  <script type="module" src="/static/js/map.js"></script>
   <script type="module" src="/static/js/main.js"></script>
 </head>
 
@@ -142,6 +143,12 @@
       <label>
         <input type="checkbox" class="filled-in" id="settingsShowEnsembleMembers"/>
         <span>Show forecast ensemble members</span>
+      </label>
+    </div>
+    <div class="options-wrapper">
+      <label>
+        <input type="checkbox" class="filled-in" id="settingsUseBiasCorrected"/>
+        <span>Use experimental global bias correction on all datasets</span>
       </label>
     </div>
   </div>

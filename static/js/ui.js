@@ -1,49 +1,39 @@
-//// Constants
-const riverCountriesJSON = '../static/json/riverCountries.json'
-const outletCountriesJSON = '../static/json/outletCountries.json'
-const vpuListJSON = '../static/json/vpuList.json'
-const LOADING_GIF = '../static/img/loading.gif'
-const lang = window.location.pathname.split("/").filter(x => x && !x.includes(".html") && !x.includes('viewer'))[0] || 'en-US'
+/// URLs
+export const RFS_LAYER_URL = 'https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer'
+export const riverCountriesJSON = '../static/json/riverCountries.json'
+export const outletCountriesJSON = '../static/json/outletCountries.json'
+export const vpuListJSON = '../static/json/vpuList.json'
 
 //// DOM Elements
 // filter inputs
-const selectRiverCountry = document.getElementById('riverCountry')
-const selectOutletCountry = document.getElementById('outletCountry')
-const selectVPU = document.getElementById('vpuSelect')
-const definitionString = document.getElementById("definitionString")
-const definitionDiv = document.getElementById("definition-expression")
+export const selectRiverCountry = document.getElementById('riverCountry')
+export const selectOutletCountry = document.getElementById('outletCountry')
+export const selectVPU = document.getElementById('vpuSelect')
+export const definitionString = document.getElementById("definitionString")
+export const definitionDiv = document.getElementById("definition-expression")
+export const inputForecastDate = document.getElementById('forecast-date-calendar')
+export const timeSliderForecastDiv = document.getElementById('timeSliderForecastWrapper')
+export const timeSliderFfiDiv = document.getElementById('timeSliderFfiWrapper')
+export const timeSliderStatusDiv = document.getElementById('timeSliderHydroSOSWrapper')
+export const riverName = document.getElementById('river-name')
 // modals
-const divModalCharts = document.getElementById("charts-modal")
+export const divModalCharts = document.getElementById("charts-modal")
+export const modalFilter = document.getElementById("filter-modal")
 // charts
-const divSelectedRiverId = document.getElementById("selected-river-id")
-const riverIdInputContainer = document.getElementById('enter-river-id-container')
-const riverIdInput = document.getElementById("river-id")
-const divChartForecast = document.getElementById("forecastPlot")
-const divTableForecast = document.getElementById("forecastTable")
-const divChartRetro = document.getElementById("retroPlot")
-const divChartYearlyVol = document.getElementById("yearlyVolPlot")
-const divChartStatus = document.getElementById("yearlyStatusPlot")
-const divChartFdc = document.getElementById("fdcPlot")
+export const divSelectedRiverId = document.getElementById("selected-river-id")
+export const riverIdInputContainer = document.getElementById('enter-river-id-container')
+export const riverIdInput = document.getElementById("river-id")
+export const divChartForecast = document.getElementById("forecastPlot")
+export const divTableForecast = document.getElementById("forecastTable")
+export const divChartRetro = document.getElementById("retroPlot")
+export const divChartYearlyVol = document.getElementById("yearlyVolPlot")
+export const divChartStatus = document.getElementById("yearlyStatusPlot")
+export const divChartFdc = document.getElementById("fdcPlot")
 
-//// Initialize Modal Values
-fetch(riverCountriesJSON)
-  .then(response => response.json())
-  .then(response => {
-    selectRiverCountry.innerHTML += response.map(c => `<option value="${c}">${c}</option>`).join('')
-    M.FormSelect.init(selectRiverCountry)
-  })
-fetch(outletCountriesJSON)
-  .then(response => response.json())
-  .then(response => {
-    selectOutletCountry.innerHTML += response.map(c => `<option value="${c}">${c}</option>`).join('')
-    M.FormSelect.init(selectOutletCountry)
-  })
-fetch(vpuListJSON)
-  .then(response => response.json())
-  .then(response => {
-    selectVPU.innerHTML += response.map(v => `<option value="${v}">${v}</option>`).join('')
-    M.FormSelect.init(selectVPU)
-  })
+// Misc constants
+export const lang = window.location.pathname.split("/").filter(x => x && !x.includes(".html") && !x.includes('viewer'))[0] || 'en-US'
+
+
 const showChartView = (modal) => {
   M.Modal.getInstance(divModalCharts).open()
   if (modal === 'forecast') {
@@ -95,41 +85,6 @@ const updateHash = ({lon, lat, zoom, definition}) => {
 }
 
 //// Load Status Manager
-const loadStatusManager = () => {
-  const loadingStatusDivs = Array.from(document.getElementsByClassName("load-status"))
-  let status = {
-    riverid: null,
-    forecast: "clear",
-    retro: "clear",
-  }
-
-  const statusIcons = {
-    'clear': "",
-    'ready': "&check;",
-    'fail': "&times;",
-    'load': '&darr;'
-  }
-
-  const loadingImageTag = `<img src="${LOADING_GIF}" alt='loading'>`
-
-  const update = object => {
-    for (let key in object) status[key] = object[key]
-    // place loading icons but only if that load message is new to avoid flickering/rerendering that tag
-    if (status.forecast === "load" && "forecast" in object) {
-      divChartForecast.innerHTML = loadingImageTag
-      divTableForecast.innerHTML = ''
-    }
-    if (status.retro === "load" && "retro" in object) divChartRetro.innerHTML = loadingImageTag
-    divSelectedRiverId.innerText = status.riverid ? status.riverid : ""
-
-    document.getElementById("forecast-load-icon").innerHTML = statusIcons[status.forecast]
-    document.getElementById("retro-load-icon").innerHTML = statusIcons[status.retro]
-  }
-
-  return {
-    update
-  }
-}
 
 const toggleVisibleRiverInput = () => riverIdInputContainer.classList.toggle("hide")
 const hideRiverInput = () => {
@@ -142,9 +97,6 @@ window.showChartView = showChartView
 window.toggleVisibleRiverInput = toggleVisibleRiverInput
 
 export {
-  loadStatusManager, showChartView, updateHash, resetFilterForm, buildFilterExpression,
+  showChartView, updateHash, resetFilterForm, buildFilterExpression,
   hideRiverInput, toggleVisibleRiverInput,
-  riverIdInput, riverIdInputContainer,
-  divChartForecast, divTableForecast, divChartRetro, divChartYearlyVol, divChartStatus, divChartFdc,
-  lang
 }

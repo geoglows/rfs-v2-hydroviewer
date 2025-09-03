@@ -1,4 +1,6 @@
-import {useBiasCorrected} from "./settings.js";
+import {loadStatusManager, selectedRiverId, useBiasCorrected, useForecastMembers} from "./state.js";
+import {clearCharts, plotAllForecast, plotAllRetro} from "./plots.js";
+import {inputForecastDate} from "./ui.js";
 
 const REST_ENDPOINT = 'https://geoglows.ecmwf.int/api/v2'
 
@@ -60,4 +62,51 @@ const updateDownloadLinks = riverid => {
   document.getElementById("download-retrospective-btn").disabled = !riverid
 }
 
-export {fetchForecastPromise, fetchForecastMembersPromise, fetchReturnPeriodsPromise, fetchRetroPromise, updateDownloadLinks}
+const getForecastData = riverid => {
+  selectedRiverId.set(riverid)
+  if (!selectedRiverId.get()) return
+  loadStatusManager.update({forecast: "load"})
+  const date = inputForecastDate.value.replaceAll("-", "")
+  const showMembers = useForecastMembers()
+  const forecastFetcher = showMembers ? fetchForecastMembersPromise : fetchForecastPromise
+  Promise
+    .all([forecastFetcher({riverid: riverid, date}), fetchReturnPeriodsPromise(riverid)])
+    .then(responses => {
+      plotAllForecast({forecast: responses[0], rp: responses[1], riverid: riverid, showMembers})
+      loadStatusManager.update({forecast: "ready"})
+    })
+    .catch(() => {
+      loadStatusManager.update({forecast: "fail"})
+    })
+}
+const getRetrospectiveData = () => {
+  if (!selectedRiverId.get()) return
+  clearCharts('retrospective')
+  loadStatusManager.update({retro: "load"})
+  fetchRetroPromise(selectedRiverId.get())
+    .then(response => {
+      plotAllRetro({retro: response, riverid: selectedRiverId.get()})
+      loadStatusManager.update({retro: "ready"})
+    })
+    .catch(() => loadStatusManager.update({retro: "fail"}))
+}
+const fetchData = riverid => {
+  if (!riverid) return loadStatusManager.update({riverid: null})
+  clearCharts()
+  // todo can we consolidate the location of updateDownloadLinks, clearCharts, etc into selectedRiverId.set?
+  loadStatusManager.update({riverid: riverid, forecast: "clear", retro: "clear"})
+  updateDownloadLinks(riverid)
+  getForecastData(riverid)
+  getRetrospectiveData()
+}
+
+export {
+  fetchForecastPromise,
+  fetchForecastMembersPromise,
+  fetchReturnPeriodsPromise,
+  fetchRetroPromise,
+  updateDownloadLinks,
+  getRetrospectiveData,
+  getForecastData,
+  fetchData
+}
