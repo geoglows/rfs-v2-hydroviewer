@@ -16,7 +16,7 @@ window.text = {
     "fiveYearAverage": "5 Year Average",
     "annualVolume": "Annual Volume",
     "millionMetersCubed": "Million Cubic Meters",
-    "monthlyStatusCategories": "Monthly Status Categories",
+    "monthlyStatusCategories": "WMO HydroSOS Status Categories",
     "monthlyAverageFlows": "Monthly Average Flows",
     "flowDurationCurve": "Flow Duration Curve",
     "fdc": "FDC",
@@ -53,7 +53,7 @@ window.text = {
     "fcTitle": "Forecast for River: ",
     "retroTitle": "Retrospective Simulation for River: ",
     "volumeTitle": "Yearly Cumulative Discharge Volume for River: ",
-    "statusTitle": "Annual Status by Month for River: ",
+    "statusTitle": "Monthly Average Flow by Year for River: ",
     "fdcTitle": "Flow Duration Curves for River: ",
   }
 }

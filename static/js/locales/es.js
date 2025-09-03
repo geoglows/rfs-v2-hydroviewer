@@ -16,7 +16,7 @@ window.text = {
     "fiveYearAverage": "Promedio de 5 Años",
     "annualVolume": "Volumen Anual",
     "millionMetersCubed": "Millones de Metros Cúbicos",
-    "monthlyStatusCategories": "Categorías de Estado Mensual",
+    "monthlyStatusCategories": "Categorías de OMM HydroSOS",
     "monthlyAverageFlows": "Promedios Mensuales de Caudal",
     "flowDurationCurve": "Curva de Duración de Flujo",
     "fdc": "CDF",
@@ -51,7 +51,7 @@ window.text = {
     "fcYaxis": "Caudal",
     "fcLineUncertainty": "Incertidumbre",
     "fcLineMedian": "Flujo Predicho",
-    "fcMembersTitle": "Miembros del Pronóstico para Río: ", // todo
+    "fcMembersTitle": "Miembros del Pronóstico para Río: ",
     "retroXaxis": "Fecha",
     "retroYaxis": "Caudal",
     "fcTitle": "Pronóstico para",
