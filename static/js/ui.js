@@ -1,4 +1,7 @@
 /// URLs
+import {updateDownloadLinks} from "./data.js";
+import {clearCharts} from "./plots.js";
+
 export const RFS_LAYER_URL = 'https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer'
 
 //// DOM Elements
@@ -25,6 +28,7 @@ export const divChartFdc = document.getElementById("fdcPlot")
 
 // Misc constants
 export const lang = window.location.pathname.split("/").filter(x => x && !x.includes(".html") && !x.includes('viewer'))[0] || 'en-US'
+const loadingImageTag = `<img src="/static/img/loading.gif" alt="loading">`
 
 
 const showChartView = (modal) => {
@@ -77,7 +81,29 @@ const updateHash = ({lon, lat, zoom, definition}) => {
   window.location.hash = hashParams.toString()
 }
 
+const displayRiverNumber = (riverid) => {
+  divSelectedRiverId.innerText = riverid ? riverid : ""
+  updateDownloadLinks(riverid)
+  clearCharts()
+}
 //// Load Status Manager
+const displayLoadingStatus = statusChanges => {
+  const statusIcons = {
+    'clear': "",
+    'ready': "&check;",
+    'fail': "&times;",
+    'load': '&darr;'
+  }
+  // place loading icons only if the load message is new to avoid flickering/rerendering that tag
+  if ("forecast" in statusChanges) {
+    document.getElementById("forecast-load-icon").innerHTML = statusIcons[statusChanges.forecast]
+    if (statusChanges.forecast === "load") divChartForecast.innerHTML = loadingImageTag
+  }
+  if ("retro" in statusChanges) {
+    document.getElementById("retro-load-icon").innerHTML = statusIcons[statusChanges.retro]
+    if (statusChanges.retro === "load") divChartRetro.innerHTML = loadingImageTag
+  }
+}
 
 const toggleVisibleRiverInput = () => riverIdInputContainer.classList.toggle("hide")
 const hideRiverInput = () => {
@@ -91,5 +117,5 @@ window.toggleVisibleRiverInput = toggleVisibleRiverInput
 
 export {
   showChartView, updateHash, resetFilterForm, buildFilterExpression,
-  hideRiverInput, toggleVisibleRiverInput,
+  hideRiverInput, toggleVisibleRiverInput, displayRiverNumber, displayLoadingStatus,
 }

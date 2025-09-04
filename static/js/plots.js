@@ -382,10 +382,10 @@ const plotFdc = ({fdc, monthlyFdc, riverid, chartDiv}) => {
 //////////////////////////////////////////////////////////////////////// Helper Functions
 const clearCharts = chartTypes => {
   if (chartTypes === "forecast" || chartTypes === null) {
-    [divChartForecast,]
+    [divChartForecast, divTableForecast]
       .forEach(el => el.innerHTML = '')
   }
-  if (chartTypes === "retrospective" || chartTypes === null) {
+  if (chartTypes === "retro" || chartTypes === null) {
     [divChartRetro, divChartYearlyVol, divChartStatus, divChartFdc]
       .forEach(el => el.innerHTML = '')
   }

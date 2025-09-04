@@ -1,5 +1,5 @@
 import {buildFilterExpression, inputForecastDate, lang, modalFilter, resetFilterForm, RFS_LAYER_URL, selectOutletCountry, selectRiverCountry, selectVPU, showChartView, updateHash,} from "./ui.js";
-import {loadStatusManager, selectedRiverId} from "./state.js";
+import {RiverId, LoadStatus} from "./states/state.js";
 import riverCountries from "/static/json/riverCountries.json" with {type: "json"};
 import outletCountries from "/static/json/outletCountries.json" with {type: "json"};
 import vpuList from "/static/json/vpuList.json" with {type: "json"};
@@ -7,7 +7,6 @@ import vpuList from "/static/json/vpuList.json" with {type: "json"};
 const timeSliderForecastDiv = document.getElementById('timeSliderForecastWrapper')
 const timeSliderFfiDiv = document.getElementById('timeSliderFfiWrapper')
 const timeSliderStatusDiv = document.getElementById('timeSliderHydroSOSWrapper')
-const riverName = document.getElementById('river-name')
 
 selectRiverCountry.innerHTML += riverCountries.map(c => `<option value="${c}">${c}</option>`).join('')
 selectOutletCountry.innerHTML += outletCountries.map(c => `<option value="${c}">${c}</option>`).join('')
@@ -55,7 +54,8 @@ require(
                 return reject()
               }
               if (response.features[0].attributes.comid === "Null" || !response.features[0].attributes.comid) {
-                loadStatusManager.update({riverid: null})
+                RiverId.reset()
+                LoadStatus.reset()
                 M.toast({html: text.prompts.tryRiverAgain, classes: "red", displayDuration: 5000})
                 console.error(error)
                 return reject()
@@ -277,7 +277,6 @@ require(
       view.on("click", event => {
         if (view.zoom < MIN_QUERY_ZOOM) return view.goTo({target: event.mapPoint, zoom: MIN_QUERY_ZOOM});
         M.toast({html: text.prompts.findingRiver, classes: "orange"})
-        loadStatusManager.update({riverid: "load", forecast: "clear", retro: "clear"})
         searchLayerByClickPromise(event)
           .then(response => {
             view.graphics.removeAll()
@@ -290,7 +289,7 @@ require(
               }
             })
             showChartView('forecast')
-            selectedRiverId.setAndFetch(response.features[0].attributes.comid)
+            RiverId.set(response.features[0].attributes.comid)
           })
       })
 

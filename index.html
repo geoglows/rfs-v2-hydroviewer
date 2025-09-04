@@ -28,9 +28,8 @@
   <link rel="stylesheet" href="/static/css/materialize.overrides.css"/>
   <script type="application/javascript" src="/static/js/locales/en-US.js" async></script>
   <script type="module" defer src="/static/js/bookmarks.js"></script>
-  <script type="module" defer src="/static/js/state.js"></script>
-  <script type="module" defer src="/static/js/ui.js"></script>
   <script type="module" defer src="/static/js/plots.js"></script>
+  <script type="module" defer src="/static/js/ui.js"></script>
   <script type="module" defer src="/static/js/data.js"></script>
   <script type="module" defer src="/static/js/map.js"></script>
   <script type="module" defer src="/static/js/main.js"></script>
@@ -169,16 +168,16 @@
       <h4>Saved Rivers</h4>
       <div style="flex-grow: 1"></div>
       <a data-tooltip="Save River" data-position="bottom" class="btn modal-trigger tooltipped" href="#add-river-bookmark" style="margin-inline: 5px"><i class="material-icons">add</i></a>
-      <a data-tooltip="Restore Default Bookmarks" data-position="bottom" class="btn tooltipped" onclick="bookmarks.restoreDefaults()"><i class="material-icons">restore</i></a>
+      <a data-tooltip="Restore Default Bookmarks" data-position="bottom" class="btn tooltipped" id="restore-bookmarks-button"><i class="material-icons">restore</i></a>
       <a class="modal-close waves-effect waves-green btn-flat">Close</a>
     </div>
     <div id="bookmarks-table" style="width: 100%">
       <table class="striped responsive-table bordered">
         <thead>
         <tr>
-          <th data-field="riverId" style="width: 20%; max-width: 175px">River ID</th>
-          <th data-field="riverName" style="width: 60%; max-width: 525px">River Name</th>
-          <th data-field="actions" style="width: 20%; max-width: 175px">Actions</th>
+          <th data-field="riverId" style="width: 20%; max-width: 200px">River ID</th>
+          <th data-field="riverName" style="width: 60%; max-width: 450px">River Name</th>
+          <th data-field="actions" style="width: 20%; max-width: 200px">Actions</th>
         </tr>
         </thead>
         <tbody id="bookmarks-tbody">
@@ -206,7 +205,7 @@
           <input id="save-river-name" contenteditable="true" onchange="this.innerText = this.innerText.slice(0, 30)" placeholder="River name">
         </td>
         <td data-field="actions">
-          <button class="btn green" onclick="bookmarks.submitForm()">Add Bookmark</button>
+          <button class="btn green" id="submit-new-bookmark">Add Bookmark</button>
         </td>
       </tr>
       </tbody>

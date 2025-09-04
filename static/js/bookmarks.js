@@ -1,16 +1,31 @@
 import namedDefaultRivers from "../json/namedDefaultRivers.json" with {type: "json"}
-import {loadStatusManager} from "./state.js";
+import {RiverId} from "./states/state.js";
 
 const key = 'riverBookmarks'
 
 export const bookmarks = (() => {
   let bookmarks = JSON.parse(localStorage.getItem(key)) || []
-  const tableModalDiv = document.getElementById('bookmarks-modal')
   const tableBody = document.getElementById('bookmarks-tbody')
   const addModalDiv = document.getElementById('add-river-bookmark')
   const newRiverIdInput = document.getElementById('save-river-id')
   const newRiverNameInput = document.getElementById('save-river-name')
 
+  // the button indicating if the currently displayed river is bookmarked or not
+  const bookmarkRiverButton = document.getElementById('save-current-river')
+  const isBookmarkedIcon = '<i class="material-icons">favorite</i>'
+  const unBookmarkIcon = '<i class="material-icons">favorite_border</i>'
+
+  // bookmarks view modal
+  const restoreBookmarksButton = document.getElementById('restore-bookmarks-button')
+  const submitNewBookmark = document.getElementById('submit-new-bookmark')
+
+  const setFavoriteIcon = () => {
+    console.log('setting favorite icon')
+    const id = RiverId.get()
+    let bookmarked = isBookmarked(id)
+    bookmarkRiverButton.innerHTML = bookmarked ? isBookmarkedIcon : unBookmarkIcon
+    bookmarkRiverButton.onclick = () => toggle(id)
+  }
   const cache = () => {
     localStorage.setItem(key, JSON.stringify(bookmarks))
     table()
@@ -19,12 +34,12 @@ export const bookmarks = (() => {
     if (bookmarks.find(r => r.id === id)) return
     bookmarks.push({id, name})
     cache()
-    loadStatusManager.refreshBookmarkIcon()
+    setFavoriteIcon()
   }
   const remove = id => {
     bookmarks = bookmarks.filter(r => r.id !== id)
     cache()
-    loadStatusManager.refreshBookmarkIcon()
+    setFavoriteIcon()
   }
   const clear = () => {
     bookmarks = []
@@ -38,12 +53,21 @@ export const bookmarks = (() => {
         <td>${b.id}</td>
         <td>${b.name}</td>
         <td>
-          <a data-position="bottom" class="btn modal-trigger" onclick="M.Modal.getInstance(document.getElementById('bookmarks-modal')).close(); setRiverId('${b.id}')"><i class="material-icons">timeline</i></a>
-          <a data-position="bottom" class="btn red" onclick="bookmarks.remove(${b.id}); this.parentElement.parentElement.remove();"><i class="material-icons">delete</i></a>
+          <a data-position="bottom" class="btn modal-trigger" onclick="M.Modal.getInstance(document.getElementById('bookmarks-modal')).close(); setRiverId(${b.id})"><i class="material-icons">timeline</i></a>
+          <a data-position="bottom" class="btn red" data-bookmarkId="${b.id}"><i class="material-icons">delete</i></a>
         </td>
       </tr>`
       })
       .join('')
+    // attach delete event listeners
+    tableBody
+      .querySelectorAll('.red')
+      .forEach(btn => {
+        btn.onclick = () => {
+          remove(parseInt(btn.getAttribute('data-bookmarkId')))
+          btn.parentElement.parentElement.remove()
+        }
+      })
   }
   const restoreDefaults = () => {
     namedDefaultRivers.forEach(r => add(r))
@@ -76,7 +100,7 @@ export const bookmarks = (() => {
   const toggle = riverid => {
     if (isBookmarked(riverid)) {
       remove(riverid)
-      loadStatusManager.refreshBookmarkIcon()
+      setFavoriteIcon()
       return
     }
     newRiverIdInput.value = riverid || ''
@@ -84,19 +108,12 @@ export const bookmarks = (() => {
     M.Modal.getInstance(addModalDiv).open()
   }
 
+  restoreBookmarksButton.onclick = restoreDefaults
+  submitNewBookmark.onclick = submitForm
   if (bookmarks.length === 0) restoreDefaults() // on first load, populate with defaults
   table()
 
   return {
-    add, cache,  remove, clear, list, table, restoreDefaults, submitForm, toggle, isBookmarked
+    add, cache, remove, clear, list, table, restoreDefaults, submitForm, toggle, isBookmarked, setFavoriteIcon
   }
 })()
-
-window.bookmarks = {
-  restoreDefaults: bookmarks.restoreDefaults,
-  submitForm: bookmarks.submitForm,
-  add: bookmarks.add,
-  remove: bookmarks.remove,
-  generateTable: bookmarks.table,
-  toggle: bookmarks.toggle,
-}

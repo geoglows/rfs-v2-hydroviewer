@@ -1,4 +1,4 @@
-import {loadStatusManager, selectedRiverId, useBiasCorrected, useForecastMembers} from "./state.js";
+import {RiverId, LoadStatus, useBiasCorrected, useForecastMembers} from "./states/state.js";
 import {clearCharts, plotAllForecast, plotAllRetro} from "./plots.js";
 import {inputForecastDate} from "./ui.js";
 
@@ -53,6 +53,42 @@ const fetchRetroPromise = riverid => {
   })
 }
 
+const getForecastData = riverid => {
+  LoadStatus.update({forecast: "load"})
+  const date = inputForecastDate.value.replaceAll("-", "")
+  const showMembers = useForecastMembers()
+  const forecastFetcher = showMembers ? fetchForecastMembersPromise : fetchForecastPromise
+  Promise
+    .all([forecastFetcher({riverid, date}), fetchReturnPeriodsPromise(riverid)])
+    .then(responses => {
+      plotAllForecast({forecast: responses[0], rp: responses[1], riverid: riverid, showMembers})
+      LoadStatus.update({forecast: "ready"})
+    })
+    .catch(() => {
+      LoadStatus.update({forecast: "fail"})
+      clearCharts('forecast')
+    })
+}
+const getRetrospectiveData = () => {
+  if (!RiverId.get()) return
+  LoadStatus.update({retro: "load"})
+  fetchRetroPromise(RiverId.get())
+    .then(response => {
+      plotAllRetro({retro: response, riverid: RiverId.get()})
+      LoadStatus.update({retro: "ready"})
+    })
+    .catch(() => {
+      LoadStatus.update({retro: "fail"})
+      clearCharts('retro')
+    })
+}
+const fetchData = riverid => {
+  if (!riverid) return
+  getForecastData(riverid)
+  getRetrospectiveData()
+  M.Modal.getInstance(document.getElementById('charts-modal')).open()
+}
+
 const updateDownloadLinks = riverid => {
   const hrefForecast = riverid ? `${REST_ENDPOINT}/forecast/${riverid}` : ""
   const hrefRetro = riverid ? `${REST_ENDPOINT}/retrospective/${riverid}` : ""
@@ -60,42 +96,6 @@ const updateDownloadLinks = riverid => {
   document.getElementById("download-retrospective-link").href = hrefRetro
   document.getElementById("download-forecast-btn").disabled = !riverid
   document.getElementById("download-retrospective-btn").disabled = !riverid
-}
-
-const getForecastData = riverid => {
-  selectedRiverId.set(riverid)
-  if (!selectedRiverId.get()) return
-  loadStatusManager.update({forecast: "load"})
-  const date = inputForecastDate.value.replaceAll("-", "")
-  const showMembers = useForecastMembers()
-  const forecastFetcher = showMembers ? fetchForecastMembersPromise : fetchForecastPromise
-  Promise
-    .all([forecastFetcher({riverid: riverid, date}), fetchReturnPeriodsPromise(riverid)])
-    .then(responses => {
-      plotAllForecast({forecast: responses[0], rp: responses[1], riverid: riverid, showMembers})
-      loadStatusManager.update({forecast: "ready"})
-    })
-    .catch(() => {
-      loadStatusManager.update({forecast: "fail"})
-    })
-}
-const getRetrospectiveData = () => {
-  if (!selectedRiverId.get()) return
-  clearCharts('retrospective')
-  loadStatusManager.update({retro: "load"})
-  fetchRetroPromise(selectedRiverId.get())
-    .then(response => {
-      plotAllRetro({retro: response, riverid: selectedRiverId.get()})
-      loadStatusManager.update({retro: "ready"})
-    })
-    .catch(() => loadStatusManager.update({retro: "fail"}))
-}
-const fetchData = riverid => {
-  if (!riverid) return loadStatusManager.update({riverid: null})
-  loadStatusManager.update({riverid: riverid, forecast: "clear", retro: "clear"})
-  getForecastData(riverid)
-  getRetrospectiveData()
-  M.Modal.getInstance(document.getElementById('charts-modal')).open()
 }
 
 export {
