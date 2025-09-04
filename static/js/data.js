@@ -4,95 +4,129 @@ import {inputForecastDate} from "./ui.js";
 
 const REST_ENDPOINT = 'https://geoglows.ecmwf.int/api/v2'
 
-const CACHE_SIZE = 50;
-const dataCache = new Map();
+const CACHE_SIZE = 100;
+const DB_NAME = 'RiverCacheDB';
+const STORE_NAME = 'cache';
 
-const cacheKey = ({riverid, type, forecastDate}) => `${riverid}-${type}-${forecastDate || 'none'}`
-const dataIsCached = key => dataCache.has(key)
-const getCachedData = key => dataCache.get(key)
-const cacheData = ({data, riverid, type, forecastDate}) => {
-  const key = cacheKey({riverid, type, forecastDate});
-
-  if (dataCache.has(key)) dataCache.delete(key)  // allows the item to be moved to the end of the delete order
-  dataCache.set(key, data);
-
-  if (dataCache.size > CACHE_SIZE) {
-    const oldestKey = dataCache.keys().next().value;
-    dataCache.delete(oldestKey);
-  }
-}
-
-const fetchForecastPromise = ({riverid, date}) => {
-  let key = cacheKey({riverid, type: 'forecast', forecastDate: date})
-  if (dataIsCached(key)) return Promise.resolve(getCachedData(key))
+const cacheKey = ({riverid, type, forecastDate}) => `${riverid}-${type}-${forecastDate || 'none'}`;
+const openCacheDB = () => {
   return new Promise((resolve, reject) => {
-    fetch(`${REST_ENDPOINT}/forecast/${riverid}/?format=json&date=${date}&bias_corrected=${useBiasCorrected()}`)
-      .then(response => response.json())
-      .then(response => {
-        cacheData({data: response, riverid, type: 'forecast', forecastDate: date})
-        return response
-      })
-      .then(response => resolve(response))
-      .catch(() => reject())
-  })
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onupgradeneeded = event => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, {keyPath: 'key'});
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
 }
-const fetchForecastMembersPromise = ({riverid, date}) => {
-  let key = cacheKey({riverid, type: 'forecastMembers', forecastDate: date})
-  if (dataIsCached(key)) return Promise.resolve(getCachedData(key))
+const pruneCacheIfNeeded = async db => {
   return new Promise((resolve, reject) => {
-    fetch(`${REST_ENDPOINT}/forecastensemble/${riverid}/?format=json&date=${date}&bias_corrected=${useBiasCorrected()}`)
-      .then(response => response.json())
-      .then(response => {
-        // remove ensemble_52, remove entries in arrays for datetime and members that are empty
-        if (response.hasOwnProperty('ensemble_52')) delete response.ensemble_52;
-        const memberKeys = Object.keys(response).filter(key => key.startsWith('ensemble_'))
-        const goodIndexes = response.ensemble_01.reduce((acc, value, index) => {
-          if (value !== "") acc.push(index)
-          return acc
-        }, [])
-        return {
-          datetime: response.datetime.filter((_, index) => goodIndexes.includes(index)),
-          ...memberKeys.reduce((acc, key) => {
-            acc[key] = response[key].filter((_, index) => goodIndexes.includes(index))
-            return acc
-          }, {})
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.getAll();
+
+    req.onsuccess = function () {
+      const items = req.result;
+      if (items.length > CACHE_SIZE) {
+        // Sort by timestamp (oldest first)
+        items.sort((a, b) => a.timestamp - b.timestamp);
+        const toRemove = items.length - CACHE_SIZE;
+        for (let i = 0; i < toRemove; i++) {
+          store.delete(items[i].key);
         }
-      })
-      .then(response => {
-        cacheData({data: response, riverid, type: 'forecastMembers', forecastDate: date})
-        return response
-      })
-      .then(response => resolve(response))
-      .catch(() => reject())
-  })
+      }
+      resolve();
+    };
+    req.onerror = () => reject(req.error);
+  });
 }
-const fetchReturnPeriodsPromise = riverid => {
-  const key = cacheKey({riverid, type: 'returnPeriods'})
-  if (dataIsCached(key)) return Promise.resolve(getCachedData(key))
+const dataIsCached = async key => {
+  const db = await openCacheDB();
   return new Promise((resolve, reject) => {
-    fetch(`${REST_ENDPOINT}/returnperiods/${riverid}/?format=json&bias_corrected=${useBiasCorrected()}`)
-      .then(response => response.json())
-      .then(response => {
-        cacheData({data: response, riverid, type: 'returnPeriods'})
-        return response
-      })
-      .then(response => resolve(response))
-      .catch(() => reject())
-  })
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.get(key);
+    req.onsuccess = () => resolve(!!req.result);
+    req.onerror = () => reject(req.error);
+  });
+};
+const getCachedData = async key => {
+  const db = await openCacheDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.get(key);
+    req.onsuccess = () => resolve(req.result ? req.result.data : undefined);
+    req.onerror = () => reject(req.error);
+  });
+};
+const cacheData = async ({data, riverid, type, forecastDate}) => {
+  const db = await openCacheDB();
+  const key = cacheKey({riverid, type, forecastDate});
+  const tx = db.transaction(STORE_NAME, 'readwrite');
+  const store = tx.objectStore(STORE_NAME);
+  store.put({key, data, timestamp: Date.now()});
+  tx.oncomplete = () => pruneCacheIfNeeded(db);
+  tx.onerror = () => {}
+};
+
+const fetchForecastPromise = async ({riverid, date}) => {
+  let key = cacheKey({riverid, type: 'forecast', forecastDate: date});
+  if (await dataIsCached(key)) return getCachedData(key);
+  return fetch(`${REST_ENDPOINT}/forecast/${riverid}/?format=json&date=${date}&bias_corrected=${useBiasCorrected()}`)
+    .then(response => response.json())
+    .then(response => {
+      cacheData({data: response, riverid, type: 'forecast', forecastDate: date});
+      return response;
+    });
 }
-const fetchRetroPromise = riverid => {
-  const key = cacheKey({riverid, type: 'retro'})
-  if (dataIsCached(key)) return Promise.resolve(getCachedData(key))
-  return new Promise((resolve, reject) => {
-    fetch(`${REST_ENDPOINT}/retrospective/${riverid}/?format=json&bias_corrected=${useBiasCorrected()}`)
-      .then(response => response.json())
-      .then(response => {
-        cacheData({data: response, riverid, type: 'retro'})
-        return response
-      })
-      .then(response => resolve(response))
-      .catch(() => reject())
-  })
+const fetchForecastMembersPromise = async ({riverid, date}) => {
+  let key = cacheKey({riverid, type: 'forecastMembers', forecastDate: date});
+  if (await dataIsCached(key)) return getCachedData(key);
+  return fetch(`${REST_ENDPOINT}/forecastensemble/${riverid}/?format=json&date=${date}&bias_corrected=${useBiasCorrected()}`)
+    .then(response => response.json())
+    .then(response => {
+      if (response.hasOwnProperty('ensemble_52')) delete response.ensemble_52;
+      const memberKeys = Object.keys(response).filter(key => key.startsWith('ensemble_'));
+      const goodIndexes = response.ensemble_01.reduce((acc, value, index) => {
+        if (value !== "") acc.push(index);
+        return acc;
+      }, []);
+      return {
+        datetime: response.datetime.filter((_, index) => goodIndexes.includes(index)),
+        ...memberKeys.reduce((acc, key) => {
+          acc[key] = response[key].filter((_, index) => goodIndexes.includes(index));
+          return acc;
+        }, {})
+      }
+    })
+    .then(response => {
+      cacheData({data: response, riverid, type: 'forecastMembers', forecastDate: date});
+      return response;
+    });
+}
+const fetchReturnPeriodsPromise = async riverid => {
+  const key = cacheKey({riverid, type: 'returnPeriods'});
+  if (await dataIsCached(key)) return getCachedData(key);
+  return fetch(`${REST_ENDPOINT}/returnperiods/${riverid}/?format=json&bias_corrected=${useBiasCorrected()}`)
+    .then(response => response.json())
+    .then(response => {
+      cacheData({data: response, riverid, type: 'returnPeriods'});
+      return response;
+    });
+}
+const fetchRetroPromise = async riverid => {
+  const key = cacheKey({riverid, type: 'retro'});
+  if (await dataIsCached(key)) return getCachedData(key);
+  return fetch(`${REST_ENDPOINT}/retrospective/${riverid}/?format=json&bias_corrected=${useBiasCorrected()}`)
+    .then(response => response.json())
+    .then(response => {
+      cacheData({data: response, riverid, type: 'retro'});
+      return response;
+    });
 }
 
 const getForecastData = riverid => {
@@ -105,7 +139,6 @@ const getForecastData = riverid => {
   Promise
     .all([forecastFetcher({riverid, date}), fetchReturnPeriodsPromise(riverid)])
     .then(responses => {
-      console.log(responses)
       plotAllForecast({forecast: responses[0], rp: responses[1], riverid: riverid, showMembers})
       LoadStatus.update({forecast: "ready"})
     })

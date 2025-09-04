@@ -59,7 +59,6 @@ export const bookmarks = (() => {
       </tr>`
       })
       .join('')
-    // attach delete event listeners
     tableBody
       .querySelectorAll('.red')
       .forEach(btn => {
