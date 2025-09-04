@@ -2,7 +2,6 @@ import {displayLoadingStatus, displayRiverNumber, hideRiverInput, inputForecastD
 import {fetchData, getForecastData} from "./data.js";
 import {bookmarks} from "./bookmarks.js";
 import {LoadStatus, RiverId} from "./states/state.js";
-import {clearCharts} from "./plots.js";
 
 //////////////////////////////////////////////////////////////////////// INITIAL LOAD
 M.AutoInit();
@@ -10,7 +9,6 @@ Plotly.setPlotConfig({'locale': lang})
 if (window.innerWidth < 800) M.toast({html: text.prompts.mobile, classes: "blue custom-toast-placement", displayLength: 7500})
 
 RiverId.subscribe(LoadStatus.reset)
-RiverId.subscribe(clearCharts)
 RiverId.subscribe(fetchData) // as early as possible to start loading data
 RiverId.subscribe(displayRiverNumber)
 RiverId.subscribe(bookmarks.setFavoriteIcon)
