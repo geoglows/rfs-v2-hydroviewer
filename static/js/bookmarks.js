@@ -20,7 +20,6 @@ export const bookmarks = (() => {
   const submitNewBookmark = document.getElementById('submit-new-bookmark')
 
   const setFavoriteIcon = () => {
-    console.log('setting favorite icon')
     const id = RiverId.get()
     let bookmarked = isBookmarked(id)
     bookmarkRiverButton.innerHTML = bookmarked ? isBookmarkedIcon : unBookmarkIcon

@@ -1,18 +1,44 @@
-import {RiverId, LoadStatus, useBiasCorrected, useForecastMembers} from "./states/state.js";
+import {LoadStatus, RiverId, useBiasCorrected, useForecastMembers} from "./states/state.js";
 import {clearCharts, plotAllForecast, plotAllRetro} from "./plots.js";
 import {inputForecastDate} from "./ui.js";
 
 const REST_ENDPOINT = 'https://geoglows.ecmwf.int/api/v2'
 
+const CACHE_SIZE = 50;
+const dataCache = new Map();
+
+const cacheKey = ({riverid, type, forecastDate}) => `${riverid}-${type}-${forecastDate || 'none'}`
+const dataIsCached = key => dataCache.has(key)
+const getCachedData = key => dataCache.get(key)
+const cacheData = ({data, riverid, type, forecastDate}) => {
+  const key = cacheKey({riverid, type, forecastDate});
+
+  if (dataCache.has(key)) dataCache.delete(key)  // allows the item to be moved to the end of the delete order
+  dataCache.set(key, data);
+
+  if (dataCache.size > CACHE_SIZE) {
+    const oldestKey = dataCache.keys().next().value;
+    dataCache.delete(oldestKey);
+  }
+}
+
 const fetchForecastPromise = ({riverid, date}) => {
+  let key = cacheKey({riverid, type: 'forecast', forecastDate: date})
+  if (dataIsCached(key)) return Promise.resolve(getCachedData(key))
   return new Promise((resolve, reject) => {
     fetch(`${REST_ENDPOINT}/forecast/${riverid}/?format=json&date=${date}&bias_corrected=${useBiasCorrected()}`)
       .then(response => response.json())
+      .then(response => {
+        cacheData({data: response, riverid, type: 'forecast', forecastDate: date})
+        return response
+      })
       .then(response => resolve(response))
       .catch(() => reject())
   })
 }
 const fetchForecastMembersPromise = ({riverid, date}) => {
+  let key = cacheKey({riverid, type: 'forecastMembers', forecastDate: date})
+  if (dataIsCached(key)) return Promise.resolve(getCachedData(key))
   return new Promise((resolve, reject) => {
     fetch(`${REST_ENDPOINT}/forecastensemble/${riverid}/?format=json&date=${date}&bias_corrected=${useBiasCorrected()}`)
       .then(response => response.json())
@@ -32,22 +58,38 @@ const fetchForecastMembersPromise = ({riverid, date}) => {
           }, {})
         }
       })
+      .then(response => {
+        cacheData({data: response, riverid, type: 'forecastMembers', forecastDate: date})
+        return response
+      })
       .then(response => resolve(response))
       .catch(() => reject())
   })
 }
 const fetchReturnPeriodsPromise = riverid => {
+  const key = cacheKey({riverid, type: 'returnPeriods'})
+  if (dataIsCached(key)) return Promise.resolve(getCachedData(key))
   return new Promise((resolve, reject) => {
     fetch(`${REST_ENDPOINT}/returnperiods/${riverid}/?format=json&bias_corrected=${useBiasCorrected()}`)
       .then(response => response.json())
+      .then(response => {
+        cacheData({data: response, riverid, type: 'returnPeriods'})
+        return response
+      })
       .then(response => resolve(response))
       .catch(() => reject())
   })
 }
 const fetchRetroPromise = riverid => {
+  const key = cacheKey({riverid, type: 'retro'})
+  if (dataIsCached(key)) return Promise.resolve(getCachedData(key))
   return new Promise((resolve, reject) => {
     fetch(`${REST_ENDPOINT}/retrospective/${riverid}/?format=json&bias_corrected=${useBiasCorrected()}`)
       .then(response => response.json())
+      .then(response => {
+        cacheData({data: response, riverid, type: 'retro'})
+        return response
+      })
       .then(response => resolve(response))
       .catch(() => reject())
   })
