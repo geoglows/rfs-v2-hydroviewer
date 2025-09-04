@@ -12,8 +12,8 @@ export const bookmarks = (() => {
 
   // the button indicating if the currently displayed river is bookmarked or not
   const bookmarkRiverButton = document.getElementById('save-current-river')
-  const isBookmarkedIcon = '<i class="material-icons">favorite</i>'
-  const unBookmarkIcon = '<i class="material-icons">favorite_border</i>'
+  const isBookmarkedIcon = '<i class="material-icons" style="color: red">favorite</i>'
+  const unBookmarkIcon = '<i class="material-icons" style="color: red">favorite_border</i>'
 
   // bookmarks view modal
   const restoreBookmarksButton = document.getElementById('restore-bookmarks-button')

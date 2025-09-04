@@ -96,6 +96,8 @@ const fetchRetroPromise = riverid => {
 }
 
 const getForecastData = riverid => {
+  riverid = riverid || RiverId.get()
+  if (!riverid) return
   LoadStatus.update({forecast: "load"})
   const date = inputForecastDate.value.replaceAll("-", "")
   const showMembers = useForecastMembers()
@@ -103,31 +105,34 @@ const getForecastData = riverid => {
   Promise
     .all([forecastFetcher({riverid, date}), fetchReturnPeriodsPromise(riverid)])
     .then(responses => {
+      console.log(responses)
       plotAllForecast({forecast: responses[0], rp: responses[1], riverid: riverid, showMembers})
       LoadStatus.update({forecast: "ready"})
     })
-    .catch(() => {
+    .catch(error => {
+      console.error(error)
       LoadStatus.update({forecast: "fail"})
       clearCharts('forecast')
     })
 }
-const getRetrospectiveData = () => {
-  if (!RiverId.get()) return
+const getRetrospectiveData = riverid => {
+  riverid = riverid || RiverId.get()
+  if (!riverid) return
   LoadStatus.update({retro: "load"})
   fetchRetroPromise(RiverId.get())
     .then(response => {
       plotAllRetro({retro: response, riverid: RiverId.get()})
       LoadStatus.update({retro: "ready"})
     })
-    .catch(() => {
+    .catch(error => {
+      console.error(error)
       LoadStatus.update({retro: "fail"})
       clearCharts('retro')
     })
 }
 const fetchData = riverid => {
-  if (!riverid) return
   getForecastData(riverid)
-  getRetrospectiveData()
+  getRetrospectiveData(riverid)
   M.Modal.getInstance(document.getElementById('charts-modal')).open()
 }
 
@@ -136,8 +141,6 @@ const updateDownloadLinks = riverid => {
   const hrefRetro = riverid ? `${REST_ENDPOINT}/retrospective/${riverid}` : ""
   document.getElementById("download-forecast-link").href = hrefForecast
   document.getElementById("download-retrospective-link").href = hrefRetro
-  document.getElementById("download-forecast-btn").disabled = !riverid
-  document.getElementById("download-retrospective-btn").disabled = !riverid
 }
 
 export {

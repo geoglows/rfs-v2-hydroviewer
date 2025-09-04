@@ -75,18 +75,13 @@ arcgis-map {
     background: rgba(255, 255, 255, 0.9);
 }
 
-.load-status {
+.header-group {
     text-align: center;
     font-weight: bold;
-    width: 100%;
     display: flex;
-    flex: 0 1 0;
     flex-direction: row;
     justify-content: center;
-}
-
-.load-status:first-child {
-    background-color: #0084ff;
+    align-items: center;
 }
 
 .modal-header-bar {
@@ -223,17 +218,12 @@ input.river-id {
     margin: 10px
 }
 
-#selected-river-id {
-    margin: 0;
-    width: 180px;
-}
-
 table.forecast-probability-table td, table.forecast-probability-table th {
     text-align: center;
 }
 
 #forecast-date-calendar {
-    width: 180px;
+    width: 150px;
     margin: 0;
 }
 

@@ -27,7 +27,6 @@
   <link rel="stylesheet" href="/static/css/main.css"/>
   <link rel="stylesheet" href="/static/css/materialize.overrides.css"/>
   <script type="application/javascript" src="/static/js/locales/en-US.js" async></script>
-  <script type="module" defer src="/static/js/bookmarks.js"></script>
   <script type="module" defer src="/static/js/plots.js"></script>
   <script type="module" defer src="/static/js/ui.js"></script>
   <script type="module" defer src="/static/js/data.js"></script>
@@ -36,50 +35,7 @@
 </head>
 
 <body>
-<!-- Main User Interface Modals -->
-<div id="charts-modal" class="modal always-large-modal">
-  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
-    <div class="modal-header-bar">
-      <h4 id="selected-river-id"></h4>
-      <div class="load-status">
-        <button id="showForecastCharts" class="btn status-btn active" onclick="showChartView('forecast')">Forecast<span id="forecast-load-icon"></span></button>
-        <button id="showRetroCharts" class="btn status-btn" onclick="showChartView('retro')">Retro<span class="hide-on-small-only">spective</span><span id="retro-load-icon"></span></button>
-        <button class="btn btn-flat status-btn" onclick="toggleVisibleRiverInput()">Enter <span class="hide-on-small-only">River </span>ID</button>
-      </div>
-      <input type="date" id="forecast-date-calendar" name="forecast-date-calendar" min="2024-07-01" onkeydown="return false">
-    </div>
-    <div id="enter-river-id-container" class="hide">
-      <input type="number" id="river-id" placeholder="Enter 9 Digit River ID">
-      <button class="waves-effect waves-light btn" onclick="setRiverId()">Submit</button>
-    </div>
-    <div class="chart-spaces chart-category-container" style="position: relative; height: 100%">
-      <div id="forecastChartSpace" class="chart-category-container">
-        <div id="forecastPlot" class="chart">
-          <h4>Enter a River ID or use the map to click on a stream to view data</h4>
-        </div>
-        <div id="forecastTable" class="chart"></div>
-      </div>
-      <div id="retroChartSpace" class="chart-category-container dissolve-backwards">
-        <div id="retroPlot" class="chart">
-          <h4>Enter a River ID or use the map to click on a stream to view data</h4>
-        </div>
-        <div id="yearlyVolPlot" class="chart"></div>
-        <div id="yearlyStatusPlot" class="chart"></div>
-        <div id="fdcPlot" class="chart"></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" id="save-current-river"><i class="material-icons">favorite_border</i></button>
-      <button class="btn btn-success" id="download-forecast-btn" disabled>
-        <a id="download-forecast-link" target="_blank">Save Forecast Data (CSV)</a>
-      </button>
-      <button class="btn btn-success" id="download-retrospective-btn" disabled>
-        <a id="download-retrospective-link" target="_blank">Save Retrospective Data (CSV)</a>
-      </button>
-      <a class="modal-close waves-effect waves-green btn-flat">Close</a>
-    </div>
-  </div>
-</div>
+<!-- Settings-->
 <div id="about-modal" class="modal">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
     <h4>About</h4>
@@ -123,6 +79,69 @@
   </div>
   <div class="modal-footer">
     <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+  </div>
+</div>
+
+<!-- Data presentation -->
+<div id="charts-modal" class="modal always-large-modal">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
+    <div class="modal-header-bar">
+      <div class="header-group">
+        <a class="btn btn-flat modal-trigger waves-effect waves-teal tooltipped" data-tooltip="Search for a river" href="#enter-river-id-modal"><i class="material-icons" style="color: black">search</i></a>
+        <h4 id="selected-river-id" style="margin: 0">Select a river</h4>
+        <button class="btn-flat" id="save-current-river"></button>
+      </div>
+      <div class="header-group">
+        <button id="showForecastCharts" class="btn status-btn active" onclick="showChartView('forecast')">Forecast<span id="forecast-load-icon"></span></button>
+        <button id="showRetroCharts" class="btn status-btn" onclick="showChartView('retro')">Retro<span class="hide-on-small-only">spective</span><span id="retro-load-icon"></span></button>
+        <a class="btn btn-flat waves-effect waves-teal tooltipped dropdown-trigger" data-target="download-select" data-tooltip="Download CSVs"><i class="material-icons">download</i></a>
+        <ul id="download-select" class="dropdown-content">
+          <li><a id="download-forecast-link" target="_blank">Save Forecast Data (CSV)</a></li>
+          <li><a id="download-retrospective-link" target="_blank">Save Retrospective Data (CSV)</a></li>
+        </ul>
+        <button class="btn modal-close waves-effect waves-red btn-flat">X</button>
+      </div>
+    </div>
+    <div class="chart-spaces chart-category-container" style="position: relative; height: 100%">
+      <div id="forecastChartSpace" class="chart-category-container">
+        <div id="forecast-date-controls">
+          <label for="forecast-date-calendar">Forecast Date:</label>
+          <input type="date" id="forecast-date-calendar" name="forecast-date-calendar" min="2024-07-01" onkeydown="return false">
+        </div>
+        <div id="forecastPlot" class="chart">
+          <h4>Enter a River ID or use the map to click on a stream to view data</h4>
+        </div>
+        <div id="forecastTable" class="chart"></div>
+      </div>
+      <div id="retroChartSpace" class="chart-category-container dissolve-backwards">
+        <div id="retroPlot" class="chart">
+          <h4>Enter a River ID or use the map to click on a stream to view data</h4>
+        </div>
+        <div id="yearlyVolPlot" class="chart"></div>
+        <div id="yearlyStatusPlot" class="chart"></div>
+        <div id="fdcPlot" class="chart"></div>
+      </div>
+    </div>
+    <!--    <div class="modal-footer">-->
+    <!--      <button class="btn btn-success" id="download-forecast-btn" disabled>-->
+    <!--        <a id="download-forecast-link" target="_blank">Save Forecast Data (CSV)</a>-->
+    <!--      </button>-->
+    <!--      <button class="btn btn-success" id="download-retrospective-btn" disabled>-->
+    <!--        <a id="download-retrospective-link" target="_blank">Save Retrospective Data (CSV)</a>-->
+    <!--      </button>-->
+    <!--    </div>-->
+  </div>
+</div>
+<div id="enter-river-id-modal" class="modal" data-category="river-bookmarks">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
+    <div style="display: flex; flex-direction: row; align-items: center; gap: 5px; justify-content: center; width: 100%">
+      <label for="river-id">River ID</label>
+      <input type="number" id="river-id" placeholder="Enter 9 Digit River ID" style="max-width: 200px">
+      <button class="waves-effect waves-light btn" onclick="setRiverId()">Submit</button>
+    </div>
+    <div class="modal-footer">
+      <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+    </div>
   </div>
 </div>
 
