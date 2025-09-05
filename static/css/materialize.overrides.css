@@ -1,5 +1,5 @@
 /* Materialize CSS Overrides */
-.modal {
+.always-large-modal {
     width: 85%;
     max-width: 1400px;
     height: 80%;
@@ -7,9 +7,6 @@
     padding: 10px;
 }
 
-.modal.bottom-sheet {
-    width: 100%;
-    max-width: 100%;
-    height: max-content;
-    max-height: 65%;
+.modal .modal-content {
+    padding: 20px;
 }

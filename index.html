@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <!-- Plotly -->
-  <script src="https://cdn.plot.ly/plotly-2.35.3.min.js" charset="utf-8"></script>
+  <script src="https://cdn.plot.ly/plotly-3.1.0.min.js" charset="utf-8"></script>
   <!-- ArcGIS JS -->
   <script type="module" src="https://js.arcgis.com/calcite-components/3.2.1/calcite.esm.js"></script>
   <link rel="stylesheet" href="https://js.arcgis.com/4.33/esri/themes/light/main.css"/>
@@ -26,91 +26,17 @@
   <!-- App -->
   <link rel="stylesheet" href="/static/css/main.css"/>
   <link rel="stylesheet" href="/static/css/materialize.overrides.css"/>
-  <script type="application/javascript" src="/static/js/localization.en-US.js" async></script>
-  <script type="module" src="/static/js/settings.js"></script>
-  <script type="module" src="/static/js/ui.js"></script>
-  <script type="module" src="/static/js/plots.js"></script>
-  <script type="module" src="/static/js/data.js"></script>
-  <script type="module" src="/static/js/main.js"></script>
+  <script type="application/javascript" src="/static/js/locales/en-US.js" async></script>
+  <script type="module" defer src="/static/js/plots.js"></script>
+  <script type="module" defer src="/static/js/ui.js"></script>
+  <script type="module" defer src="/static/js/data.js"></script>
+  <script type="module" defer src="/static/js/map.js"></script>
+  <script type="module" defer src="/static/js/main.js"></script>
 </head>
 
 <body>
-<div id="charts-modal" class="modal">
-  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
-    <div class="modal-header-bar">
-      <h4 id="selected-river-id"></h4>
-      <div class="load-status">
-        <button id="showForecastCharts" class="btn status-btn active" onclick="showChartView('forecast')">Forecast<span id="forecast-load-icon"></span></button>
-        <button id="showRetroCharts" class="btn status-btn" onclick="showChartView('retro')">Retro<span class="hide-on-small-only">spective</span><span id="retro-load-icon"></span></button>
-        <button class="btn btn-flat status-btn" onclick="toggleVisibleRiverInput()">Enter <span class="hide-on-small-only">River </span>ID</button>
-      </div>
-      <input type="date" id="forecast-date-calendar" name="forecast-date-calendar" min="2024-07-01" onkeydown="return false">
-    </div>
-    <div id="enter-river-id-container" class="hide">
-      <input type="number" id="river-id" placeholder="Enter 9 Digit River ID">
-      <button class="waves-effect waves-light btn" onclick="setRiverId()">Submit</button>
-    </div>
-    <div class="chart-spaces chart-category-container" style="position: relative; height: 100%">
-      <div id="forecastChartSpace" class="chart-category-container">
-        <div id="forecastPlot" class="chart">
-          <h4>Enter a River ID or use the map to click on a stream to view data</h4>
-        </div>
-        <div id="forecastTable" class="chart"></div>
-      </div>
-      <div id="retroChartSpace" class="chart-category-container dissolve-backwards">
-        <div id="retroPlot" class="chart">
-          <h4>Enter a River ID or use the map to click on a stream to view data</h4>
-        </div>
-        <div id="yearlyVolPlot" class="chart"></div>
-        <div id="yearlyStatusPlot" class="chart"></div>
-        <div id="fdcPlot" class="chart"></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-success" id="download-forecast-btn" disabled>
-        <a id="download-forecast-link" target="_blank">Save Forecast Data (CSV)</a>
-      </button>
-      <button class="btn btn-success" id="download-retrospective-btn" disabled>
-        <a id="download-retrospective-link" target="_blank">Save Retrospective Data (CSV)</a>
-      </button>
-      <a class="modal-close waves-effect waves-green btn-flat">Close</a>
-    </div>
-  </div>
-</div>
-<div id="filter-modal" class="modal bottom-sheet">
-  <div class="modal-content">
-    <h4>Filter Streams on Map</h4>
-    <div><a href="https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer/0">Visit the Esri Living Atlas</a> for all attribute options</div>
-    <div style="width: 100%">
-      <div>
-        <label for="outletCountry">River Outlet Country</label>
-        <select id="outletCountry" class="browser default" multiple></select>
-      </div>
-      <div>
-        <label for="riverCountry">River Country</label>
-        <select id="riverCountry" class="browser default" multiple></select>
-      </div>
-      <div>
-        <label for="vpuSelect">VPU Number</label>
-        <select id="vpuSelect" class="browser default" multiple></select>
-      </div>
-      <div>
-        <label for="definitionString">Enter Custom SQL Filters</label>
-        <input type="text" id="definitionString" placeholder=""/>
-      </div>
-      <div>
-        <label for="definition-expression">Definition Currently Displayed</label>
-        <input type="text" id="definition-expression" disabled/>
-      </div>
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn" onclick="updateLayerDefinitions()">Apply Filters</button>
-    <button class="btn btn-secondary" onclick="resetDefinitionExpression()">Clear Filters</button>
-    <a class="modal-close waves-effect waves-green btn-flat">Close</a>
-  </div>
-</div>
-<div id="about-modal" class="modal bottom-sheet">
+<!-- Settings-->
+<div id="about-modal" class="modal">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
     <h4>About</h4>
     <div style="width: 100%; max-width: 800px">
@@ -144,9 +70,163 @@
         <span>Show forecast ensemble members</span>
       </label>
     </div>
+    <div class="options-wrapper">
+      <label>
+        <input type="checkbox" class="filled-in" id="settingsUseBiasCorrected"/>
+        <span>Use experimental global bias correction on all datasets</span>
+      </label>
+    </div>
   </div>
   <div class="modal-footer">
     <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+  </div>
+</div>
+
+<!-- Data presentation -->
+<div id="charts-modal" class="modal always-large-modal">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
+    <div class="modal-header-bar">
+      <div class="header-group">
+        <a class="btn btn-flat modal-trigger waves-effect waves-teal tooltipped" data-tooltip="Search for a river" href="#enter-river-id-modal"><i class="material-icons" style="color: black">search</i></a>
+        <h4 id="selected-river-id" style="margin: 0">Select a river</h4>
+        <button class="btn-flat" id="save-current-river"></button>
+      </div>
+      <div class="header-group">
+        <button id="showForecastCharts" class="btn status-btn active" onclick="showChartView('forecast')">Forecast<span id="forecast-load-icon"></span></button>
+        <button id="showRetroCharts" class="btn status-btn" onclick="showChartView('retro')">Retro<span class="hide-on-small-only">spective</span><span id="retro-load-icon"></span></button>
+        <a class="btn btn-flat waves-effect waves-teal tooltipped dropdown-trigger" data-target="download-select" data-tooltip="Download CSVs"><i class="material-icons">download</i></a>
+        <ul id="download-select" class="dropdown-content">
+          <li><a id="download-forecast-link" target="_blank">Save Forecast Data (CSV)</a></li>
+          <li><a id="download-retrospective-link" target="_blank">Save Retrospective Data (CSV)</a></li>
+        </ul>
+        <button class="btn modal-close waves-effect waves-red btn-flat">X</button>
+      </div>
+    </div>
+    <div class="chart-spaces chart-category-container" style="position: relative; height: 100%">
+      <div id="forecastChartSpace" class="chart-category-container">
+        <div id="forecast-date-controls">
+          <button id="datepicker-previous" class="btn btn-flat"><i class="material-icons">arrow_back</i></button>
+          <label for="forecast-date-calendar">Forecast Date:</label>
+          <input type="date" id="forecast-date-calendar" onkeydown="return false">
+          <button id="datepicker-next" class="btn btn-flat" disabled><i class="material-icons">arrow_forward</i></button>
+        </div>
+        <div id="forecastPlot" class="chart">
+          <h4>Enter a River ID or use the map to click on a stream to view data</h4>
+        </div>
+        <div id="forecastTable" class="chart"></div>
+      </div>
+      <div id="retroChartSpace" class="chart-category-container dissolve-backwards">
+        <div id="retroPlot" class="chart">
+          <h4>Enter a River ID or use the map to click on a stream to view data</h4>
+        </div>
+        <div id="yearlyVolPlot" class="chart"></div>
+        <div id="yearlyStatusPlot" class="chart"></div>
+        <div id="fdcPlot" class="chart"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="enter-river-id-modal" class="modal" data-category="river-bookmarks">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
+    <div style="display: flex; flex-direction: row; align-items: center; gap: 5px; justify-content: center; width: 100%">
+      <label for="river-id">River ID</label>
+      <input type="number" id="river-id" placeholder="Enter 9 Digit River ID" style="max-width: 200px">
+      <button class="waves-effect waves-light btn" onclick="setRiverId()">Submit</button>
+    </div>
+    <div class="modal-footer">
+      <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+    </div>
+  </div>
+</div>
+
+<!-- For the Map -->
+<div id="filter-modal" data-category="map" class="modal">
+  <div class="modal-content">
+    <h4>Filter Streams on Map</h4>
+    <div><a href="https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer/0">Visit the Esri Living Atlas</a> for all attribute options</div>
+    <div style="width: 100%">
+      <div>
+        <label for="outletCountry">River Outlet Country</label>
+        <select id="outletCountry" class="browser default" multiple></select>
+      </div>
+      <div>
+        <label for="riverCountry">River Country</label>
+        <select id="riverCountry" class="browser default" multiple></select>
+      </div>
+      <div>
+        <label for="vpuSelect">VPU Number</label>
+        <select id="vpuSelect" class="browser default" multiple></select>
+      </div>
+      <div>
+        <label for="definitionString">Enter Custom SQL Filters</label>
+        <input type="text" id="definitionString" placeholder=""/>
+      </div>
+      <div>
+        <label for="definition-expression">Definition Currently Displayed</label>
+        <input type="text" id="definition-expression" disabled/>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" onclick="updateLayerDefinitions()">Apply Filters</button>
+    <button class="btn btn-secondary" onclick="resetDefinitionExpression()">Clear Filters</button>
+    <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+  </div>
+</div>
+
+<!-- River Bookmarking -->
+<div id="bookmarks-modal" class="modal" data-category="river-bookmarks">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center;">
+    <div class="modal-header-bar">
+      <h4 style="margin: 0">Saved Rivers</h4>
+      <div style="flex-grow: 1"></div>
+      <a data-tooltip="Save River" data-position="bottom" class="btn modal-trigger tooltipped" href="#add-river-bookmark" style="margin-inline: 8px"><i class="material-icons">add</i></a>
+      <a data-tooltip="Restore Default Bookmarks" data-position="bottom" class="btn tooltipped" id="restore-bookmarks-button" style="margin-inline: 8px"><i class="material-icons">restore</i></a>
+      <a data-tooltip="Delete All Bookmarks" data-position="bottom" class="btn tooltipped" id="clear-bookmarks-button" style="margin-inline: 8px"><i class="material-icons">delete_forever</i></a>
+      <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+    </div>
+    <div id="bookmarks-table" style="width: 100%">
+      <table class="striped responsive-table bordered">
+        <thead>
+        <tr>
+          <th data-field="riverId" style="width: 20%; max-width: 200px">River ID</th>
+          <th data-field="riverName" style="width: 60%; max-width: 450px">River Name</th>
+          <th data-field="actions" style="width: 20%; max-width: 200px">Actions</th>
+        </tr>
+        </thead>
+        <tbody id="bookmarks-tbody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div id="add-river-bookmark" class="modal" data-category="river-bookmarks">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
+    <table>
+      <thead>
+      <tr>
+        <th data-field="riverId"><label for="save-river-id">River ID</label></th>
+        <th data-field="riverName"><label for="save-river-name">River Name</label></th>
+        <th data-field="actions">Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td data-field="riverId">
+          <input id="save-river-id" type="number" contenteditable="true" onchange="this.value = this.value.slice(0, 9)" placeholder="9 Digit River ID">
+        </td>
+        <td data-field="riverName">
+          <input id="save-river-name" contenteditable="true" onchange="this.innerText = this.innerText.slice(0, 30)" placeholder="River name">
+        </td>
+        <td data-field="actions">
+          <button class="btn green" id="submit-new-bookmark">Add Bookmark</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+    <div class="modal-footer">
+      <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+    </div>
   </div>
 </div>
 
@@ -157,6 +237,7 @@
     </h4>
     <div>
       <a data-tooltip="View Charts" data-position="bottom" class="btn modal-trigger tooltipped" href="#charts-modal"><i class="material-icons">timeline</i></a>
+      <a data-tooltip="Saved Rivers" data-category="river-bookmarks" data-position="bottom" class="btn modal-trigger tooltipped" href="#bookmarks-modal"><i class="material-icons">bookmark</i></a>
       <a data-tooltip="Learn More" data-position="bottom" class="btn modal-trigger tooltipped" href="#about-modal"><i class="material-icons">help</i></a>
       <a data-tooltip="Settings" data-position="bottom" class="btn modal-trigger tooltipped" href="#settings-modal"><i class="material-icons">settings</i></a>
       <a data-tooltip="Language" data-position="bottom" class="btn dropdown-trigger tooltipped" href="#" data-target="language-select"><i class="material-icons">translate</i></a>
@@ -185,15 +266,15 @@
     <arcgis-scale-bar position="bottom-right" bar-style="line" unit="dual"></arcgis-scale-bar>
   </arcgis-map>
 
-  <div id="timeSliderForecastWrapper" class="time-sliders">
+  <div id="timeSliderForecastWrapper" data-category="map" class="time-sliders">
     <div class="time-slider-title">Stream Layer Forecast Time Steps</div>
     <div id="timeSliderForecast"></div>
   </div>
-  <div id="timeSliderFfiWrapper" class="time-sliders">
+  <div id="timeSliderFfiWrapper" data-category="map" class="time-sliders">
     <div class="time-slider-title">Flash Flood Forecast Time Steps</div>
     <div id="timeSliderFfi"></div>
   </div>
-  <div id="timeSliderHydroSOSWrapper" class="time-sliders">
+  <div id="timeSliderHydroSOSWrapper" data-category="map" class="time-sliders">
     <div class="time-slider-title">HydroSOS Monthly Status Indicators</div>
     <div id="timeSliderHydroSOS"></div>
   </div>

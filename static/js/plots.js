@@ -90,10 +90,10 @@ const plotForecast = ({forecast, rp, riverid, chartDiv}) => {
       ...returnPeriods,
     ],
     {
-      title: `${text.plots.fcTitle}${riverid}`,
-      xaxis: {title: `${text.plots.fcXaxis} (UTC +00:00)`},
+      title: {text: `${text.plots.fcTitle}${riverid}`},
+      xaxis: {title: {text: `${text.plots.fcXaxis} (UTC +00:00)`}},
       yaxis: {
-        title: `${text.plots.fcYaxis} (m³/s)`,
+        title: {text: `${text.plots.fcYaxis} (m³/s)`},
         range: [0, null]
       },
       legend: {'orientation': 'h'},
@@ -124,10 +124,10 @@ const plotForecastMembers = ({forecast, rp, riverid, chartDiv}) => {
     chartDiv,
     [...memberTraces, ...returnPeriods,],
     {
-      title: `${text.plots.fcMembersTitle}${riverid}`,
-      xaxis: {title: `${text.plots.fcXaxis} (UTC +00:00)`},
+      title: {text: `${text.plots.fcMembersTitle}${riverid}`},
+      xaxis: {title: {text: `${text.plots.fcXaxis} (UTC +00:00)`}},
       yaxis: {
-        title: `${text.plots.fcYaxis} (m³/s)`,
+        title: {text: `${text.plots.fcYaxis} (m³/s)`},
         range: [0, null]
       },
       legend: {'orientation': 'h'},
@@ -159,7 +159,9 @@ const forecastProbabilityTable = ({forecast, rp}) => {
   const bodyRows = returnPeriods.map(rpKey => {
     const rpThreshold = rp.return_periods[rpKey]
     const percentages = dailyDateStrings.map((_, index) => {
-      const countAboveThreshold = dailyArrays.reduce((count, dailyArray) => {return count + (dailyArray[index] > rpThreshold ? 1 : 0)}, 0)
+      const countAboveThreshold = dailyArrays.reduce((count, dailyArray) => {
+        return count + (dailyArray[index] > rpThreshold ? 1 : 0)
+      }, 0)
       return (countAboveThreshold / memberKeys.length * 100).toFixed(0)
     })
     return `<tr><td>${rpKey} (${rpThreshold.toFixed(0)} m³/s)</td>${percentages.map(p => `<td style="background-color: ${returnPeriodColors[rpKey].replace('rgb', 'rgba').replace(')', `, ${p === "0" ? 0 : 0.25 + 0.75 * (p / 100)})`)}">${p}%</td>`).join('')}</tr>`
@@ -187,15 +189,15 @@ const plotRetrospective = ({daily, monthly, riverid, chartDiv}) => {
       }
     ],
     {
-      title: `${text.plots.retroTitle} ${riverid}`,
+      title: {text: `${text.plots.retroTitle} ${riverid}`},
       legend: {orientation: 'h', x: 0, y: 1},
       hovermode: 'x',
       yaxis: {
-        title: `${text.plots.retroYaxis} (m³/s)`,
+        title: {text: `${text.plots.retroYaxis} (m³/s)`},
         range: [0, null]
       },
       xaxis: {
-        title: `${text.plots.retroXaxis} (UTC +00:00)`,
+        title: {text: `${text.plots.retroXaxis} (UTC +00:00)`},
         type: 'date',
         autorange: false,
         range: defaultDateRange,
@@ -263,12 +265,12 @@ const plotYearlyVolumes = ({yearly, averages, riverid, chartDiv}) => {
       }) || []
     ],
     {
-      title: `${text.plots.volumeTitle}${riverid}`,
+      title: {text: `${text.plots.volumeTitle}${riverid}`},
       legend: {orientation: 'h'},
       hovermode: 'x',
-      xaxis: {title: `${text.words.year}`},
+      xaxis: {title: {text: `${text.words.year}`}},
       yaxis: {
-        title: `${text.words.millionMetersCubed} (m³ * 10^6)`,
+        title: {text: `${text.words.millionMetersCubed} (m³ * 10^6)`},
         range: [0, null]
       }
     }
@@ -295,6 +297,7 @@ const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, rive
           name: label,
           line: {width: 0},
           fillcolor: color,
+          visible: 'legendonly',
           legendgrouptitle: {text: `${text.words.monthlyStatusCategories}`},
         }
       }),
@@ -304,8 +307,8 @@ const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, rive
         y: monthlyAverages.map(y => y.value),
         mode: 'lines',
         name: `${text.words.monthlyAverageFlows}`,
-        visible: 'legendonly',
-        line: {color: 'rgb(0,0,0)', width: 3, dash: 'dash'},
+        visible: true,
+        line: {color: 'rgb(0,157,255)', width: 3, dash: 'dash'},
       },
       // each individual year's monthly averages
       ...years.toReversed().map((year, idx) => {
@@ -325,15 +328,15 @@ const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, rive
       })
     ],
     {
-      title: `${text.plots.statusTitle}${riverid}`,
+      title: {text: `${text.plots.statusTitle}${riverid}`},
       xaxis: {
-        title: `${text.words.month}`,
+        title: {text: `${text.words.month}`},
         tickvals: months,
         ticktext: monthNames,
       },
       hovermode: 'x',
       yaxis: {
-        title: `${text.words.flow} (m³/s)`,
+        title: {text: `${text.words.flow} (m³/s)`},
         range: [0, null]
       },
     }
@@ -364,10 +367,10 @@ const plotFdc = ({fdc, monthlyFdc, riverid, chartDiv}) => {
         })
     ],
     {
-      title: `${text.plots.fdcTitle}${riverid}`,
-      xaxis: {title: `${text.words.percentile} (%)`},
+      title: {text: `${text.plots.fdcTitle}${riverid}`},
+      xaxis: {title: {text: `${text.words.percentile} (%)`}},
       yaxis: {
-        title: `${text.words.flow} (m³/s)`,
+        title: {text: `${text.words.flow} (m³/s)`},
         range: [0, null]
       },
       legend: {orientation: 'h'},
@@ -378,11 +381,11 @@ const plotFdc = ({fdc, monthlyFdc, riverid, chartDiv}) => {
 
 //////////////////////////////////////////////////////////////////////// Helper Functions
 const clearCharts = chartTypes => {
-  if (chartTypes === "forecast" || chartTypes === null) {
-    [divChartForecast,]
+  if (chartTypes === "forecast" || chartTypes === null || chartTypes === undefined) {
+    [divChartForecast, divTableForecast]
       .forEach(el => el.innerHTML = '')
   }
-  if (chartTypes === "retrospective" || chartTypes === null) {
+  if (chartTypes === "retro" || chartTypes === null || chartTypes === undefined) {
     [divChartRetro, divChartYearlyVol, divChartStatus, divChartFdc]
       .forEach(el => el.innerHTML = '')
   }
@@ -396,7 +399,6 @@ const plotAllRetro = ({retro, riverid}) => {
   let monthlyFdc = {}
   let monthlyStatusValues = {}
   text.statusLabels.forEach(label => monthlyStatusValues[label] = [])
-
 
   let monthlyValues = retro.datetime.reduce((acc, currentValue, currentIndex) => {
     const date = new Date(currentValue)
