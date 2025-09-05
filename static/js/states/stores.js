@@ -1,4 +1,4 @@
-const loggingEnabled = true
+const loggingEnabled = false
 
 export const pubSubState = ({initialValue, localStorageKey}) => {
   let state = initialValue ? initialValue : localStorage.getItem(localStorageKey) || null
