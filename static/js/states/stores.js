@@ -46,15 +46,3 @@ export const pubSubState = ({initialValue, localStorageKey}) => {
   const unsubscribe = (callback) => subscribers.delete(callback)
   return {get, set, update, reset, subscribe, subscribeAndInit, unsubscribe}
 }
-
-// a localstorage hook for the state to be used within the pubsubstate object
-export const useLocalStorage = (key, initialValue) => {
-  let state = initialValue
-  const set = (newValue) => {
-    localStorage.setItem(key, JSON.stringify(newValue))
-    state = newValue
-  }
-  const get = () => state
-
-  return {set, get}
-}

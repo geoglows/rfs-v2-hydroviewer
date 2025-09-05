@@ -90,10 +90,10 @@ const plotForecast = ({forecast, rp, riverid, chartDiv}) => {
       ...returnPeriods,
     ],
     {
-      title: {'text': `${text.plots.fcTitle}${riverid}`},
-      xaxis: {title: {'text': `${text.plots.fcXaxis} (UTC +00:00)`}},
+      title: {text: `${text.plots.fcTitle}${riverid}`},
+      xaxis: {title: {text: `${text.plots.fcXaxis} (UTC +00:00)`}},
       yaxis: {
-        title: {'text': `${text.plots.fcYaxis} (m³/s)`},
+        title: {text: `${text.plots.fcYaxis} (m³/s)`},
         range: [0, null]
       },
       legend: {'orientation': 'h'},
@@ -124,10 +124,10 @@ const plotForecastMembers = ({forecast, rp, riverid, chartDiv}) => {
     chartDiv,
     [...memberTraces, ...returnPeriods,],
     {
-      title: {'text': `${text.plots.fcMembersTitle}${riverid}`},
-      xaxis: {'text': {title: `${text.plots.fcXaxis} (UTC +00:00)`}},
+      title: {text: `${text.plots.fcMembersTitle}${riverid}`},
+      xaxis: {title: {text: `${text.plots.fcXaxis} (UTC +00:00)`}},
       yaxis: {
-        title: {'text': `${text.plots.fcYaxis} (m³/s)`},
+        title: {text: `${text.plots.fcYaxis} (m³/s)`},
         range: [0, null]
       },
       legend: {'orientation': 'h'},
@@ -189,15 +189,15 @@ const plotRetrospective = ({daily, monthly, riverid, chartDiv}) => {
       }
     ],
     {
-      title: {'text': `${text.plots.retroTitle} ${riverid}`},
+      title: {text: `${text.plots.retroTitle} ${riverid}`},
       legend: {orientation: 'h', x: 0, y: 1},
       hovermode: 'x',
       yaxis: {
-        title: {'text': `${text.plots.retroYaxis} (m³/s)`},
+        title: {text: `${text.plots.retroYaxis} (m³/s)`},
         range: [0, null]
       },
       xaxis: {
-        title: {'text': `${text.plots.retroXaxis} (UTC +00:00)`},
+        title: {text: `${text.plots.retroXaxis} (UTC +00:00)`},
         type: 'date',
         autorange: false,
         range: defaultDateRange,
@@ -265,12 +265,12 @@ const plotYearlyVolumes = ({yearly, averages, riverid, chartDiv}) => {
       }) || []
     ],
     {
-      title: {'text': `${text.plots.volumeTitle}${riverid}`},
+      title: {text: `${text.plots.volumeTitle}${riverid}`},
       legend: {orientation: 'h'},
       hovermode: 'x',
-      xaxis: {title: {'text': `${text.words.year}`}},
+      xaxis: {title: {text: `${text.words.year}`}},
       yaxis: {
-        title: {'text': `${text.words.millionMetersCubed} (m³ * 10^6)`},
+        title: {text: `${text.words.millionMetersCubed} (m³ * 10^6)`},
         range: [0, null]
       }
     }
@@ -328,15 +328,15 @@ const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, rive
       })
     ],
     {
-      title: {'text': `${text.plots.statusTitle}${riverid}`},
+      title: {text: `${text.plots.statusTitle}${riverid}`},
       xaxis: {
-        title: {'text': `${text.words.month}`},
+        title: {text: `${text.words.month}`},
         tickvals: months,
         ticktext: monthNames,
       },
       hovermode: 'x',
       yaxis: {
-        title: {'text': `${text.words.flow} (m³/s)`},
+        title: {text: `${text.words.flow} (m³/s)`},
         range: [0, null]
       },
     }
@@ -367,10 +367,10 @@ const plotFdc = ({fdc, monthlyFdc, riverid, chartDiv}) => {
         })
     ],
     {
-      title: {'text': `${text.plots.fdcTitle}${riverid}`},
-      xaxis: {title: {'text': `${text.words.percentile} (%)`}},
+      title: {text: `${text.plots.fdcTitle}${riverid}`},
+      xaxis: {title: {text: `${text.words.percentile} (%)`}},
       yaxis: {
-        title: {'text': `${text.words.flow} (m³/s)`},
+        title: {text: `${text.words.flow} (m³/s)`},
         range: [0, null]
       },
       legend: {orientation: 'h'},
