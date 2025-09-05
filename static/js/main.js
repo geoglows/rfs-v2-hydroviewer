@@ -1,5 +1,5 @@
-import {displayLoadingStatus, displayRiverNumber, inputForecastDate, lang, riverIdInput} from "./ui.js";
-import {fetchData, getForecastData} from "./data.js";
+import {displayLoadingStatus, displayRiverNumber, lang, riverIdInput} from "./ui.js";
+import {fetchData} from "./data.js";
 import {bookmarks} from "./bookmarks.js";
 import {LoadStatus, RiverId} from "./states/state.js";
 
@@ -13,15 +13,47 @@ M.Dropdown.init(document.querySelectorAll('.dropdown-trigger'), {
 Plotly.setPlotConfig({'locale': lang})
 if (window.innerWidth < 800) M.toast({html: text.prompts.mobile, classes: "blue custom-toast-placement", displayLength: 7500})
 
+// subscribers to RiverId changes - don't change the order
 RiverId.subscribe(LoadStatus.reset)
-RiverId.subscribe(fetchData) // as early as possible to start loading data
 RiverId.subscribe(displayRiverNumber)
+RiverId.subscribe(fetchData)
 RiverId.subscribe(bookmarks.setFavoriteIcon)
 
-// things that subscribe to loadingStatus changes
+// subscribers to loadingStatus changes
 LoadStatus.subscribe(displayLoadingStatus)
 
-inputForecastDate.addEventListener("change", () => getForecastData())
+// event listeners
+const forecastDatePicker = document.getElementById('forecast-date-calendar')
+const previousDateArrow = document.getElementById('datepicker-previous')
+const nextDateArrow = document.getElementById('datepicker-next')
+const earliestDateObj = new Date(Date.UTC(2024, 6, 1))
+const latestDateObj = new Date(Date.now() - 12 * 60 * 60 * 1000)
+const earliestDate = earliestDateObj.toISOString().slice(0, 10)
+const latestDate = latestDateObj.toISOString().slice(0, 10)
+forecastDatePicker.min = earliestDate
+forecastDatePicker.max = latestDate
+forecastDatePicker.value = latestDate
+forecastDatePicker.onchange = () => {
+  previousDateArrow.disabled = forecastDatePicker.value === earliestDate
+  nextDateArrow.disabled = forecastDatePicker.value === latestDate
+  fetchData()
+}
+previousDateArrow.onclick = () => {
+  let date = new Date(forecastDatePicker.value + "T00:00:00Z")
+  date.setUTCDate(date.getUTCDate() - 1)
+  forecastDatePicker.value = date.toISOString().slice(0, 10)
+  previousDateArrow.disabled = forecastDatePicker.value === earliestDate
+  nextDateArrow.disabled = false
+  fetchData()
+}
+nextDateArrow.onclick = () => {
+  let date = new Date(forecastDatePicker.value + "T00:00:00Z");
+  date.setUTCDate(date.getUTCDate() + 1);
+  forecastDatePicker.value = date.toISOString().slice(0, 10)
+  previousDateArrow.disabled = false
+  nextDateArrow.disabled = forecastDatePicker.value === latestDate
+  fetchData()
+}
 riverIdInput.addEventListener("keydown", event => {
   if (event.key !== "Enter") return
   let possibleId = riverIdInput.value

@@ -86,7 +86,6 @@ const displayRiverNumber = (riverid) => {
   updateDownloadLinks(riverid)
   clearCharts()
 }
-//// Load Status Manager
 const displayLoadingStatus = statusChanges => {
   const statusIcons = {
     'clear': "",
@@ -97,19 +96,19 @@ const displayLoadingStatus = statusChanges => {
   // place loading icons only if the load message is new to avoid flickering/rerendering that tag
   if ("forecast" in statusChanges) {
     document.getElementById("forecast-load-icon").innerHTML = statusIcons[statusChanges.forecast]
-    if (statusChanges.forecast === "load") divChartForecast.innerHTML = loadingImageTag
+    if (statusChanges.forecast === "load") {
+      divChartForecast.innerHTML = loadingImageTag
+    }
   }
   if ("retro" in statusChanges) {
     document.getElementById("retro-load-icon").innerHTML = statusIcons[statusChanges.retro]
-    if (statusChanges.retro === "load") divChartRetro.innerHTML = loadingImageTag
+    if (statusChanges.retro === "load") {
+      divChartRetro.innerHTML = loadingImageTag
+    }
   }
 }
 
 const toggleVisibleRiverInput = () => riverIdInputContainer.classList.toggle("hide")
-const hideRiverInput = () => {
-  riverIdInputContainer.classList.add("hide")
-  riverIdInput.value = ""
-}
 
 //// Export Functions
 window.showChartView = showChartView
@@ -117,5 +116,5 @@ window.toggleVisibleRiverInput = toggleVisibleRiverInput
 
 export {
   showChartView, updateHash, resetFilterForm, buildFilterExpression,
-  hideRiverInput, toggleVisibleRiverInput, displayRiverNumber, displayLoadingStatus,
+  toggleVisibleRiverInput, displayRiverNumber, displayLoadingStatus,
 }

@@ -105,8 +105,10 @@
     <div class="chart-spaces chart-category-container" style="position: relative; height: 100%">
       <div id="forecastChartSpace" class="chart-category-container">
         <div id="forecast-date-controls">
+          <button id="datepicker-previous" class="btn btn-flat"><i class="material-icons">arrow_back</i></button>
           <label for="forecast-date-calendar">Forecast Date:</label>
-          <input type="date" id="forecast-date-calendar" name="forecast-date-calendar" min="2024-07-01" onkeydown="return false">
+          <input type="date" id="forecast-date-calendar" onkeydown="return false">
+          <button id="datepicker-next" class="btn btn-flat" disabled><i class="material-icons">arrow_forward</i></button>
         </div>
         <div id="forecastPlot" class="chart">
           <h4>Enter a River ID or use the map to click on a stream to view data</h4>
@@ -122,14 +124,6 @@
         <div id="fdcPlot" class="chart"></div>
       </div>
     </div>
-    <!--    <div class="modal-footer">-->
-    <!--      <button class="btn btn-success" id="download-forecast-btn" disabled>-->
-    <!--        <a id="download-forecast-link" target="_blank">Save Forecast Data (CSV)</a>-->
-    <!--      </button>-->
-    <!--      <button class="btn btn-success" id="download-retrospective-btn" disabled>-->
-    <!--        <a id="download-retrospective-link" target="_blank">Save Retrospective Data (CSV)</a>-->
-    <!--      </button>-->
-    <!--    </div>-->
   </div>
 </div>
 <div id="enter-river-id-modal" class="modal" data-category="river-bookmarks">
