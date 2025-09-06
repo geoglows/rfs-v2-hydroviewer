@@ -38,7 +38,10 @@
 <!-- Settings-->
 <div id="about-modal" class="modal">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
-    <h4>About</h4>
+    <div class="modal-header-bar">
+      <h4>About</h4>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+    </div>
     <div style="width: 100%; max-width: 800px">
       <p>
         To learn more about the GEOGLOWS project, visit <a href="https://www.geoglows.org" target="_blank">geoglows.org</a>.
@@ -55,14 +58,13 @@
       </ol>
     </div>
   </div>
-  <div class="modal-footer">
-    <a class="modal-close waves-effect waves-green btn-flat">Close</a>
-  </div>
 </div>
 <div id="settings-modal" class="modal">
   <div class="modal-content">
-    <h4>Settings</h4>
-    <hr>
+    <div class="modal-header-bar">
+      <h4>Settings</h4>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+    </div>
     <h5>Chart Options</h5>
     <div class="options-wrapper">
       <label>
@@ -76,9 +78,6 @@
         <span>Use experimental global bias correction on all datasets</span>
       </label>
     </div>
-  </div>
-  <div class="modal-footer">
-    <a class="modal-close waves-effect waves-green btn-flat">Close</a>
   </div>
 </div>
 
@@ -128,13 +127,14 @@
 </div>
 <div id="enter-river-id-modal" class="modal" data-category="river-bookmarks">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
+    <div class="modal-header-bar">
+      <h4>Enter River ID</h4>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+    </div>
     <div style="display: flex; flex-direction: row; align-items: center; gap: 5px; justify-content: center; width: 100%">
       <label for="river-id">River ID</label>
-      <input type="number" id="river-id" placeholder="Enter 9 Digit River ID" style="max-width: 200px">
+      <input type="number" id="river-id" placeholder="Enter 9 Digit River ID" onchange="this.value = this.value.slice(0, 9)" style="max-width: 200px"/>
       <button class="waves-effect waves-light btn" onclick="setRiverId()">Submit</button>
-    </div>
-    <div class="modal-footer">
-      <a class="modal-close waves-effect waves-green btn-flat">Close</a>
     </div>
   </div>
 </div>
@@ -183,7 +183,7 @@
       <a data-tooltip="Save River" data-position="bottom" class="btn modal-trigger tooltipped" href="#add-river-bookmark" style="margin-inline: 8px"><i class="material-icons">add</i></a>
       <a data-tooltip="Restore Default Bookmarks" data-position="bottom" class="btn tooltipped" id="restore-bookmarks-button" style="margin-inline: 8px"><i class="material-icons">restore</i></a>
       <a data-tooltip="Delete All Bookmarks" data-position="bottom" class="btn tooltipped" id="clear-bookmarks-button" style="margin-inline: 8px"><i class="material-icons">delete_forever</i></a>
-      <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
     </div>
     <div id="bookmarks-table" style="width: 100%">
       <table class="striped responsive-table bordered">
@@ -202,6 +202,10 @@
 </div>
 <div id="add-river-bookmark" class="modal" data-category="river-bookmarks">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
+    <div class="modal-header-bar">
+      <h4>New River Bookmark</h4>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+    </div>
     <table>
       <thead>
       <tr>
@@ -224,9 +228,6 @@
       </tr>
       </tbody>
     </table>
-    <div class="modal-footer">
-      <a class="modal-close waves-effect waves-green btn-flat">Close</a>
-    </div>
   </div>
 </div>
 

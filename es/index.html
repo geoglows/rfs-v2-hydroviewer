@@ -38,7 +38,10 @@
 <!-- Settings-->
 <div id="about-modal" class="modal">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
-    <h4>Acerca de GEOGLOWS</h4>
+    <div class="modal-header-bar">
+      <h4>Acerca de GEOGLOWS</h4>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+    </div>
     <div style="width: 100%; max-width: 800px">
       <p>
         Para obtener más información sobre el proyecto GEOGLOWS, visite <a href="https://www.geoglows.org" target="_blank">geoglows.org</a>.
@@ -55,14 +58,13 @@
       </ol>
     </div>
   </div>
-  <div class="modal-footer">
-    <a class="modal-close waves-effect waves-green btn-flat">Cerrar</a>
-  </div>
 </div>
 <div id="settings-modal" class="modal">
   <div class="modal-content">
-    <h4>Configuración</h4>
-    <hr>
+    <div class="modal-header-bar">
+      <h4>Configuración</h4>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+    </div>
     <h5>Opciones de visualización de datos</h5>
     <div class="options-wrapper">
       <label>
@@ -76,9 +78,6 @@
         <span>Usar pronósticos corregidos por sesgo (experimental)</span>
       </label>
     </div>
-  </div>
-  <div class="modal-footer">
-    <a class="modal-close waves-effect waves-green btn-flat">Cerrar</a>
   </div>
 </div>
 
@@ -94,7 +93,7 @@
       <div class="header-group">
         <button id="showForecastCharts" class="btn status-btn active" onclick="showChartView('forecast')">Pronóstico<span id="forecast-load-icon"></span></button>
         <button id="showRetroCharts" class="btn status-btn" onclick="showChartView('retro')">Histórico<span id="retro-load-icon"></span></button>
-        <a class="btn btn-flat waves-effect waves-teal tooltipped dropdown-trigger" data-target="download-select" data-tooltip="Download CSVs"><i class="material-icons">download</i></a>
+        <a class="btn btn-flat waves-effect waves-teal tooltipped dropdown-trigger" data-target="download-select" data-tooltip="Descargar CSVs"><i class="material-icons">download</i></a>
         <ul id="download-select" class="dropdown-content">
           <li><a id="download-forecast-link" target="_blank">Guardar datos de pronóstico (CSV)</a></li>
           <li><a id="download-retrospective-link" target="_blank">Guardar datos retrospectivos (CSV)</a></li>
@@ -128,13 +127,14 @@
 </div>
 <div id="enter-river-id-modal" class="modal" data-category="river-bookmarks">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
-    <div style="display: flex; flex-direction: row; align-items: center; gap: 5px; justify-content: center; width: 100%">
-      <label for="river-id">River ID</label>
-      <input type="number" id="river-id" placeholder="Enter 9 Digit River ID" style="max-width: 200px">
-      <button class="waves-effect waves-light btn" onclick="setRiverId()">Entregar</button>
+    <div class="modal-header-bar">
+      <h4 style="margin: 0">Buscar un río por ID</h4>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
     </div>
-    <div class="modal-footer">
-      <a class="modal-close waves-effect waves-green btn-flat">Cerrar</a>
+    <div style="display: flex; flex-direction: row; align-items: center; gap: 5px; justify-content: center; width: 100%">
+      <label for="river-id">ID del Río:</label>
+      <input type="number" id="river-id" placeholder="ID del Río (9 dígitos)" onchange="this.value = this.value.slice(0, 9)" style="width: 200px"/>
+      <button class="waves-effect waves-light btn" onclick="setRiverId()">Entregar</button>
     </div>
   </div>
 </div>
@@ -142,8 +142,8 @@
 <!-- For the Map -->
 <div id="filter-modal" data-category="map" class="modal">
   <div class="modal-content">
-    <h4>Filter Streams on Map</h4>
-    <div><a href="https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer/0">Visit the Esri Living Atlas</a> for all attribute options</div>
+    <h4>Filtrar Ríos</h4>
+    <div><a href="https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer/0">Visita ArcGIS Living Atlas</a> para ver metadatos.</div>
     <div style="width: 100%">
       <div>
         <label for="outletCountry">País de Salida del Río</label>
@@ -178,20 +178,20 @@
 <div id="bookmarks-modal" class="modal" data-category="river-bookmarks">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center;">
     <div class="modal-header-bar">
-      <h4 style="margin: 0">Saved Rivers</h4>
+      <h4 style="margin: 0">Ríos Marcados</h4>
       <div style="flex-grow: 1"></div>
-      <a data-tooltip="Save River" data-position="bottom" class="btn modal-trigger tooltipped" href="#add-river-bookmark" style="margin-inline: 8px"><i class="material-icons">add</i></a>
-      <a data-tooltip="Restore Default Bookmarks" data-position="bottom" class="btn tooltipped" id="restore-bookmarks-button" style="margin-inline: 8px"><i class="material-icons">restore</i></a>
-      <a data-tooltip="Delete All Bookmarks" data-position="bottom" class="btn tooltipped" id="clear-bookmarks-button" style="margin-inline: 8px"><i class="material-icons">delete_forever</i></a>
-      <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+      <a data-tooltip="Añadir marcador" data-position="bottom" class="btn modal-trigger tooltipped" href="#add-river-bookmark" style="margin-inline: 8px"><i class="material-icons">add</i></a>
+      <a data-tooltip="Restaurar marcadores predeterminados" data-position="bottom" class="btn tooltipped" id="restore-bookmarks-button" style="margin-inline: 8px"><i class="material-icons">restore</i></a>
+      <a data-tooltip="Eliminar todos los marcadores" data-position="bottom" class="btn tooltipped" id="clear-bookmarks-button" style="margin-inline: 8px"><i class="material-icons">delete_forever</i></a>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
     </div>
     <div id="bookmarks-table" style="width: 100%">
       <table class="striped responsive-table bordered">
         <thead>
         <tr>
-          <th data-field="riverId" style="width: 20%; max-width: 200px">River ID</th>
-          <th data-field="riverName" style="width: 60%; max-width: 450px">River Name</th>
-          <th data-field="actions" style="width: 20%; max-width: 200px">Actions</th>
+          <th data-field="riverId" style="width: 20%; max-width: 200px">ID del Río</th>
+          <th data-field="riverName" style="width: 60%; max-width: 450px">Nombre del Río</th>
+          <th data-field="actions" style="width: 20%; max-width: 200px">Acciones</th>
         </tr>
         </thead>
         <tbody id="bookmarks-tbody">
@@ -202,31 +202,32 @@
 </div>
 <div id="add-river-bookmark" class="modal" data-category="river-bookmarks">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
+    <div class="modal-header-bar">
+      <h4 style="margin: 0">Añadir un nuevo marcador de río</h4>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+    </div>
     <table>
       <thead>
       <tr>
-        <th data-field="riverId"><label for="save-river-id">River ID</label></th>
-        <th data-field="riverName"><label for="save-river-name">River Name</label></th>
-        <th data-field="actions">Actions</th>
+        <th data-field="riverId"><label for="save-river-id">ID del Río</label></th>
+        <th data-field="riverName"><label for="save-river-name">Nombre del Río</label></th>
+        <th data-field="actions">Acciones</th>
       </tr>
       </thead>
       <tbody>
       <tr>
         <td data-field="riverId">
-          <input id="save-river-id" type="number" contenteditable="true" onchange="this.value = this.value.slice(0, 9)" placeholder="9 Digit River ID">
+          <input id="save-river-id" type="number" contenteditable="true" onchange="this.value = this.value.slice(0, 9)" placeholder="ID del Río (9 dígitos)">
         </td>
         <td data-field="riverName">
-          <input id="save-river-name" contenteditable="true" onchange="this.innerText = this.innerText.slice(0, 30)" placeholder="River name">
+          <input id="save-river-name" contenteditable="true" onchange="this.innerText = this.innerText.slice(0, 30)" placeholder="Nombre del Río">
         </td>
         <td data-field="actions">
-          <button class="btn green" id="submit-new-bookmark">Add Bookmark</button>
+          <button class="btn green" id="submit-new-bookmark">Añadir marcador</button>
         </td>
       </tr>
       </tbody>
     </table>
-    <div class="modal-footer">
-      <a class="modal-close waves-effect waves-green btn-flat">Close</a>
-    </div>
   </div>
 </div>
 

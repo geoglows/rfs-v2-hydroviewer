@@ -95,6 +95,10 @@ arcgis-map {
     margin-bottom: 10px;
 }
 
+.modal-header-bar h4 {
+    margin: 0;
+}
+
 .status-btn {
     border: 1px solid black;
     text-transform: unset;
