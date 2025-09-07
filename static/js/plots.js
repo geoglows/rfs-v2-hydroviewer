@@ -1,4 +1,5 @@
 import {divChartFdc, divChartForecast, divChartRetro, divChartStatus, divChartYearlyVol, divTableForecast, lang} from './ui.js'
+import {useBiasCorrected} from "./states/state.js";
 
 //////////////////////////////////////////////////////////////////////// Constants and configs
 const defaultDateRange = ['2015-01-01', new Date().toISOString().split("T")[0]]
@@ -23,6 +24,23 @@ const returnPeriodColors = {
 }
 const months = Array.from({length: 12}).map((_, idx) => (idx + 1).toString().padStart(2, '0'))
 const monthNames = months.map(m => new Date(2021, parseInt(m, 10) - 1, 1).toLocaleString(lang, {month: 'short'}))
+
+const experimentalPlotWatermark = [
+  {
+    text: "EXPERIMENTAL",
+    xref: "paper",
+    yref: "paper",
+    x: 0.5,
+    y: 0.5,
+    showarrow: false,
+    font: {
+      size: 85,
+      color: "rgba(0,0,0,0.3)"
+    },
+    xanchor: "center",
+    yanchor: "middle"
+  }
+]
 
 //////////////////////////////////////////////////////////////////////// Plots
 const returnPeriodShapes = ({rp, x0, x1, maxFlow}) => {
@@ -91,6 +109,7 @@ const plotForecast = ({forecast, rp, riverid, chartDiv}) => {
     ],
     {
       title: {text: `${text.plots.fcTitle}${riverid}`},
+      annotations: useBiasCorrected() ? experimentalPlotWatermark : [],
       xaxis: {title: {text: `${text.plots.fcXaxis} (UTC +00:00)`}},
       yaxis: {
         title: {text: `${text.plots.fcYaxis} (m³/s)`},
@@ -125,6 +144,7 @@ const plotForecastMembers = ({forecast, rp, riverid, chartDiv}) => {
     [...memberTraces, ...returnPeriods,],
     {
       title: {text: `${text.plots.fcMembersTitle}${riverid}`},
+      annotations: useBiasCorrected() ? experimentalPlotWatermark : [],
       xaxis: {title: {text: `${text.plots.fcXaxis} (UTC +00:00)`}},
       yaxis: {
         title: {text: `${text.plots.fcYaxis} (m³/s)`},
@@ -190,6 +210,7 @@ const plotRetrospective = ({daily, monthly, riverid, chartDiv}) => {
     ],
     {
       title: {text: `${text.plots.retroTitle} ${riverid}`},
+      annotations: useBiasCorrected() ? experimentalPlotWatermark : [],
       legend: {orientation: 'h', x: 0, y: 1},
       hovermode: 'x',
       yaxis: {
@@ -266,6 +287,7 @@ const plotYearlyVolumes = ({yearly, averages, riverid, chartDiv}) => {
     ],
     {
       title: {text: `${text.plots.volumeTitle}${riverid}`},
+      annotations: useBiasCorrected() ? experimentalPlotWatermark : [],
       legend: {orientation: 'h'},
       hovermode: 'x',
       xaxis: {title: {text: `${text.words.year}`}},
@@ -329,6 +351,7 @@ const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, rive
     ],
     {
       title: {text: `${text.plots.statusTitle}${riverid}`},
+      annotations: useBiasCorrected() ? experimentalPlotWatermark : [],
       xaxis: {
         title: {text: `${text.words.month}`},
         tickvals: months,
@@ -368,6 +391,7 @@ const plotFdc = ({fdc, monthlyFdc, riverid, chartDiv}) => {
     ],
     {
       title: {text: `${text.plots.fdcTitle}${riverid}`},
+      annotations: useBiasCorrected() ? experimentalPlotWatermark : [],
       xaxis: {title: {text: `${text.words.percentile} (%)`}},
       yaxis: {
         title: {text: `${text.words.flow} (m³/s)`},
