@@ -18,7 +18,7 @@ export const bookmarks = (() => {
   // bookmarks view modal
   const restoreBookmarksButton = document.getElementById('restore-bookmarks-button')
   const submitNewBookmark = document.getElementById('submit-new-bookmark')
-  const deleteAllBookmarksButton = document.getElementById('clear-bookmarks-button')
+  const deleteAllBookmarksButtons = Array.from(document.getElementsByClassName('delete-all-bookmarks'))
 
   const setFavoriteIcon = () => {
     const id = RiverId.get()
@@ -109,13 +109,16 @@ export const bookmarks = (() => {
 
   restoreBookmarksButton.onclick = restoreDefaults
   submitNewBookmark.onclick = submitForm
-  deleteAllBookmarksButton.onclick = () => {
-    if (confirm('Are you sure you want to delete all bookmarks?')) {
-      clear()
-      table()
-      setFavoriteIcon()
+  deleteAllBookmarksButtons.forEach(btn => {
+    btn.onclick = () => {
+      if (confirm('Are you sure you want to delete all bookmarks?')) {
+        clear()
+        alert('All bookmarks deleted!')
+        table()
+        setFavoriteIcon()
+      }
     }
-  }
+  })
   if (bookmarks.length === 0) restoreDefaults() // on first load, populate with defaults
   table()
 

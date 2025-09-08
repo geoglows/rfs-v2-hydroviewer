@@ -1,5 +1,5 @@
 import {buildFilterExpression, inputForecastDate, lang, modalFilter, resetFilterForm, RFS_LAYER_URL, selectOutletCountry, selectRiverCountry, selectVPU, showChartView, updateHash,} from "./ui.js";
-import {RiverId, LoadStatus} from "./states/state.js";
+import {LoadStatus, RiverId} from "./states/state.js";
 import riverCountries from "/static/json/riverCountries.json" with {type: "json"};
 import outletCountries from "/static/json/outletCountries.json" with {type: "json"};
 import vpuList from "/static/json/vpuList.json" with {type: "json"};
@@ -31,6 +31,8 @@ require(
       intl.setLocale(lang)
 
       const now = new Date()  // the default date is 12 hours before UTC now, typical lag for computing forecasts each day
+      const firstHydroSOSDate = new Date(1990, 0, 1)  // July 2024
+      const lastHydroSOSDate = new Date(now.getFullYear(), now.getMonth() - (now.getDate() > 6 ? 1 : 2), 1)
       now.setHours(now.getHours() - 12)
       inputForecastDate.value = now.toISOString().split("T")[0]
 
@@ -152,8 +154,8 @@ require(
         label: "HydroSOS Monthly Status Layer Time Steps",
         mode: "instant",
         fullTimeExtent: {
-          start: new Date(1990, 0, 1),
-          end: new Date(now.getFullYear(), now.getMonth() - (now.getDate() > 6 ? 1 : 2), 1)
+          start: firstHydroSOSDate,
+          end: lastHydroSOSDate
         },
         stops: {
           interval: {
@@ -182,7 +184,8 @@ require(
         visible: false,
       })
       let cogMonthlyStatusLayer = new ImageryTileLayer({
-        url: "https://d2sl0kux8qc7kl.cloudfront.net/hydrosos/cogs/2025-07.tif",
+        // url: "https://d2sl0kux8qc7kl.cloudfront.net/hydrosos/cogs/2025-07.tif",
+        url:`https://d2sl0kux8qc7kl.cloudfront.net/hydrosos/cogs/${lastHydroSOSDate.getFullYear()}-${String(lastHydroSOSDate.getMonth() + 1).padStart(2, '0')}.tif`,
         title: "HydroSOS Monthly Status Indicators",
         visible: false,
       })

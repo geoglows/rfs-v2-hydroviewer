@@ -78,6 +78,9 @@
         <span>Usar pronósticos corregidos por sesgo (experimental)</span>
       </label>
     </div>
+    <h5>Data and Cache Options</h5>
+    <button class="btn red clear-cache">Borrar caché de datos</button>
+    <button class="btn red delete-all-bookmarks">Borrar todos los marcadores de ríos</button>
   </div>
 </div>
 
@@ -181,17 +184,17 @@
       <h4 style="margin: 0">Ríos Marcados</h4>
       <div style="flex-grow: 1"></div>
       <a data-tooltip="Añadir marcador" data-position="bottom" class="btn modal-trigger tooltipped" href="#add-river-bookmark" style="margin-inline: 8px"><i class="material-icons">add</i></a>
-      <a data-tooltip="Restaurar marcadores predeterminados" data-position="bottom" class="btn tooltipped" id="restore-bookmarks-button" style="margin-inline: 8px"><i class="material-icons">restore</i></a>
-      <a data-tooltip="Eliminar todos los marcadores" data-position="bottom" class="btn tooltipped" id="clear-bookmarks-button" style="margin-inline: 8px"><i class="material-icons">delete_forever</i></a>
-      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+      <button data-tooltip="Restaurar marcadores predeterminados" data-position="bottom" class="btn tooltipped" id="restore-bookmarks-button" style="margin-inline: 8px"><i class="material-icons">restore</i></button>
+      <button data-tooltip="Eliminar todos los marcadores" data-position="bottom" class="btn tooltipped delete-all-bookmarks" style="margin-inline: 8px"><i class="material-icons">delete_forever</i></button>
+      <button class="modal-close waves-effect waves-green btn-flat">X</button>
     </div>
     <div id="bookmarks-table" style="width: 100%">
       <table class="striped responsive-table bordered">
         <thead>
         <tr>
-          <th data-field="riverId" style="width: 20%; max-width: 200px">ID del Río</th>
+          <th data-field="riverId" style="width: 20%; min-width: 150px; max-width: 200px">ID del Río</th>
           <th data-field="riverName" style="width: 60%; max-width: 450px">Nombre del Río</th>
-          <th data-field="actions" style="width: 20%; max-width: 200px">Acciones</th>
+          <th data-field="actions" style="width: 20%; min-width: 150px; max-width: 200px">Acciones</th>
         </tr>
         </thead>
         <tbody id="bookmarks-tbody">

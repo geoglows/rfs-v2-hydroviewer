@@ -8,7 +8,7 @@ const CACHE_SIZE = 125
 const DB_NAME = 'RiverCacheDB'
 const STORE_NAME = 'cache'
 
-const cacheKey = ({riverid, type, date}) => `${riverid}-${type}-${date}`
+const cacheKey = ({riverid, biasCorrected, type, date}) => `${riverid}-${biasCorrected}-${type}-${date}`
 const openCacheDB = () => {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, 1)
@@ -71,11 +71,18 @@ const cacheData = async (data, key) => {
   tx.onerror = () => {
   }
 }
+const clearCache = async () => {
+  const db = await openCacheDB()
+  const tx = db.transaction(STORE_NAME, 'readwrite')
+  const store = tx.objectStore(STORE_NAME)
+  store.clear()
+}
 
 const fetchForecastPromise = async ({riverid, date}) => {
-  let key = cacheKey({riverid, type: 'forecast', date: date})
+  const biasCorrected = useBiasCorrected()
+  let key = cacheKey({riverid, biasCorrected, type: 'forecast', date: date})
   if (await dataIsCached(key)) return getCachedData(key)
-  return fetch(`${REST_ENDPOINT}/forecast/${riverid}/?format=json&date=${date}&bias_corrected=${useBiasCorrected()}`)
+  return fetch(`${REST_ENDPOINT}/forecast/${riverid}/?format=json&date=${date}&bias_corrected=${biasCorrected}`)
     .then(response => response.json())
     .then(response => {
       cacheData(response, key)
@@ -83,9 +90,10 @@ const fetchForecastPromise = async ({riverid, date}) => {
     })
 }
 const fetchForecastMembersPromise = async ({riverid, date}) => {
-  let key = cacheKey({riverid, type: 'forecastMembers', date})
+  const biasCorrected = useBiasCorrected()
+  let key = cacheKey({riverid, biasCorrected, type: 'forecastMembers', date})
   if (await dataIsCached(key)) return getCachedData(key)
-  return fetch(`${REST_ENDPOINT}/forecastensemble/${riverid}/?format=json&date=${date}&bias_corrected=${useBiasCorrected()}`)
+  return fetch(`${REST_ENDPOINT}/forecastensemble/${riverid}/?format=json&date=${date}&bias_corrected=${biasCorrected}`)
     .then(response => response.json())
     .then(response => {
       if (response.hasOwnProperty('ensemble_52')) delete response.ensemble_52
@@ -108,9 +116,10 @@ const fetchForecastMembersPromise = async ({riverid, date}) => {
     })
 }
 const fetchReturnPeriodsPromise = async riverid => {
-  const key = cacheKey({riverid, type: 'returnPeriods', date: 'static'})
+  const biasCorrected = useBiasCorrected()
+  const key = cacheKey({riverid, biasCorrected, type: 'returnPeriods', date: 'static'})
   if (await dataIsCached(key)) return getCachedData(key)
-  return fetch(`${REST_ENDPOINT}/returnperiods/${riverid}/?format=json&bias_corrected=${useBiasCorrected()}`)
+  return fetch(`${REST_ENDPOINT}/returnperiods/${riverid}/?format=json&bias_corrected=${biasCorrected}`)
     .then(response => response.json())
     .then(response => {
       cacheData(response, key)
@@ -118,9 +127,10 @@ const fetchReturnPeriodsPromise = async riverid => {
     })
 }
 const fetchRetroPromise = async riverid => {
-  const key = cacheKey({riverid, type: 'retro', date: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString().slice(0, 10).replaceAll('-', '')})
+  const biasCorrected = useBiasCorrected()
+  const key = cacheKey({riverid, biasCorrected, type: 'retro', date: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString().slice(0, 10).replaceAll('-', '')})
   if (await dataIsCached(key)) return getCachedData(key)
-  return fetch(`${REST_ENDPOINT}/retrospective/${riverid}/?format=json&bias_corrected=${useBiasCorrected()}`)
+  return fetch(`${REST_ENDPOINT}/retrospective/${riverid}/?format=json&bias_corrected=${biasCorrected}`)
     .then(response => response.json())
     .then(response => {
       cacheData(response, key)
@@ -175,6 +185,17 @@ const updateDownloadLinks = riverid => {
   document.getElementById("download-retrospective-link").href = hrefRetro
 }
 
+////////////////// Event Listeners
+const clearCacheButtons = Array.from(document.getElementsByClassName("clear-cache"))
+clearCacheButtons.forEach(btn => {
+  btn.onclick = () => {
+    if (confirm('Are you sure you want to clear downloaded data?')) {
+      clearCache().then(() => alert('Cache cleared!'))
+    }
+  }
+})
+
+////////////////// Module Exports
 export {
   fetchForecastPromise,
   fetchForecastMembersPromise,
