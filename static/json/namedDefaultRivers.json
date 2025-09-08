@@ -1,11 +1,19 @@
 [
   {"id": 760021611, "name": "Mississippi, USA"},
   {"id": 160064246, "name": "Nile, East Africa"},
-  {"id": 710431167, "name": "Colorado, USA & Mexico"},
+  {"id": 710431167, "name": "Colorado, Mexico"},
   {"id": 441057380, "name": "Ganges, India"},
   {"id": 430157411, "name": "Mekong, Vietnam"},
   {"id": 210406913, "name": "Tiber, Italy"},
   {"id": 621010293, "name": "Amazon, Brazil"},
   {"id": 130747391, "name": "Congo, D.R. Congo"},
-  {"id": 640255644, "name": "Parana, Argentina"}
+  {"id": 640255644, "name": "Parana, Argentina"},
+  {"id": 540514417, "name": "Murray, Australia"},
+  {"id": 441077984, "name": "Indus, India"},
+  {"id": 280302448, "name": "Volga, Russia"},
+  {"id": 220463113, "name": "Danube, Romania"},
+  {"id": 230452055, "name": "Seine, France"},
+  {"id": 640255644, "name": "Paraná, Argentina"},
+  {"id": 410641150, "name": "Amur, China/Russia"},
+  {"id": 140049491, "name": "Niger, Nigeria"}
 ]
