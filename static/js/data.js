@@ -1,4 +1,4 @@
-import {LoadStatus, RiverId, useBiasCorrected, useForecastMembers} from "./states/state.js"
+import {LoadStatus, RiverId, UseBiasCorrected, useForecastMembers} from "./states/state.js"
 import {clearCharts, plotAllForecast, plotAllRetro} from "./plots.js"
 import {inputForecastDate} from "./ui.js"
 
@@ -79,7 +79,7 @@ const clearCache = async () => {
 }
 
 const fetchForecastPromise = async ({riverid, date}) => {
-  const biasCorrected = useBiasCorrected()
+  const biasCorrected = UseBiasCorrected.get()
   let key = cacheKey({riverid, biasCorrected, type: 'forecast', date: date})
   if (await dataIsCached(key)) return getCachedData(key)
   return fetch(`${REST_ENDPOINT}/forecast/${riverid}/?format=json&date=${date}&bias_corrected=${biasCorrected}`)
@@ -90,7 +90,7 @@ const fetchForecastPromise = async ({riverid, date}) => {
     })
 }
 const fetchForecastMembersPromise = async ({riverid, date}) => {
-  const biasCorrected = useBiasCorrected()
+  const biasCorrected = UseBiasCorrected.get()
   let key = cacheKey({riverid, biasCorrected, type: 'forecastMembers', date})
   if (await dataIsCached(key)) return getCachedData(key)
   return fetch(`${REST_ENDPOINT}/forecastensemble/${riverid}/?format=json&date=${date}&bias_corrected=${biasCorrected}`)
@@ -116,7 +116,7 @@ const fetchForecastMembersPromise = async ({riverid, date}) => {
     })
 }
 const fetchReturnPeriodsPromise = async riverid => {
-  const biasCorrected = useBiasCorrected()
+  const biasCorrected = UseBiasCorrected.get()
   const key = cacheKey({riverid, biasCorrected, type: 'returnPeriods', date: 'static'})
   if (await dataIsCached(key)) return getCachedData(key)
   return fetch(`${REST_ENDPOINT}/returnperiods/${riverid}/?format=json&bias_corrected=${biasCorrected}`)
@@ -127,7 +127,7 @@ const fetchReturnPeriodsPromise = async riverid => {
     })
 }
 const fetchRetroPromise = async riverid => {
-  const biasCorrected = useBiasCorrected()
+  const biasCorrected = UseBiasCorrected.get()
   const key = cacheKey({riverid, biasCorrected, type: 'retro', date: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString().slice(0, 10).replaceAll('-', '')})
   if (await dataIsCached(key)) return getCachedData(key)
   return fetch(`${REST_ENDPOINT}/retrospective/${riverid}/?format=json&bias_corrected=${biasCorrected}`)
@@ -172,10 +172,12 @@ const getRetrospectiveData = riverid => {
       clearCharts('retro')
     })
 }
-const fetchData = riverid => {
+const fetchData = ({riverid, display = true} = {}) => {
   getForecastData(riverid)
   getRetrospectiveData(riverid)
-  M.Modal.getInstance(document.getElementById('charts-modal')).open()
+  if (display) {
+    M.Modal.getInstance(document.getElementById('charts-modal')).open()
+  }
 }
 
 const updateDownloadLinks = riverid => {

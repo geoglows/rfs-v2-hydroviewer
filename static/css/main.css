@@ -252,10 +252,6 @@ table.forecast-probability-table td, table.forecast-probability-table th {
         padding: 0 13px;
     }
 
-    .modal-header-bar {
-        flex-direction: column;
-    }
-
     .hide-on-small-only {
         display: none;
     }

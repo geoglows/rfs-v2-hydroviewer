@@ -1,7 +1,7 @@
 import {displayLoadingStatus, displayRiverNumber, lang, riverIdInput} from "./ui.js";
 import {fetchData} from "./data.js";
 import {bookmarks} from "./bookmarks.js";
-import {LoadStatus, RiverId} from "./states/state.js";
+import {LoadStatus, RiverId, UseBiasCorrected} from "./states/state.js";
 
 //////////////////////////////////////////////////////////////////////// INITIAL LOAD
 M.AutoInit();
@@ -21,6 +21,9 @@ RiverId.subscribe(bookmarks.setFavoriteIcon)
 
 // subscribers to loadingStatus changes
 LoadStatus.subscribe(displayLoadingStatus)
+
+// UseBiasCorrected subscriber to sync checkbox state
+UseBiasCorrected.subscribe(() => fetchData({display: false}))
 
 // event listeners
 const forecastDatePicker = document.getElementById('forecast-date-calendar')

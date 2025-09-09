@@ -1,5 +1,4 @@
 import {divChartFdc, divChartForecast, divChartRetro, divChartStatus, divChartYearlyVol, divTableForecast, lang} from './ui.js'
-import {useBiasCorrected} from "./states/state.js";
 
 //////////////////////////////////////////////////////////////////////// Constants and configs
 const defaultDateRange = ['2015-01-01', new Date().toISOString().split("T")[0]]
@@ -27,15 +26,15 @@ const monthNames = months.map(m => new Date(2021, parseInt(m, 10) - 1, 1).toLoca
 
 const experimentalPlotWatermark = [
   {
-    text: "EXPERIMENTAL",
+    text: "Experimental<br>Bias Correction",
     xref: "paper",
     yref: "paper",
     x: 0.5,
     y: 0.5,
     showarrow: false,
     font: {
-      size: 85,
-      color: "rgba(0,0,0,0.3)"
+      size: 80,
+      color: "rgba(0,0,0,0.25)"
     },
     xanchor: "center",
     yanchor: "middle"
@@ -83,7 +82,8 @@ const plotForecast = ({forecast, rp, riverid, chartDiv}) => {
         name: `${text.plots.fcLineUncertainty}`,
         fill: 'toself',
         fillcolor: 'rgba(44,182,255,0.6)',
-        line: {color: 'rgba(0,0,0,0)'}
+        line: {color: 'rgba(0,0,0,0)'},
+        legendgroup: 'forecast',
       },
       {
         x: forecast.datetime,
@@ -91,6 +91,7 @@ const plotForecast = ({forecast, rp, riverid, chartDiv}) => {
         line: {color: 'rgb(0,166,255)'},
         showlegend: false,
         name: '',
+        legendgroup: 'forecast',
       },
       {
         x: forecast.datetime,
@@ -98,24 +99,63 @@ const plotForecast = ({forecast, rp, riverid, chartDiv}) => {
         line: {color: 'rgb(0,166,255)'},
         showlegend: false,
         name: '',
+        legendgroup: 'forecast',
       },
       {
         x: forecast.datetime,
         y: forecast.flow_median,
-        name: `${text.plots.fcLineMedian}`,
-        line: {color: 'black'}
+        line: {color: 'black'},
+        name: text.plots.fcLineMedian,
+        legendgroup: 'forecast',
       },
+      ...(forecast.flow_median_original ? [
+        {
+          x: forecast.datetime.concat(forecast.datetime.slice().toReversed()),
+          y: forecast.flow_uncertainty_lower_original.concat(forecast.flow_uncertainty_upper_original.slice().toReversed()),
+          name: text.plots.fcLineUncertaintyOriginal,
+          fill: 'toself',
+          fillcolor: 'rgba(227,212,9,0.8)',
+          line: {color: 'rgba(0,0,0,0)'},
+          visible: 'legendonly',
+          legendgroup: 'forecastOriginal',
+        },
+        {
+          x: forecast.datetime,
+          y: forecast.flow_uncertainty_lower_original,
+          name: '',
+          line: {color: 'rgb(255,236,0)'},
+          showlegend: false,
+          visible: 'legendonly',
+          legendgroup: 'forecastOriginal',
+        },
+        {
+          x: forecast.datetime,
+          y: forecast.flow_uncertainty_upper_original,
+          name: '',
+          line: {color: 'rgb(255,236,0)'},
+          showlegend: false,
+          visible: 'legendonly',
+          legendgroup: 'forecastOriginal',
+        },
+        {
+          x: forecast.datetime,
+          y: forecast.flow_median_original,
+          name: text.plots.fcLineMedianOriginal,
+          line: {color: 'blue'},
+          visible: 'legendonly',
+          legendgroup: 'forecastOriginal',
+        },
+      ] : []),
       ...returnPeriods,
     ],
     {
       title: {text: `${text.plots.fcTitle}${riverid}`},
-      annotations: useBiasCorrected() ? experimentalPlotWatermark : [],
+      annotations: forecast.flow_median_original ? experimentalPlotWatermark : [],
       xaxis: {title: {text: `${text.plots.fcXaxis} (UTC +00:00)`}},
       yaxis: {
         title: {text: `${text.plots.fcYaxis} (m³/s)`},
         range: [0, null]
       },
-      legend: {'orientation': 'h'},
     }
   )
 }
@@ -144,7 +184,7 @@ const plotForecastMembers = ({forecast, rp, riverid, chartDiv}) => {
     [...memberTraces, ...returnPeriods,],
     {
       title: {text: `${text.plots.fcMembersTitle}${riverid}`},
-      annotations: useBiasCorrected() ? experimentalPlotWatermark : [],
+      annotations: UseBiasCorrected.get() ? experimentalPlotWatermark : [],
       xaxis: {title: {text: `${text.plots.fcXaxis} (UTC +00:00)`}},
       yaxis: {
         title: {text: `${text.plots.fcYaxis} (m³/s)`},
@@ -188,7 +228,7 @@ const forecastProbabilityTable = ({forecast, rp}) => {
   })
   return `<table class="forecast-probability-table"><thead>${headerRow}</thead><tbody>${bodyRows.join('')}</tbody></table>`
 }
-const plotRetrospective = ({daily, monthly, riverid, chartDiv}) => {
+const plotRetrospective = ({daily, monthly, riverid, chartDiv, biasCorrected}) => {
   chartDiv.innerHTML = ""
   Plotly.newPlot(
     chartDiv,
@@ -206,11 +246,20 @@ const plotRetrospective = ({daily, monthly, riverid, chartDiv}) => {
         name: `${text.words.monthlyAverage}`,
         line: {color: 'rgb(0, 166, 255)'},
         visible: 'legendonly'
-      }
+      },
+      // if there is a key ${river_id}_original, plot it also
+      ...(biasCorrected ? [{
+        x: daily.datetime,
+        y: daily[`${riverid}_original`],
+        type: 'lines',
+        name: `${text.words.dailyAverageOriginal}`,
+        line: {color: 'rgb(255, 0, 0)'},
+        visible: 'legendonly'
+      }] : [])
     ],
     {
       title: {text: `${text.plots.retroTitle} ${riverid}`},
-      annotations: useBiasCorrected() ? experimentalPlotWatermark : [],
+      annotations: biasCorrected ? experimentalPlotWatermark : [],
       legend: {orientation: 'h', x: 0, y: 1},
       hovermode: 'x',
       yaxis: {
@@ -260,7 +309,7 @@ const plotRetrospective = ({daily, monthly, riverid, chartDiv}) => {
     }
   )
 }
-const plotYearlyVolumes = ({yearly, averages, riverid, chartDiv}) => {
+const plotYearlyVolumes = ({yearly, averages, riverid, chartDiv, biasCorrected}) => {
   chartDiv.innerHTML = ""
   Plotly.newPlot(
     chartDiv,
@@ -287,7 +336,7 @@ const plotYearlyVolumes = ({yearly, averages, riverid, chartDiv}) => {
     ],
     {
       title: {text: `${text.plots.volumeTitle}${riverid}`},
-      annotations: useBiasCorrected() ? experimentalPlotWatermark : [],
+      annotations: biasCorrected ? experimentalPlotWatermark : [],
       legend: {orientation: 'h'},
       hovermode: 'x',
       xaxis: {title: {text: `${text.words.year}`}},
@@ -297,9 +346,8 @@ const plotYearlyVolumes = ({yearly, averages, riverid, chartDiv}) => {
       }
     }
   )
-
 }
-const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, riverid, chartDiv}) => {
+const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, riverid, chartDiv, biasCorrected}) => {
   chartDiv.innerHTML = ""
   const years = Array.from(new Set(Object.keys(monthlyAverageTimeseries).map(k => k.split('-')[0]))).sort((a, b) => a - b)
 
@@ -351,7 +399,7 @@ const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, rive
     ],
     {
       title: {text: `${text.plots.statusTitle}${riverid}`},
-      annotations: useBiasCorrected() ? experimentalPlotWatermark : [],
+      annotations: biasCorrected ? experimentalPlotWatermark : [],
       xaxis: {
         title: {text: `${text.words.month}`},
         tickvals: months,
@@ -365,7 +413,7 @@ const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, rive
     }
   )
 }
-const plotFdc = ({fdc, monthlyFdc, riverid, chartDiv}) => {
+const plotFdc = ({fdc, monthlyFdc, riverid, chartDiv, biasCorrected}) => {
   chartDiv.innerHTML = ""
   Plotly.newPlot(
     chartDiv,
@@ -391,7 +439,7 @@ const plotFdc = ({fdc, monthlyFdc, riverid, chartDiv}) => {
     ],
     {
       title: {text: `${text.plots.fdcTitle}${riverid}`},
-      annotations: useBiasCorrected() ? experimentalPlotWatermark : [],
+      annotations: biasCorrected ? experimentalPlotWatermark : [],
       xaxis: {title: {text: `${text.words.percentile} (%)`}},
       yaxis: {
         title: {text: `${text.words.flow} (m³/s)`},
@@ -423,6 +471,7 @@ const plotAllRetro = ({retro, riverid}) => {
   let monthlyFdc = {}
   let monthlyStatusValues = {}
   text.statusLabels.forEach(label => monthlyStatusValues[label] = [])
+  const biasCorrected = retro.hasOwnProperty(`${riverid}_original`)
 
   // Get subsets of data with the same YYYY-MM timestamp
   let monthlyValues = retro.datetime.reduce((acc, currentValue, currentIndex) => {
@@ -476,10 +525,10 @@ const plotAllRetro = ({retro, riverid}) => {
       average: total / count
     }))
 
-  plotRetrospective({daily: retro, monthly: monthlyAverageTimeseries, riverid, chartDiv: divChartRetro})
-  plotYearlyVolumes({yearly: yearlyVolumes, averages: fiveYearlyAverages, riverid, chartDiv: divChartYearlyVol})
-  plotStatuses({statuses: monthlyStatusValues, monthlyAverages, monthlyAverageTimeseries, riverid, chartDiv: divChartStatus})
-  plotFdc({fdc, monthlyFdc, riverid, chartDiv: divChartFdc})
+  plotRetrospective({daily: retro, monthly: monthlyAverageTimeseries, riverid, chartDiv: divChartRetro, biasCorrected})
+  plotYearlyVolumes({yearly: yearlyVolumes, averages: fiveYearlyAverages, riverid, chartDiv: divChartYearlyVol, biasCorrected})
+  plotStatuses({statuses: monthlyStatusValues, monthlyAverages, monthlyAverageTimeseries, riverid, chartDiv: divChartStatus, biasCorrected})
+  plotFdc({fdc, monthlyFdc, riverid, chartDiv: divChartFdc, biasCorrected})
 }
 const plotAllForecast = ({forecast, rp, riverid, showMembers}) => {
   showMembers ? plotForecastMembers({forecast, rp, riverid, chartDiv: divChartForecast}) : plotForecast({forecast, rp, riverid, chartDiv: divChartForecast})
