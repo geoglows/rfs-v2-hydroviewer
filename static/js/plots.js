@@ -26,7 +26,7 @@ const monthNames = months.map(m => new Date(2021, parseInt(m, 10) - 1, 1).toLoca
 
 const experimentalPlotWatermark = [
   {
-    text: "Experimental<br>Bias Correction",
+    text: text.plots.experimentalOverlay,
     xref: "paper",
     yref: "paper",
     x: 0.5,
@@ -163,7 +163,7 @@ const plotForecastMembers = ({forecast, rp, riverid, chartDiv}) => {
   chartDiv.innerHTML = ""
   const memberTraces = Object
     .keys(forecast)
-    .filter(key => key.startsWith('ensemble_'))
+    .filter(key => key.startsWith('ensemble_') && !key.endsWith('_original'))
     .map(key => {
       const memberNumber = parseInt(key.replace('ensemble_', ''))
       return {
@@ -184,7 +184,7 @@ const plotForecastMembers = ({forecast, rp, riverid, chartDiv}) => {
     [...memberTraces, ...returnPeriods,],
     {
       title: {text: `${text.plots.fcMembersTitle}${riverid}`},
-      annotations: UseBiasCorrected.get() ? experimentalPlotWatermark : [],
+      annotations: forecast.ensemble_01_original ? experimentalPlotWatermark : [],
       xaxis: {title: {text: `${text.plots.fcXaxis} (UTC +00:00)`}},
       yaxis: {
         title: {text: `${text.plots.fcYaxis} (m³/s)`},

@@ -62,5 +62,6 @@ window.text = {
     "volumeTitle": "Volumen Anual Acumulado de Caudal para Río: ",
     "statusTitle": "Estado Anual por Mes para Río: ",
     "fdcTitle": "Curvas de Duración de Flujo para Río: ",
+    "experimentalOverlay": "Corrección<br>Experimental"
   }
 }

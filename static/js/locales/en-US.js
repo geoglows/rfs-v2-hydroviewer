@@ -59,5 +59,6 @@ window.text = {
     "volumeTitle": "Yearly Cumulative Discharge Volume for River: ",
     "statusTitle": "Monthly Average Flow by Year for River: ",
     "fdcTitle": "Flow Duration Curves for River: ",
+    "experimentalOverlay": "Experimental<br>Bias Correction"
   }
 }
