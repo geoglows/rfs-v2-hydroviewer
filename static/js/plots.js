@@ -424,6 +424,7 @@ const plotAllRetro = ({retro, riverid}) => {
   let monthlyStatusValues = {}
   text.statusLabels.forEach(label => monthlyStatusValues[label] = [])
 
+  // Get subsets of data with the same YYYY-MM timestamp
   let monthlyValues = retro.datetime.reduce((acc, currentValue, currentIndex) => {
     const date = new Date(currentValue)
     const datestring = date.toISOString().slice(0, 7)
@@ -434,9 +435,16 @@ const plotAllRetro = ({retro, riverid}) => {
   const fdc = sortedArrayToPercentiles(retro[riverid].toSorted((a, b) => a - b))
   const years = Array.from(new Set(Object.keys(monthlyValues).map(k => k.split('-')[0]))).sort((a, b) => a - b)
 
+  // Calculate monthly averages from the monthly values. Minimum 20 values to calculate a monthly average.
   Object
     .keys(monthlyValues)
-    .forEach(k => monthlyAverageTimeseries[k] = monthlyValues[k].reduce((a, b) => a + b, 0) / monthlyValues[k].length)
+    .forEach(k => {
+      if (monthlyValues[k].length < 20) {
+        delete monthlyValues[k]
+        return
+      }
+      monthlyAverageTimeseries[k] = monthlyValues[k].reduce((a, b) => a + b, 0) / monthlyValues[k].length
+    })
   months
     .forEach(month => {
       const values = Object.keys(monthlyValues).filter(k => k.endsWith(`-${month}`)).map(k => monthlyValues[k]).flat().sort((a, b) => b - a)
