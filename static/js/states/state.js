@@ -2,7 +2,6 @@ import {pubSubState} from "./stores.js";
 
 const RiverId = pubSubState({
   initialValue: null,
-  localStorageKey: null
 })
 const LoadStatus = pubSubState({
   initialValue: {
@@ -12,8 +11,7 @@ const LoadStatus = pubSubState({
   localStorageKey: null
 })
 const UseBiasCorrected = pubSubState({
-  initialValue: localStorage.getItem('useBiasCorrected') === 'true' || false,
-  localStorageKey: 'useBiasCorrected'
+  initialValue: false,
 })
 
 // set event listeners and sync state with localStorage values on first load
@@ -22,8 +20,9 @@ const useForecastMembers = () => checkShowMembers.checked
 checkShowMembers.addEventListener('change', () => localStorage.setItem('showEnsembleMembers', checkShowMembers.checked))
 checkShowMembers.checked = localStorage.getItem('showEnsembleMembers') === 'true' || false
 
-const checkUseBiasCorrected = document.getElementById('settingsUseBiasCorrected')
-checkUseBiasCorrected.addEventListener('change', () => UseBiasCorrected.set(checkUseBiasCorrected.checked))
+// const checkUseBiasCorrected = document.getElementById('settingsUseBiasCorrected')
+// checkUseBiasCorrected.checked = UseBiasCorrected.get()
+// checkUseBiasCorrected.addEventListener('change', () => UseBiasCorrected.set(checkUseBiasCorrected.checked))
 
 export {
   RiverId, LoadStatus, UseBiasCorrected,

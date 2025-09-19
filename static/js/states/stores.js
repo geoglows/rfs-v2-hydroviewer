@@ -1,7 +1,7 @@
 const loggingEnabled = false
 
 export const pubSubState = ({initialValue, localStorageKey}) => {
-  let state = initialValue ? initialValue : localStorage.getItem(localStorageKey) || null
+  let state = (initialValue !== undefined) ? initialValue : (localStorageKey ? JSON.parse(localStorage.getItem(localStorageKey)) : null)
   const originalState = JSON.parse(JSON.stringify(state)) // deep clone for reset
   let subscribers = new Set()
 

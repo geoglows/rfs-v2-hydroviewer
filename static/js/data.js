@@ -141,6 +141,7 @@ const fetchRetroPromise = async riverid => {
 const getForecastData = riverid => {
   riverid = riverid || RiverId.get()
   if (!riverid) return
+  clearCharts('forecast')
   LoadStatus.update({forecast: "load"})
   const date = inputForecastDate.value.replaceAll("-", "")
   const showMembers = useForecastMembers()
@@ -160,6 +161,7 @@ const getForecastData = riverid => {
 const getRetrospectiveData = riverid => {
   riverid = riverid || RiverId.get()
   if (!riverid) return
+  clearCharts('retro')
   LoadStatus.update({retro: "load"})
   fetchRetroPromise(RiverId.get())
     .then(response => {
