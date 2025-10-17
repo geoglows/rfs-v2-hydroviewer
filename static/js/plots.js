@@ -1,4 +1,4 @@
-import {divChartFdc, divChartForecast, divChartRetro, divChartStatus, divChartYearlyVol, divTableForecast, lang} from './ui.js'
+import {divChartFdc, divChartForecast, divChartRetro, divChartStatus, divChartYearlyVol, divTableForecast, divYearlyPeaks, divHeatMap, lang} from './ui.js'
 
 //////////////////////////////////////////////////////////////////////// Constants and configs
 const defaultDateRange = ['2015-01-01', new Date().toISOString().split("T")[0]]
@@ -451,6 +451,386 @@ const plotFdc = ({fdc, monthlyFdc, riverid, chartDiv, biasCorrected}) => {
   )
 }
 
+// needs a title and some cleaning up overall
+const plotYearlyPeaks = ({ yearlyPeaks, riverid, chartDiv }) => {
+  if (!chartDiv) return; // ✅ prevent null errors
+    chartDiv.innerHTML = "";
+
+
+  const currentYear = new Date().getFullYear();
+
+  // Filter valid range
+  yearlyPeaks = yearlyPeaks
+    .filter(p => p.year >= 1940 && p.year < currentYear).sort((a, b) => a.year - b.year);
+
+  // --- Convert DOY → Month/Day ---
+  const doyToDate = doy => {
+    const date = new Date(2024, 0); // leap year safety
+    date.setDate(doy);
+    const month = date.toLocaleString(lang, { month: "short" });
+    const day = date.getDate();
+    return `${month} ${day}`;
+  };
+
+  // --- Circular logic for outlier detection ---
+  const angles = yearlyPeaks.map(d => (2 * Math.PI * (d.doy - 1)) / 365.0);
+  const circularDistance = (a1, a2) =>
+    Math.min(Math.abs(a1 - a2), 2 * Math.PI - Math.abs(a1 - a2));
+
+  const meanSin = angles.reduce((s, a) => s + Math.sin(a), 0) / angles.length;
+  const meanCos = angles.reduce((s, a) => s + Math.cos(a), 0) / angles.length;
+  const meanAngle = Math.atan2(meanSin, meanCos);
+
+  const distancesRad = angles.map(a => circularDistance(a, meanAngle));
+  const distancesDays = distancesRad.map(d => d * (365 / (2 * Math.PI)));
+
+  // Boxplot method for outliers
+  const sortedDistancesDays = [...distancesDays].sort((a, b) => a - b);
+  const percentile = (arr, q) => {
+    const pos = (arr.length - 1) * q;
+    const base = Math.floor(pos);
+    const rest = pos - base;
+    return arr[base + 1] !== undefined
+      ? arr[base] + rest * (arr[base + 1] - arr[base])
+      : arr[base];
+  };
+  const q1 = percentile(sortedDistancesDays, 0.25);
+  const q3 = percentile(sortedDistancesDays, 0.75);
+  const iqr = q3 - q1;
+  const threshold = q3 + 1.5 * iqr;
+
+  const outlierIndices = distancesDays
+    .map((d, i) => (d > threshold ? i : -1))
+    .filter(i => i !== -1);
+
+  const outliers = outlierIndices.map(i => yearlyPeaks[i]);
+  const normalPoints = yearlyPeaks.filter(
+    (_, i) => !outlierIndices.includes(i)
+  );
+
+  // --- Circular median DOY ---
+  const circularMedian = angles => {
+    const n = angles.length;
+    let minTotalDist = Infinity;
+    let medianAngle = 0;
+
+    for (let i = 0; i < n; i++) {
+      const a = angles[i];
+      const totalDist = angles.reduce((sum, x) => {
+        let d = Math.abs(x - a);
+        d = Math.min(d, 2 * Math.PI - d);
+        return sum + d;
+      }, 0);
+
+      if (totalDist < minTotalDist) {
+        minTotalDist = totalDist;
+        medianAngle = a;
+      }
+    }
+    return medianAngle;
+  };
+
+  const medianAngle = circularMedian(angles);
+  const medianDoy = Math.round((medianAngle / (2 * Math.PI)) * 365) + 1;
+
+  // --- Color bins ---
+  const peaks = yearlyPeaks.map(p => p.peak);
+  const minVal = Math.min(...peaks);
+  const maxVal = Math.max(...peaks);
+  const nBins = 5;
+  const viridisBins = ["#440154", "#3b528b", "#21918c", "#5ec962", "#fde725"];
+
+  const getBinColor = val => {
+    const bin = Math.floor(((val - minVal) / (maxVal - minVal)) * nBins);
+    return viridisBins[Math.min(bin, nBins - 1)];
+  };
+
+  const formatVal = val => {
+    if (val >= 1000) {
+      const rounded = Math.round((val / 1000) * 10) / 10;
+      return `${rounded}k`;
+    } else if (val === 0) {
+      return "0";
+    } else {
+      const magnitude = Math.floor(Math.log10(Math.abs(val)));
+      const factor = 10 ** (magnitude - 2);
+      return Math.round(val / factor) * factor;
+    }
+  };
+
+  const binRanges = [];
+  for (let i = 0; i < nBins; i++) {
+    const lower = formatVal(minVal + (i * (maxVal - minVal)) / nBins);
+    const upper = formatVal(minVal + ((i + 1) * (maxVal - minVal)) / nBins);
+    binRanges.push(`${lower}-${upper}`);
+  }
+
+  Plotly.newPlot(
+    chartDiv,
+    [
+      {
+        name: `${text.words.annualPeak}`,
+        x: normalPoints.map(p => p.doy),
+        y: normalPoints.map(p => p.year),
+        mode: "markers",
+        type: "scatter",
+        marker: {
+          size: 9,
+          color: normalPoints.map(p => getBinColor(p.peak)),
+          line: { width: 0 },
+        },
+        text: normalPoints.map(
+          p =>
+            `${text.words.year}: ${p.year}<br>${doyToDate(p.doy)} (DOY ${p.doy})<br>${text.words.discharge}: ${formatVal(p.peak)} m³/s`
+        ),
+        hovertemplate: "%{text}<extra></extra>",
+        showlegend: false,
+      },
+      {
+        name: `${text.words.temporalOutliers}`,
+        x: outliers.map(p => p.doy),
+        y: outliers.map(p => p.year),
+        mode: "markers",
+        type: "scatter",
+        marker: {
+          size: 15,
+          color: "rgba(0,0,0,0)",
+          line: { color: "red", width: 2 },
+        },
+        hoverinfo: "skip",
+      },
+      {
+        x: outliers.map(p => p.doy),
+        y: outliers.map(p => p.year),
+        mode: "markers",
+        type: "scatter",
+        marker: {
+          size: 9,
+          color: outliers.map(p => getBinColor(p.peak)),
+          line: { width: 0 },
+        },
+        text: outliers.map(
+          p =>
+            `${text.words.year}: ${p.year}<br>${doyToDate(p.doy)} (DOY ${p.doy})<br>${text.words.discharge}: ${formatVal(p.peak)} m³/s`
+        ),
+        hovertemplate: "%{text}<extra></extra>",
+        showlegend: false,
+      },
+      {
+        x: [medianDoy, medianDoy],
+        y: [
+          Math.min(...yearlyPeaks.map(p => p.year)) - 1,
+          Math.max(...yearlyPeaks.map(p => p.year)) + 1,
+        ],
+        mode: "lines",
+        line: { dash: "dash", width: 1, color: "black" },
+        hoverinfo: "none",
+        name: `${text.words.medianDOY}`,
+        showlegend: true,
+      },
+      ...viridisBins.map((color, i) => ({
+        x: [null],
+        y: [null],
+        mode: "markers",
+        type: "scatter",
+        marker: { size: 9, color: color },
+        name: `${binRanges[i]}`,
+        showlegend: true,
+      })),
+    ],
+     {
+      title: {
+        text: `${text.plots.peaksTitle}${riverid}`,
+        x: 0.5,
+        xanchor: "center",
+        yanchor: "top",
+      },
+      xaxis: {
+        title: {
+          text: `${text.plots.peaksXaxis}`,
+        },
+        range: [0, 366],
+        dtick: 30,
+        tickfont: { size: 12 },
+      },
+      yaxis: {
+        title: {
+          text: `${text.words.year}`,
+        },
+        tickfont: { size: 12 },
+      },
+      height: 560,
+      margin: { t: 80, l: 80, r: 180, b: 70 },
+      legend: {
+        x: 1.05,
+        y: 1,
+        bgcolor: "rgba(255,255,255,0)",
+        bordercolor: "rgba(0,0,0,0)",
+        title: { text: `${text.words.peakDischarge} (m³/s)` },
+      },
+    }
+  );
+};
+
+///////////// heat map raster ting
+const plotHeatMap = ({ retro, riverid, chartDiv }) => {
+  if (!chartDiv) return;
+  chartDiv.innerHTML = "";
+
+
+  // Build array of (year, doy, flow)
+  const daily = retro.datetime.map((currentValue, currentIndex) => {
+    const date = new Date(currentValue);
+    const year = date.getFullYear();
+    const doy = Math.floor((date - new Date(year, 0, 0)) / (1000 * 60 * 60 * 24));
+    const flow = retro[riverid][currentIndex];
+    return { year, doy, flow };
+  });
+
+  const filteredDaily = daily.filter(d => d.doy <= 365);
+
+  // Group by year
+  const grouped = filteredDaily.reduce((acc, d) => {
+    if (!acc[d.year]) acc[d.year] = [];
+    acc[d.year].push(d);
+    return acc;
+  }, {});
+
+  const currentYear = new Date().getFullYear();
+
+  // Filter valid years
+  const validYears = Object.keys(grouped)
+    .map(y => parseInt(y))
+    .filter(y => (y === currentYear) || grouped[y].length >= 360)
+    .filter(y => y !== 1939)
+    .sort((a, b) => a - b);
+
+  const days = Array.from({ length: 365 }, (_, i) => i + 1);
+
+   const doyToDate = doy => {
+    const date = new Date(2024, 0); // leap year safety
+    date.setDate(doy);
+    const month = date.toLocaleString(lang, { month: "short" });
+    const day = date.getDate();
+    return `${month} ${day}`;
+  };
+
+   const dateLabels = days.map(doy => doyToDate(doy));
+   const textMatrix = validYears.map(() => dateLabels);
+
+  // Build lookup
+  const flowLookup = {};
+  filteredDaily.forEach(d => {
+    flowLookup[`${d.year}-${d.doy}`] = d.flow;
+  });
+
+  // Build 2D data matrix
+  const dataMatrix = validYears.map(y =>
+    days.map(d => flowLookup[`${y}-${d}`] ?? null)
+  );
+
+  // Compute data range
+  const dataFlat = dataMatrix.flat().filter(v => v != null);
+  const dataMin = Math.min(...dataFlat);
+  const dataMax = Math.max(...dataFlat);
+
+  // --- BINNING SECTION ---
+  const nBins = 7;
+  const colors = ["#440154", "#414487", "#2a788e", "#22a884", "#7ad151", "#bddf26", "#fde725"];
+
+  const formatVal = val => {
+  if (val >= 1000) {
+    const rounded = Math.round((val / 1000) * 10) / 10;
+    return `${rounded}k`;
+  } else if (val === 0) {
+    return "0";
+  } else {
+    const magnitude = Math.floor(Math.log10(Math.abs(val)));
+    const factor = 10 ** (magnitude - 2);
+    return Math.round(val / factor) * factor;
+  }
+};
+
+  // Compute bin edges
+  const binEdges = Array.from({ length: nBins + 1 }, (_, i) =>
+    dataMin + (i * (dataMax - dataMin)) / nBins
+  );
+
+  // Build discrete colorscale for Plotly (pairs of identical stops)
+  const colorscale = [];
+  for (let i = 0; i < nBins; i++) {
+    const p1 = i / nBins;
+    const p2 = (i + 1) / nBins;
+    colorscale.push([p1, colors[i]], [p2, colors[i]]);
+  }
+
+  // Convert dataMatrix values → representative bin center (for discrete display)
+  const binnedMatrix = dataMatrix.map(row =>
+    row.map(v => {
+      if (v == null) return null;
+      for (let i = 0; i < nBins; i++) {
+        if (v <= binEdges[i + 1]) return (binEdges[i] + binEdges[i + 1]) / 2;
+      }
+      return (binEdges[nBins - 1] + binEdges[nBins]) / 2;
+    })
+  );
+
+  // Month overlay (still works the same)
+  const monthStarts = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
+  const maxYear = Math.max(...validYears);
+
+  const monthAnnotations = monthNames.map((month, i) => ({
+    x: monthStarts[i] + 15,
+    y: maxYear - 0.2,
+    text: monthNames[i],
+    showarrow: false,
+    xanchor: "center",
+    yanchor: "bottom",
+    font: { size: 12, color: "0,0,0,0.5" },
+  }));
+
+  const layout = {
+    title: {
+      text: `${text.plots.heatMapTitle}${riverid}`,
+      x: 0.5
+    },
+    xaxis: {
+      title: { text: `${text.plots.heatMapXaxis}` },
+      tickmode: "array",
+      tickvals: Array.from({ length: 8 }, (_, i) => i * 50),
+      side: "bottom"
+    },
+    yaxis: {
+      title: { text: `${text.words.year}` },
+      range: [1985, null]
+    },
+    margin: { t: 80, l: 80, r: 80, b: 70 },
+    annotations: monthAnnotations,
+    height: 560,
+
+  };
+
+  Plotly.newPlot(chartDiv, [
+    {
+      z: binnedMatrix,
+      x: days,
+      y: validYears,
+      type: "heatmap",
+      colorscale: colorscale,
+      zmin: dataMin,
+      zmax: dataMax,
+      text: textMatrix,
+      hovertemplate: `${text.words.year}: %{y}<br>${text.words.doy}: %{text} (%{x})<br>${text.words.discharge}: %{z} m³/s<extra></extra>`,
+      colorbar: {
+        title: {text: `${text.words.discharge} (m³/s)`, side: "top"},
+        tickvals: binEdges.slice(0, -1).map((v, i) => (v + binEdges[i + 1]) / 2),
+        ticktext: binEdges.slice(0, -1).map(
+          (v, i) => `${formatVal(v)}–${formatVal(binEdges[i + 1])}`
+        )
+      }
+    }
+  ], layout);
+};
 //////////////////////////////////////////////////////////////////////// Helper Functions
 const clearCharts = chartTypes => {
   if (chartTypes === "forecast" || chartTypes === null || chartTypes === undefined) {
@@ -458,8 +838,8 @@ const clearCharts = chartTypes => {
       .forEach(el => el.innerHTML = '')
   }
   if (chartTypes === "retro" || chartTypes === null || chartTypes === undefined) {
-    [divChartRetro, divChartYearlyVol, divChartStatus, divChartFdc]
-      .forEach(el => el.innerHTML = '')
+    [divChartRetro, divChartYearlyVol, divChartStatus, divChartFdc, divYearlyPeaks, divHeatMap]
+      .forEach(el => {if (el) el.innerHTML = ''})
   }
 }
 
@@ -470,6 +850,7 @@ const plotAllRetro = ({retro, riverid}) => {
   let monthlyAverageTimeseries = {}
   let monthlyFdc = {}
   let monthlyStatusValues = {}
+  let yearlyPeaks = {}
   text.statusLabels.forEach(label => monthlyStatusValues[label] = [])
   const biasCorrected = retro.hasOwnProperty(`${riverid}_original`)
 
@@ -483,6 +864,24 @@ const plotAllRetro = ({retro, riverid}) => {
   }, {})
   const fdc = sortedArrayToPercentiles(retro[riverid].toSorted((a, b) => a - b))
   const years = Array.from(new Set(Object.keys(monthlyValues).map(k => k.split('-')[0]))).sort((a, b) => a - b)
+
+  // Calculate yearly discharge peaks.
+
+  retro.datetime.forEach((currentValue, currentIndex) => {
+  const date = new Date(currentValue)
+  const year = date.getFullYear()
+  const doy =
+    Math.floor((date - new Date(year, 0, 0)) / (1000 * 60 * 60 * 24)) // day of year
+  const value = retro[riverid][currentIndex]
+
+  // store max per year with its day of year
+  if (!yearlyPeaks[year] || value > yearlyPeaks[year].peak) {
+    yearlyPeaks[year] = { year, doy, peak: value }
+  }
+})
+
+// convert to array
+yearlyPeaks = Object.values(yearlyPeaks).sort((a, b) => a.year - b.year)
 
   // Calculate monthly averages from the monthly values. Minimum 20 values to calculate a monthly average.
   Object
@@ -529,6 +928,8 @@ const plotAllRetro = ({retro, riverid}) => {
   plotYearlyVolumes({yearly: yearlyVolumes, averages: fiveYearlyAverages, riverid, chartDiv: divChartYearlyVol, biasCorrected})
   plotStatuses({statuses: monthlyStatusValues, monthlyAverages, monthlyAverageTimeseries, riverid, chartDiv: divChartStatus, biasCorrected})
   plotFdc({fdc, monthlyFdc, riverid, chartDiv: divChartFdc, biasCorrected})
+  plotYearlyPeaks({yearlyPeaks, riverid, chartDiv: divYearlyPeaks})
+  plotHeatMap({retro, riverid, chartDiv: divHeatMap})
 }
 const plotAllForecast = ({forecast, rp, riverid, showMembers}) => {
   showMembers ? plotForecastMembers({forecast, rp, riverid, chartDiv: divChartForecast}) : plotForecast({forecast, rp, riverid, chartDiv: divChartForecast})

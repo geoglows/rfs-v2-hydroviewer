@@ -22,6 +22,12 @@ window.text = {
     "flowDurationCurve": "Curva de Duración de Flujo",
     "fdc": "CDF",
     "ensMembers": "Miembros del Ensamble",
+    "annualPeak": "Pico Anual",
+    "temporalOutliers": "Valores Poco Comúnes",
+    "medianDOY": "Dia Promedio del Año",
+    "doy": "Dia del Año",
+    "discharge": "Caudal",
+    "peakDischarge": "Caudal Máximo"
   },
   "statusLabels": [
     "Muy Mojado",
@@ -62,6 +68,10 @@ window.text = {
     "volumeTitle": "Volumen Anual Acumulado de Caudal para Río: ",
     "statusTitle": "Estado Anual por Mes para Río: ",
     "fdcTitle": "Curvas de Duración de Flujo para Río: ",
-    "experimentalOverlay": "Corrección<br>Experimental"
+    "experimentalOverlay": "Corrección<br>Experimental",
+    "peaksTitle": "Picos Anuales con Valores Temporales poco Comúnes para el Río: ",
+    "peaksXaxis": "Dia del Año",
+    "heatMapTitle": "Caudal Diaria Promedio para el Rio: ",
+    "heatMapXaxis": "Dia del Año"
   }
 }
