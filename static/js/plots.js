@@ -451,17 +451,15 @@ const plotFdc = ({fdc, monthlyFdc, riverid, chartDiv, biasCorrected}) => {
   )
 }
 
-// needs a title and some cleaning up overall
 const plotYearlyPeaks = ({ yearlyPeaks, riverid, chartDiv }) => {
-  if (!chartDiv) return; // ✅ prevent null errors
+  if (!chartDiv) return; //
     chartDiv.innerHTML = "";
-
 
   const currentYear = new Date().getFullYear();
 
   // Filter valid range
   yearlyPeaks = yearlyPeaks
-    .filter(p => p.year >= 1940 && p.year < currentYear).sort((a, b) => a.year - b.year);
+    .filter(p => p.year < currentYear).sort((a, b) => a.year - b.year);
 
   // --- Convert DOY → Month/Day ---
   const doyToDate = doy => {
@@ -672,64 +670,65 @@ const plotYearlyPeaks = ({ yearlyPeaks, riverid, chartDiv }) => {
   );
 };
 
-///////////// heat map raster ting
+// fix the hover template for the 2nd of every month
 const plotHeatMap = ({ retro, riverid, chartDiv }) => {
   if (!chartDiv) return;
   chartDiv.innerHTML = "";
 
-
-  // Build array of (year, doy, flow)
+  // --- Build array of (year, doy, flow) ---
   const daily = retro.datetime.map((currentValue, currentIndex) => {
     const date = new Date(currentValue);
-    const year = date.getFullYear();
-    const doy = Math.floor((date - new Date(year, 0, 0)) / (1000 * 60 * 60 * 24));
+    const year = date.getUTCFullYear();
+
+    // DOY in UTC (includes Feb 29 for leap years)
+    const doy = Math.floor(
+      (Date.UTC(year, date.getUTCMonth(), date.getUTCDate()) - Date.UTC(year, 0, 0)) / 86400000
+    )
+
     const flow = retro[riverid][currentIndex];
     return { year, doy, flow };
   });
 
-  const filteredDaily = daily.filter(d => d.doy <= 365);
-
-  // Group by year
-  const grouped = filteredDaily.reduce((acc, d) => {
+  // --- Group by year ---
+  const grouped = daily.reduce((acc, d) => {
     if (!acc[d.year]) acc[d.year] = [];
     acc[d.year].push(d);
     return acc;
   }, {});
 
-  const currentYear = new Date().getFullYear();
-
-  // Filter valid years
+  // --- Find all years in the dataset ---
   const validYears = Object.keys(grouped)
     .map(y => parseInt(y))
-    .filter(y => (y === currentYear) || grouped[y].length >= 360)
-    .filter(y => y !== 1939)
     .sort((a, b) => a - b);
 
-  const days = Array.from({ length: 365 }, (_, i) => i + 1);
+  // --- Determine max DOY for axis labels (handles leap years) ---
+  const maxDoy = Math.max(...daily.map(d => d.doy));
+  const days = Array.from({ length: maxDoy }, (_, i) => i + 1);
 
-   const doyToDate = doy => {
-    const date = new Date(2024, 0); // leap year safety
-    date.setDate(doy);
-    const month = date.toLocaleString(lang, { month: "short" });
-    const day = date.getDate();
+  // --- Convert DOY to Month/Day for hovertemplate ---
+  const doyToDate = (year, doy) => {
+    const date = new Date(Date.UTC(year, 0, doy));
+    const month = date.toLocaleString(lang, { month: "short", timeZone: "UTC" });
+    const day = date.getUTCDate();
     return `${month} ${day}`;
   };
 
-   const dateLabels = days.map(doy => doyToDate(doy));
-   const textMatrix = validYears.map(() => dateLabels);
+  const textMatrix = validYears.map(y =>
+    days.map(doy => doyToDate(y, doy))
+  );
 
-  // Build lookup
+  // --- Build lookup for flow values ---
   const flowLookup = {};
-  filteredDaily.forEach(d => {
+  daily.forEach(d => {
     flowLookup[`${d.year}-${d.doy}`] = d.flow;
   });
 
-  // Build 2D data matrix
+  // --- Build 2D data matrix ---
   const dataMatrix = validYears.map(y =>
     days.map(d => flowLookup[`${y}-${d}`] ?? null)
   );
 
-  // Compute data range
+  // --- Compute data range ---
   const dataFlat = dataMatrix.flat().filter(v => v != null);
   const dataMin = Math.min(...dataFlat);
   const dataMax = Math.max(...dataFlat);
@@ -739,24 +738,22 @@ const plotHeatMap = ({ retro, riverid, chartDiv }) => {
   const colors = ["#440154", "#414487", "#2a788e", "#22a884", "#7ad151", "#bddf26", "#fde725"];
 
   const formatVal = val => {
-  if (val >= 1000) {
-    const rounded = Math.round((val / 1000) * 10) / 10;
-    return `${rounded}k`;
-  } else if (val === 0) {
-    return "0";
-  } else {
-    const magnitude = Math.floor(Math.log10(Math.abs(val)));
-    const factor = 10 ** (magnitude - 2);
-    return Math.round(val / factor) * factor;
-  }
-};
+    if (val >= 1000) {
+      const rounded = Math.round((val / 1000) * 10) / 10;
+      return `${rounded}k`;
+    } else if (val === 0) {
+      return "0";
+    } else {
+      const magnitude = Math.floor(Math.log10(Math.abs(val)));
+      const factor = 10 ** (magnitude - 2);
+      return Math.round(val / factor) * factor;
+    }
+  };
 
-  // Compute bin edges
   const binEdges = Array.from({ length: nBins + 1 }, (_, i) =>
     dataMin + (i * (dataMax - dataMin)) / nBins
   );
 
-  // Build discrete colorscale for Plotly (pairs of identical stops)
   const colorscale = [];
   for (let i = 0; i < nBins; i++) {
     const p1 = i / nBins;
@@ -764,7 +761,6 @@ const plotHeatMap = ({ retro, riverid, chartDiv }) => {
     colorscale.push([p1, colors[i]], [p2, colors[i]]);
   }
 
-  // Convert dataMatrix values → representative bin center (for discrete display)
   const binnedMatrix = dataMatrix.map(row =>
     row.map(v => {
       if (v == null) return null;
@@ -775,41 +771,23 @@ const plotHeatMap = ({ retro, riverid, chartDiv }) => {
     })
   );
 
-  // Month overlay (still works the same)
-  const monthStarts = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
-  const maxYear = Math.max(...validYears);
+  // --- Month overlay ---
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthStarts = monthNames.map((_, i) => {
+    const date = new Date(Date.UTC(2023, i, 1)); // non-leap reference for start of month
+    return Math.floor((date - Date.UTC(2023, 0, 0)) / 86400000) + 1;
+  });
 
-  const monthAnnotations = monthNames.map((month, i) => ({
-    x: monthStarts[i] + 15,
-    y: maxYear - 0.2,
-    text: monthNames[i],
-    showarrow: false,
-    xanchor: "center",
-    yanchor: "bottom",
-    font: { size: 12, color: "0,0,0,0.5" },
-  }));
-
+  // --- Layout ---
   const layout = {
-    title: {
-      text: `${text.plots.heatMapTitle}${riverid}`,
-      x: 0.5
-    },
-    xaxis: {
-      title: { text: `${text.plots.heatMapXaxis}` },
-      tickmode: "array",
-      tickvals: Array.from({ length: 8 }, (_, i) => i * 50),
-      side: "bottom"
-    },
-    yaxis: {
-      title: { text: `${text.words.year}` },
-      range: [1985, null]
-    },
+    title: { text: `${text.plots.heatMapTitle}${riverid}`, x: 0.5 },
+    xaxis: { title: { text: `${text.plots.heatMapXaxis}` }, tickmode: "array", tickvals: monthStarts, ticktext: monthNames, side: "bottom" },
+    yaxis: { title: { text: `${text.words.year}` }, range: [1985, null] },
     margin: { t: 80, l: 80, r: 80, b: 70 },
-    annotations: monthAnnotations,
     height: 560,
-
   };
 
+  // --- Plot ---
   Plotly.newPlot(chartDiv, [
     {
       z: binnedMatrix,
@@ -822,15 +800,14 @@ const plotHeatMap = ({ retro, riverid, chartDiv }) => {
       text: textMatrix,
       hovertemplate: `${text.words.year}: %{y}<br>${text.words.doy}: %{text} (%{x})<br>${text.words.discharge}: %{z} m³/s<extra></extra>`,
       colorbar: {
-        title: {text: `${text.words.discharge} (m³/s)`, side: "top"},
+        title: { text: `${text.words.discharge} (m³/s)`, side: "top" },
         tickvals: binEdges.slice(0, -1).map((v, i) => (v + binEdges[i + 1]) / 2),
-        ticktext: binEdges.slice(0, -1).map(
-          (v, i) => `${formatVal(v)}–${formatVal(binEdges[i + 1])}`
-        )
+        ticktext: binEdges.slice(0, -1).map((v, i) => `${formatVal(v)}–${formatVal(binEdges[i + 1])}`)
       }
     }
   ], layout);
 };
+
 //////////////////////////////////////////////////////////////////////// Helper Functions
 const clearCharts = chartTypes => {
   if (chartTypes === "forecast" || chartTypes === null || chartTypes === undefined) {
@@ -866,12 +843,13 @@ const plotAllRetro = ({retro, riverid}) => {
   const years = Array.from(new Set(Object.keys(monthlyValues).map(k => k.split('-')[0]))).sort((a, b) => a - b)
 
   // Calculate yearly discharge peaks.
-
   retro.datetime.forEach((currentValue, currentIndex) => {
   const date = new Date(currentValue)
-  const year = date.getFullYear()
-  const doy =
-    Math.floor((date - new Date(year, 0, 0)) / (1000 * 60 * 60 * 24)) // day of year
+      const localTime = new Date(date.getTime() + date.getTimezoneOffset() * 60000)
+
+  const year = localTime.getFullYear()
+  const doy = Math.round(
+  (localTime - new Date(localTime.getFullYear(), 0, 0)) / 86400000)// day of year
   const value = retro[riverid][currentIndex]
 
   // store max per year with its day of year
