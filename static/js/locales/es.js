@@ -27,7 +27,8 @@ window.text = {
     "medianDOY": "Dia Promedio del Año",
     "doy": "Dia del Año",
     "discharge": "Caudal",
-    "peakDischarge": "Caudal Máximo"
+    "peakDischarge": "Caudal Máximo",
+      "date": "Fecha"
   },
   "statusLabels": [
     "Muy Mojado",
@@ -70,8 +71,8 @@ window.text = {
     "fdcTitle": "Curvas de Duración de Flujo para Río: ",
     "experimentalOverlay": "Corrección<br>Experimental",
     "peaksTitle": "Picos Anuales con Valores Temporales poco Comúnes para el Río: ",
-    "peaksXaxis": "Dia del Año",
+    "peaksXaxis": "Mes",
     "heatMapTitle": "Caudal Diaria Promedio para el Rio: ",
-    "heatMapXaxis": "Dia del Año"
+    "heatMapXaxis": "Mes"
   }
 }

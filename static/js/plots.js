@@ -563,6 +563,17 @@ const plotYearlyPeaks = ({ yearlyPeaks, riverid, chartDiv }) => {
     binRanges.push(`${lower}-${upper}`);
   }
 
+  const monthNames = Array.from({ length: 12 }, (_, i) => {
+  return new Date(Date.UTC(2023, i, 1)).toLocaleString(lang, {
+    month: "short",
+    timeZone: "UTC",
+        });
+    });
+  const monthStarts = monthNames.map((_, i) => {
+    const date = new Date(Date.UTC(2023, i, 1)); // non-leap reference for start of month
+    return Math.floor((date - Date.UTC(2023, 0, 0)) / 86400000) + 1;
+  });
+
   Plotly.newPlot(
     chartDiv,
     [
@@ -647,9 +658,10 @@ const plotYearlyPeaks = ({ yearlyPeaks, riverid, chartDiv }) => {
         title: {
           text: `${text.plots.peaksXaxis}`,
         },
-        range: [0, 366],
-        dtick: 30,
-        tickfont: { size: 12 },
+        tickmode: "array",
+          tickvals: monthStarts,
+          ticktext: monthNames,
+          side: "bottom"
       },
       yaxis: {
         title: {
@@ -772,7 +784,12 @@ const plotHeatMap = ({ retro, riverid, chartDiv }) => {
   );
 
   // --- Month overlay ---
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthNames = Array.from({ length: 12 }, (_, i) => {
+  return new Date(Date.UTC(2023, i, 1)).toLocaleString(lang, {
+    month: "short",
+    timeZone: "UTC",
+        });
+    });
   const monthStarts = monthNames.map((_, i) => {
     const date = new Date(Date.UTC(2023, i, 1)); // non-leap reference for start of month
     return Math.floor((date - Date.UTC(2023, 0, 0)) / 86400000) + 1;
@@ -797,17 +814,26 @@ const plotHeatMap = ({ retro, riverid, chartDiv }) => {
       colorscale: colorscale,
       zmin: dataMin,
       zmax: dataMax,
-      text: textMatrix,
-      hovertemplate: `${text.words.year}: %{y}<br>${text.words.doy}: %{text} (%{x})<br>${text.words.discharge}: %{z} m³/s<extra></extra>`,
+      customdata: dataMatrix.map((row, i) =>
+      row.map((val, j) => ({
+        date: textMatrix[i][j],
+        flow: formatVal(val),
+      }))
+    ),
+      hovertemplate:
+        `${text.words.year}: %{y}<br>` +
+        `${text.words.date}: %{customdata.date}<br>` +
+        `${text.words.doy}: %{x:.0f}<br>` +
+        `${text.words.discharge}: %{customdata.flow} m³/s<extra></extra>`,
       colorbar: {
         title: { text: `${text.words.discharge} (m³/s)`, side: "top" },
         tickvals: binEdges.slice(0, -1).map((v, i) => (v + binEdges[i + 1]) / 2),
         ticktext: binEdges.slice(0, -1).map((v, i) => `${formatVal(v)}–${formatVal(binEdges[i + 1])}`)
-      }
+      },
+      hoverinfo: "skip" // disables default hover behavior
     }
   ], layout);
 };
-
 //////////////////////////////////////////////////////////////////////// Helper Functions
 const clearCharts = chartTypes => {
   if (chartTypes === "forecast" || chartTypes === null || chartTypes === undefined) {
