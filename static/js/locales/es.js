@@ -70,7 +70,7 @@ window.text = {
     "statusTitle": "Estado Anual por Mes para Río: ",
     "fdcTitle": "Curvas de Duración de Flujo para Río: ",
     "experimentalOverlay": "Corrección<br>Experimental",
-    "peaksTitle": "Picos Anuales con Valores Temporales poco Comúnes para el Río: ",
+    "peaksTitle": "Fecha de Caudal Máximo Anual del Rio: ",
     "peaksXaxis": "Mes",
     "heatMapTitle": "Caudal Diaria Promedio para el Rio: ",
     "heatMapXaxis": "Mes"

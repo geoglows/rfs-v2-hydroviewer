@@ -67,9 +67,9 @@ window.text = {
     "statusTitle": "Monthly Average Flow by Year for River: ",
     "fdcTitle": "Flow Duration Curves for River: ",
     "experimentalOverlay": "Experimental<br>Bias Correction",
-    "peaksTitle": "Date of Annual Peak Discharge: ",
+    "peaksTitle": "Date of Annual Peak Discharge for River: ",
     "peaksXaxis": "Month",
-    "heatMapTitle": "Average Daily Discharge: ",
+    "heatMapTitle": "Average Daily Discharge for River: ",
     "heatMapXaxis": "Month",
   }
 }
