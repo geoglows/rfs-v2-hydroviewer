@@ -530,7 +530,7 @@ const plotYearlyPeaks = ({ yearlyPeaks, riverid, chartDiv }) => {
         type: "scatter",
         marker: { size: 9, color: viridis[i], line: { width: 0 } },
         text: allPoints.map(
-          p => `${text.words.year}: ${p.year}<br>${doyToDate(p.doy, p.year)} (DOY ${p.doy})<br>${text.words.discharge}: ${formatVal(p.peak)} m³/s`
+          p => `${text.words.year}: ${p.year}<br>${text.words.date}: ${doyToDate(p.doy, p.year)}<br>${text.words.discharge}: ${formatVal(p.peak)} m³/s`
         ),
         hovertemplate: "%{text}<extra></extra>",
         showlegend: true,
@@ -698,10 +698,7 @@ const plotHeatMap = ({ retro, riverid, chartDiv }) => {
       row.map((v, j) => ({ date: textMatrix[i][j], flow: formatVal(v) }))
     ),
       hovertemplate:
-          `${text.words.date}: %{customdata.date}<br>` +
-          `${text.words.year}: %{y}<br>` +
-          `${text.words.doy}: %{x:.0f}<br>` +
-          `${text.words.discharge}: %{customdata.flow} m³/s<extra></extra>`,
+          `${text.words.year}: %{y}<br>${text.words.date}: %{customdata.date}<br>${text.words.discharge}: %{customdata.flow} m³/s<extra></extra>`,
       colorbar: {
       title: { text: `${text.words.discharge} (m³/s)`, side: "top" },
       tickvals: binMid,
