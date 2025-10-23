@@ -24,7 +24,7 @@ window.text = {
     "fdc": "FDC",
     "ensMembers": "Ensemble Members",
     "annualPeak": "Annual Peak",
-    "temporalOutliers": "Outliers",
+    "temporalOutliers": "Outliers (Q3+1.5×IQR rule)",
     "medianDOY": "Median DOY",
     "doy": "Day of Year",
     "peakDischarge": "Peak Discharge",

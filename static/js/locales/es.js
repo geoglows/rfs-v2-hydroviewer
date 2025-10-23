@@ -23,7 +23,7 @@ window.text = {
     "fdc": "CDF",
     "ensMembers": "Miembros del Ensamble",
     "annualPeak": "Pico Anual",
-    "temporalOutliers": "Valores Poco Comúnes",
+    "temporalOutliers": "Valores atípicos (regla Q3+1,5×RIC)",
     "medianDOY": "Dia Promedio del Año",
     "doy": "Dia del Año",
     "discharge": "Caudal",

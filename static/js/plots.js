@@ -451,7 +451,6 @@ const plotFdc = ({fdc, monthlyFdc, riverid, chartDiv, biasCorrected}) => {
   )
 }
 const plotYearlyPeaks = ({ yearlyPeaks, riverid, chartDiv }) => {
-  if (!chartDiv) return;
   chartDiv.innerHTML = "";
 
   const currentYear = new Date().getFullYear();
@@ -494,10 +493,10 @@ const plotYearlyPeaks = ({ yearlyPeaks, riverid, chartDiv }) => {
   const iqr = q3 - q1;
   const threshold = q3 + 1.5 * iqr;
 
-  // Identify outliers
+  // Identify outliers - iqr rule and more than 30 days from median
   const outlierIndices = distancesDays
-    .map((d, i) => (d > threshold ? i : -1))
-    .filter(i => i !== -1);
+  .map((d, i) => (d > threshold && d > 30 ? i : -1))
+  .filter(i => i !== -1);
   const outliers = outlierIndices.map(i => yearlyPeaks[i]);
   const normalPoints = yearlyPeaks.filter((_, i) => !outlierIndices.includes(i));
 
@@ -582,7 +581,6 @@ const plotYearlyPeaks = ({ yearlyPeaks, riverid, chartDiv }) => {
   );
   const monthStarts = monthNames.map((_, i) => Math.floor((Date.UTC(2023, i, 1) - Date.UTC(2023, 0, 0)) / 86400000) + 1);
 
-  // --- Layout ---
   const layout = {
     uirevision: "peaks-locked",
     title: { text: `${text.plots.peaksTitle}${riverid}`, x: 0.5 },
@@ -621,7 +619,6 @@ const plotYearlyPeaks = ({ yearlyPeaks, riverid, chartDiv }) => {
 
   Plotly.newPlot(chartDiv, traces, layout, config);
 };
-
 const plotHeatMap = ({ retro, riverid, chartDiv }) => {
   if (!chartDiv) return;
   chartDiv.innerHTML = "";
@@ -721,7 +718,7 @@ const clearCharts = chartTypes => {
   }
   if (chartTypes === "retro" || chartTypes === null || chartTypes === undefined) {
     [divChartRetro, divChartYearlyVol, divChartStatus, divChartFdc, divYearlyPeaks, divHeatMap]
-      .forEach(el => {if (el) el.innerHTML = ''})
+      .forEach(el => el.innerHTML = '')
   }
 }
 
