@@ -28,7 +28,12 @@ window.text = {
     "doy": "Dia del Año",
     "discharge": "Caudal",
     "peakDischarge": "Caudal Máximo",
-      "date": "Fecha"
+      "date": "Fecha",
+      "wettestYear": "Año Más Lluvioso",
+      "driestYear": "Año Más Seco",
+      "medianYear": "Año Medio",
+      "average": "Promedio"
+
   },
   "statusLabels": [
     "Muy Mojado",

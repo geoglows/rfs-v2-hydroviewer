@@ -29,7 +29,11 @@ window.text = {
     "doy": "Day of Year",
     "peakDischarge": "Peak Discharge",
     "discharge": "Discharge",
-      "date": "Date"
+      "date": "Date",
+      "wettestYear": "Wettest Year",
+      "driestYear": "Driest Year",
+      "medianYear": "Median Year",
+      "average": "Average"
   },
   "statusLabels": [
     "Very Wet",
@@ -71,5 +75,8 @@ window.text = {
     "peaksXaxis": "Month",
     "heatMapTitle": "Average Daily Discharge for River: ",
     "heatMapXaxis": "Month",
+      "cumVolumeTitle": "Cumulative Volume by Year for River: ",
+      "cumVolumeYaxis": "Cumulative Volume (million m³)",
+
   }
 }

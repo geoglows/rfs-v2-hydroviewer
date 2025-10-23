@@ -1,4 +1,4 @@
-import {divChartFdc, divChartForecast, divChartRetro, divChartStatus, divChartYearlyVol, divTableForecast, divYearlyPeaks, divHeatMap, lang} from './ui.js'
+import {divChartFdc, divChartForecast, divChartRetro, divChartStatus, divChartYearlyVol, divTableForecast, divYearlyPeaks, divHeatMap, divCumulativeVolume, lang} from './ui.js'
 
 //////////////////////////////////////////////////////////////////////// Constants and configs
 const defaultDateRange = ['2015-01-01', new Date().toISOString().split("T")[0]]
@@ -620,7 +620,6 @@ const plotYearlyPeaks = ({ yearlyPeaks, riverid, chartDiv }) => {
   Plotly.newPlot(chartDiv, traces, layout, config);
 };
 const plotHeatMap = ({ retro, riverid, chartDiv }) => {
-  if (!chartDiv) return;
   chartDiv.innerHTML = "";
 
   // --- Helper functions ---
@@ -710,6 +709,138 @@ const plotHeatMap = ({ retro, riverid, chartDiv }) => {
     height: 560
   });
 };
+const plotCumulativeVolumes = ({retro, riverid, chartDiv}) => {
+    chartDiv.innerHTML = "";
+
+    const daily = retro.datetime.map((currentValue, currentIndex) => {
+    const d = new Date(currentValue);
+    const year = d.getUTCFullYear();
+    const doy = Math.floor((Date.UTC(year, d.getUTCMonth(), d.getUTCDate()) - Date.UTC(year, 0, 0)) / 86400000);
+
+    const flow = retro[riverid][currentIndex];
+    const volume_m3 = flow * 86400;
+    return { year, doy, volume_m3 };
+    });
+
+    const currentYear = new Date().getUTCFullYear();
+    const filtered = daily.filter(d => d.year < currentYear);
+
+    const cumulative = {};
+    filtered.forEach(d => {
+    if (!cumulative[d.year]) cumulative[d.year] = [];
+        const prev = cumulative[d.year].length
+        ? cumulative[d.year][cumulative[d.year].length - 1].cum
+        : 0;
+    cumulative[d.year].push({ doy: d.doy, cum: prev + d.volume_m3 });
+    });
+
+    const totals = Object.entries(cumulative).map(([year, arr]) => ({
+        year: +year,
+        total: arr[arr.length - 1].cum
+    }));
+
+    const sortedTotals = [...totals].sort((a,b) => a.total - b.total);
+    const driestYear = sortedTotals[0].year;
+    const wettestYear = sortedTotals[sortedTotals.length - 1].year;
+    const medianYear = sortedTotals[Math.floor(sortedTotals.length / 2)].year;
+
+    // compute mean cumulative curve
+    const doys = Array.from({ length: 366}, (_, i) => i + 1);
+    const meanCumulative = doys.map(doy => {
+        const vals = Object.values(cumulative)
+            .map(yearArr => {
+                const day = yearArr.find(x => x.doy === doy);
+                return day ? day.cum : null;
+            })
+            .filter(v => v !== null);
+        const mean = vals.length ? vals.reduce((a,b) => a + b, 0) / vals.length : null;
+        return {doy, mean};
+    }).filter(p => p.mean !== null);
+
+    const traces = [];
+
+    Object.entries(cumulative).forEach(([year, arr]) => {
+        traces.push({
+            x: arr.map(p => p.doy),
+            y: arr.map(p => p.cum / 1e6),
+            mode: "lines",
+            line: { color: "lightgray", width: 0.8 },
+            name: year,
+            hoverinfo: "skip",
+            showlegend: false,
+        });
+    });
+
+    const highlightYear = (year, color, label) => {
+        const arr = cumulative[year];
+        traces.push({
+            x: arr.map(p => p.doy),
+            y:arr.map(p => p.cum / 1e6),
+            mode: "lines",
+            line: { color, width: 2},
+            name: label,
+            hoverinfo: "skip",
+            showlegend: true,
+        });
+    };
+
+    highlightYear(wettestYear, "blue", `${text.words.wettestYear}: ${wettestYear}`);
+    highlightYear(driestYear, "red", `${text.words.driestYear}: ${driestYear}`);
+    highlightYear(medianYear, "green", `${text.words.medianYear}: ${medianYear}`);
+
+    traces.push({
+        x: meanCumulative.map(p => p.doy),
+        y: meanCumulative.map(p => p.mean / 1e6),
+        mode: "lines",
+        line: { color: "black", width: 2.5},
+        name: text.words.average,
+        hoverinfo: "skip",
+        showlegend: true,
+    });
+
+  // --- Month labels ---
+  const months = Array.from({ length: 12 }, (_, i) =>
+    new Date(Date.UTC(2023, i, 1)).toLocaleString(lang, { month: "short", timeZone: "UTC" })
+  );
+  const monthStarts = months.map((_, i) =>
+    Math.floor((Date.UTC(2023, i, 1) - Date.UTC(2023, 0, 0)) / 86400000) + 1
+  );
+
+  const layout = {
+      title: { text: `${text.plots.cumVolumeTitle}` + riverid, x: 0.5},
+      xaxis: {
+          title: { text: text.words.months},
+          tickmode: "array",
+          tickvals: monthStarts,
+          ticktext: monthNames,
+          range: [1, 366],
+          fixedrange: true,
+      },
+      yaxis: {
+          title: { text: text.plots.cumVolumeYaxis},
+          fixedrange: true,
+      },
+      legend: {
+          x: 1.05,
+          y: 1,
+          bgcolor: "rgba(255,255,255,0)",
+          bordercolor: "rgba(0,0,0,0)",
+      },
+      height: 560,
+      margin: { t: 80, l: 80, r: 180, b: 70},
+      grid: {rows: 1, columns: 1},
+  };
+
+  const config = {
+      displaylogo: false,
+      doubleClick: false,
+      scrollZoom: false,
+      responsive: true,
+  };
+
+  Plotly.newPlot(chartDiv, traces, layout, config);
+};
+
 //////////////////////////////////////////////////////////////////////// Helper Functions
 const clearCharts = chartTypes => {
   if (chartTypes === "forecast" || chartTypes === null || chartTypes === undefined) {
@@ -717,11 +848,10 @@ const clearCharts = chartTypes => {
       .forEach(el => el.innerHTML = '')
   }
   if (chartTypes === "retro" || chartTypes === null || chartTypes === undefined) {
-    [divChartRetro, divChartYearlyVol, divChartStatus, divChartFdc, divYearlyPeaks, divHeatMap]
+    [divChartRetro, divChartYearlyVol, divChartStatus, divChartFdc, divYearlyPeaks, divHeatMap, divCumulativeVolume]
       .forEach(el => el.innerHTML = '')
   }
 }
-
 //////////////////////////////////////////////////////////////////////// Plotting Managers
 const plotAllRetro = ({retro, riverid}) => {
   let monthlyAverages = []
@@ -810,6 +940,7 @@ yearlyPeaks = Object.values(yearlyPeaks).sort((a, b) => a.year - b.year)
   plotFdc({fdc, monthlyFdc, riverid, chartDiv: divChartFdc, biasCorrected})
   plotYearlyPeaks({yearlyPeaks, riverid, chartDiv: divYearlyPeaks})
   plotHeatMap({retro, riverid, chartDiv: divHeatMap})
+    plotCumulativeVolumes({retro, riverid, chartDiv: divCumulativeVolume})
 }
 const plotAllForecast = ({forecast, rp, riverid, showMembers}) => {
   showMembers ? plotForecastMembers({forecast, rp, riverid, chartDiv: divChartForecast}) : plotForecast({forecast, rp, riverid, chartDiv: divChartForecast})
