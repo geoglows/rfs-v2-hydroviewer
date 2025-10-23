@@ -797,7 +797,6 @@ const plotCumulativeVolumes = ({retro, riverid, chartDiv}) => {
         hoverinfo: "skip",
         showlegend: true,
     });
-
   // --- Month labels ---
   const months = Array.from({ length: 12 }, (_, i) =>
     new Date(Date.UTC(2023, i, 1)).toLocaleString(lang, { month: "short", timeZone: "UTC" })
@@ -837,10 +836,8 @@ const plotCumulativeVolumes = ({retro, riverid, chartDiv}) => {
       scrollZoom: false,
       responsive: true,
   };
-
   Plotly.newPlot(chartDiv, traces, layout, config);
 };
-
 //////////////////////////////////////////////////////////////////////// Helper Functions
 const clearCharts = chartTypes => {
   if (chartTypes === "forecast" || chartTypes === null || chartTypes === undefined) {
