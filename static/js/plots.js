@@ -508,7 +508,7 @@ const plotYearlyPeaks = ({ yearlyPeaks, riverid, chartDiv }) => {
   const viridis = ["#440154", "#3b528b", "#21918c", "#5ec962", "#fde725"];
   const traces = [];
 
-  // --- Build bin traces (with linked outlier rings) ---
+  // --- Build bin traces ---
   for (let i = 0; i < nBins; i++) {
     const lower = minVal + (i * (maxVal - minVal)) / nBins;
     const upper = minVal + ((i + 1) * (maxVal - minVal)) / nBins;
@@ -535,7 +535,7 @@ const plotYearlyPeaks = ({ yearlyPeaks, riverid, chartDiv }) => {
         showlegend: true,
       });
 
-      // Red outline (linked to same legend toggle)
+      // Red outline
       if (outlierBinPoints.length)
         traces.push({
           legendgroup,
@@ -550,7 +550,7 @@ const plotYearlyPeaks = ({ yearlyPeaks, riverid, chartDiv }) => {
     }
   }
 
-  // --- Dummy legend symbol for red outlier rings ---
+  // --- legend symbol for red outlier rings ---
   traces.push({
     name: `${text.words.temporalOutliers}`,
     x: [null],
@@ -575,7 +575,6 @@ const plotYearlyPeaks = ({ yearlyPeaks, riverid, chartDiv }) => {
     showlegend: true,
   });
 
-  // --- Month labels ---
   const monthNames = Array.from({ length: 12 }, (_, i) =>
     new Date(Date.UTC(2023, i, 1)).toLocaleString(lang, { month: "short", timeZone: "UTC" })
   );
@@ -651,7 +650,6 @@ const plotHeatMap = ({ retro, riverid, chartDiv }) => {
   const maxDoy = Math.max(...daily.map(d => d.doy));
   const days = Array.from({ length: maxDoy }, (_, i) => i + 1);
 
-  // --- Build flow matrix + hovertext ---
   const flowMap = Object.fromEntries(daily.map(d => [`${d.year}-${d.doy}`, d.flow]));
   const dataMatrix = years.map(y => days.map(d => flowMap[`${y}-${d}`] ?? null));
   const textMatrix = years.map(y => days.map(d => doyToDate(y, d)));
@@ -673,7 +671,6 @@ const plotHeatMap = ({ retro, riverid, chartDiv }) => {
     r.map(v => v == null ? null : binMid.find((_, i) => v <= binEdges[i + 1]) ?? binMid.at(-1))
   );
 
-  // --- Month labels ---
   const months = Array.from({ length: 12 }, (_, i) =>
     new Date(Date.UTC(2023, i, 1)).toLocaleString(lang, { month: "short", timeZone: "UTC" })
   );
@@ -796,7 +793,7 @@ const plotCumulativeVolumes = ({retro, riverid, chartDiv}) => {
         hoverinfo: "skip",
         showlegend: true,
     });
-  // --- Month labels ---
+
   const months = Array.from({ length: 12 }, (_, i) =>
     new Date(Date.UTC(2023, i, 1)).toLocaleString(lang, { month: "short", timeZone: "UTC" })
   );
