@@ -681,7 +681,6 @@ const plotHeatMap = ({ retro, riverid, chartDiv }) => {
     Math.floor((Date.UTC(2023, i, 1) - Date.UTC(2023, 0, 0)) / 86400000) + 1
   );
 
-  // --- Plotly ---
   Plotly.newPlot(chartDiv, [{
     z: binnedMatrix,
     x: days,
@@ -745,7 +744,7 @@ const plotCumulativeVolumes = ({retro, riverid, chartDiv}) => {
     const medianYear = sortedTotals[Math.floor(sortedTotals.length / 2)].year;
 
     // compute mean cumulative curve
-    const doys = Array.from({ length: 366}, (_, i) => i + 1);
+    const doys = Array.from({ length: 365 }, (_, i) => i + 1);
     const meanCumulative = doys.map(doy => {
         const vals = Object.values(cumulative)
             .map(yearArr => {
