@@ -699,8 +699,8 @@ const plotHeatMap = ({ retro, riverid, chartDiv }) => {
     hoverinfo: "skip"
   }], {
     title: { text: `${text.plots.heatMapTitle}${riverid}`, x: 0.5 },
-    xaxis: { title: text.plots.heatMapXaxis, tickmode: "array", tickvals: monthStarts, ticktext: months, side: "bottom" },
-    yaxis: { title: text.words.year },
+    xaxis: { title: text.plots.heatMapXaxis, tickmode: "array", tickvals: monthStarts, ticktext: months, side: "bottom", fixedrange: true },
+    yaxis: { title: text.words.year, fixedrange: true },
     margin: { t: 80, l: 80, r: 80, b: 70 },
     height: 560
   });
