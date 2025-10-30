@@ -10,8 +10,8 @@
 import * as zarr from "https://cdn.jsdelivr.net/npm/zarrita@0.5.4/+esm"
 // import * as zarr from "zarrita"
 
-const baseRetroZarrUrl = "https://geoglows-v2.s3-us-west-2.amazonaws.com"
-const baseForecastZarrUrl = "https://geoglows-v2-forecasts.s3-website-us-west-2.amazonaws.com"
+const baseRetroZarrUrl = "https://d2grb3c773p1iz.cloudfront.net" // "http://geoglows-v2.s3-us-west-2.amazonaws.com"
+const baseForecastZarrUrl = "https://d14ritg1bypdp7.cloudfront.net"  // "http://geoglows-v2-forecasts.s3-website-us-west-2.amazonaws.com"
 
 const fetchTimeCoordinate = async (zarrUrl) => {
   const tStore = new zarr.FetchStore(`${zarrUrl}/time`);
