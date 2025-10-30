@@ -10,21 +10,23 @@ const LoadStatus = pubSubState({
   },
   localStorageKey: null
 })
+const UseSimpleForecast = pubSubState({
+  initialValue: localStorage.getItem('simpleForecast') === 'true' || false,
+  localStorageKey: 'simpleForecast'
+})
 const UseBiasCorrected = pubSubState({
   initialValue: false,
 })
 
 // set event listeners and sync state with localStorage values on first load
-const checkShowMembers = document.getElementById('settingsShowEnsembleMembers')
-const useForecastMembers = () => checkShowMembers.checked
-checkShowMembers.addEventListener('change', () => localStorage.setItem('showEnsembleMembers', checkShowMembers.checked))
-checkShowMembers.checked = localStorage.getItem('showEnsembleMembers') === 'true' || false
+const checkSimpleForecast = document.getElementById('settingsShowSimpleForecast')
+checkSimpleForecast.checked = UseSimpleForecast.get()
+checkSimpleForecast.addEventListener('change', () => UseSimpleForecast.set(checkSimpleForecast.checked))
 
 // const checkUseBiasCorrected = document.getElementById('settingsUseBiasCorrected')
 // checkUseBiasCorrected.checked = UseBiasCorrected.get()
 // checkUseBiasCorrected.addEventListener('change', () => UseBiasCorrected.set(checkUseBiasCorrected.checked))
 
 export {
-  RiverId, LoadStatus, UseBiasCorrected,
-  useForecastMembers
+  RiverId, LoadStatus, UseBiasCorrected, UseSimpleForecast
 }

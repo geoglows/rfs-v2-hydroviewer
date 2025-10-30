@@ -43,7 +43,7 @@ const experimentalPlotWatermark = [
 
 //////////////////////////////////////////////////////////////////////// Plots
 const returnPeriodShapes = ({rp, x0, x1, maxFlow}) => {
-  const visible = maxFlow > rp.return_periods['2'] ? true : 'legendonly'
+  const visible = maxFlow > rp['2'] ? true : 'legendonly'
   const box = (y0, y1, name) => {
     return {
       x: [x0, x1, x1, x0],
@@ -57,28 +57,28 @@ const returnPeriodShapes = ({rp, x0, x1, maxFlow}) => {
       legendgrouptitle: {text: `${text.words.returnPeriods}`},
       showlegend: true,
       visible: visible,
-      name: `${name}: ${rp.return_periods[name].toFixed(2)} m³/s`,
+      name: `${name}: ${rp[name].toFixed(2)} m³/s`,
     }
   }
   return Object
-    .keys(rp.return_periods)
+    .keys(rp)
     .map((key, index, array) => {
-      const y0 = rp.return_periods[key]
-      const y1 = index === array.length - 1 ? Math.max(rp.return_periods[key] * 1.15, maxFlow * 1.15) : rp.return_periods[array[index + 1]]
+      const y0 = rp[key]
+      const y1 = index === array.length - 1 ? Math.max(rp[key] * 1.15, maxFlow * 1.15) : rp[array[index + 1]]
       return box(y0, y1, key)
     })
     .concat([{legendgroup: 'returnperiods', legendgrouptitle: {text: `${text.words.returnPeriods} m³/s`}}])
 }
-const plotForecast = ({forecast, rp, riverid, chartDiv}) => {
+const plotForecast = ({forecast, rp, riverId, chartDiv}) => {
   chartDiv.innerHTML = ""
-  const maxForecast = Math.max(...forecast.flow_median)
+  const maxForecast = Math.max(...forecast.stats.median)
   const returnPeriods = returnPeriodShapes({rp, x0: forecast.datetime[0], x1: forecast.datetime[forecast.datetime.length - 1], maxFlow: maxForecast})
   Plotly.newPlot(
     chartDiv,
     [
       {
         x: forecast.datetime.concat(forecast.datetime.slice().toReversed()),
-        y: forecast.flow_uncertainty_lower.concat(forecast.flow_uncertainty_upper.slice().toReversed()),
+        y: forecast.stats.p20.concat(forecast.stats.p80.slice().toReversed()),
         name: `${text.plots.fcLineUncertainty}`,
         fill: 'toself',
         fillcolor: 'rgba(44,182,255,0.6)',
@@ -87,7 +87,7 @@ const plotForecast = ({forecast, rp, riverid, chartDiv}) => {
       },
       {
         x: forecast.datetime,
-        y: forecast.flow_uncertainty_lower,
+        y: forecast.stats.p20,
         line: {color: 'rgb(0,166,255)'},
         showlegend: false,
         name: '',
@@ -95,7 +95,7 @@ const plotForecast = ({forecast, rp, riverid, chartDiv}) => {
       },
       {
         x: forecast.datetime,
-        y: forecast.flow_uncertainty_upper,
+        y: forecast.stats.p80,
         line: {color: 'rgb(0,166,255)'},
         showlegend: false,
         name: '',
@@ -103,11 +103,12 @@ const plotForecast = ({forecast, rp, riverid, chartDiv}) => {
       },
       {
         x: forecast.datetime,
-        y: forecast.flow_median,
+        y: forecast.stats.median,
         line: {color: 'black'},
         name: text.plots.fcLineMedian,
         legendgroup: 'forecast',
       },
+      // todo: plot bias-corrected forecast if available
       ...(forecast.flow_median_original ? [
         {
           x: forecast.datetime.concat(forecast.datetime.slice().toReversed()),
@@ -149,7 +150,7 @@ const plotForecast = ({forecast, rp, riverid, chartDiv}) => {
       ...returnPeriods,
     ],
     {
-      title: {text: `${text.plots.fcTitle}${riverid}`},
+      title: {text: `${text.plots.fcTitle}${riverId}`},
       annotations: forecast.flow_median_original ? experimentalPlotWatermark : [],
       xaxis: {title: {text: `${text.plots.fcXaxis} (UTC +00:00)`}},
       yaxis: {
@@ -159,16 +160,14 @@ const plotForecast = ({forecast, rp, riverid, chartDiv}) => {
     }
   )
 }
-const plotForecastMembers = ({forecast, rp, riverid, chartDiv}) => {
+const plotForecastMembers = ({forecast, rp, riverId, chartDiv}) => {
   chartDiv.innerHTML = ""
-  const memberTraces = Object
-    .keys(forecast)
-    .filter(key => key.startsWith('ensemble_') && !key.endsWith('_original'))
-    .map(key => {
-      const memberNumber = parseInt(key.replace('ensemble_', ''))
+  const memberTraces = forecast.discharge
+    .map((memberArray, memberIdx) => {
+      const memberNumber = memberIdx + 1
       return {
         x: forecast.datetime,
-        y: forecast[key],
+        y: memberArray,
         name: text.words.ensMembers,
         showlegend: memberNumber === 1,
         type: 'scatter',
@@ -177,14 +176,15 @@ const plotForecastMembers = ({forecast, rp, riverid, chartDiv}) => {
         legendgroup: 'forecastmembers',
       }
     })
+  // todo: plot bias-corrected forecast if available
   const maxForecast = Math.max(...memberTraces.map(trace => Math.max(...trace.y)))
   const returnPeriods = returnPeriodShapes({rp, x0: forecast.datetime[0], x1: forecast.datetime[forecast.datetime.length - 1], maxFlow: maxForecast})
   Plotly.newPlot(
     chartDiv,
     [...memberTraces, ...returnPeriods,],
     {
-      title: {text: `${text.plots.fcMembersTitle}${riverid}`},
-      annotations: forecast.ensemble_01_original ? experimentalPlotWatermark : [],
+      title: {text: `${text.plots.fcMembersTitle}${riverId}`},
+      annotations: forecast.ensemble_01_original ? experimentalPlotWatermark : [],  // todo bias corrected members
       xaxis: {title: {text: `${text.plots.fcXaxis} (UTC +00:00)`}},
       yaxis: {
         title: {text: `${text.plots.fcYaxis} (m³/s)`},
@@ -194,16 +194,40 @@ const plotForecastMembers = ({forecast, rp, riverid, chartDiv}) => {
     }
   )
 }
+
 const forecastProbabilityTable = ({forecast, rp}) => {
-  const memberKeys = Object.keys(forecast).filter(key => key.startsWith('ensemble_'))
-  // groupby day so that each column is 1 day regardless of the sub time step for each of the ensemble_* arrays in memberKeys
-  // makes an array containing 1 array per memberKey. each subarray has 1 value per day. shape is [memberKeys.length, numberOfDays]
-  // stepsPerDay is known in advance, not determined by inspection
+  /*
+  forecast: object with structure
+    datetime: [Date, Date, ...],
+    discharge: [[Number, Number, ...], [Number, Number, ...], ...], // array of arrays, one per ensemble member
+    stats: {
+      min: [Number, Number, ...],
+      p20: [Number, Number, ...],
+      p25: [Number, Number, ...],
+      median: [Number, Number, ...],
+      p75: [Number, Number, ...],
+      p80: [Number, Number, ...],
+      max: [Number, Number, ...],
+      average: [Number, Number, ...],
+    }
+  rp: object mapping return period strings to discharge values
+   */
+  // groupby day so that each column is 1 day regardless of the sub time step
+  // for each ensemble member in forecast.discharge
   const stepsPerDay = 8
-  const arrayDailyBreakPoints = Array.from({length: Math.ceil(forecast.datetime.length / stepsPerDay)}, (_, i) => i * stepsPerDay)
-  const dailyArrays = memberKeys.map(key => {
-    return arrayDailyBreakPoints.map(startIdx => Math.max(...forecast[key].slice(startIdx, startIdx + stepsPerDay)))
+  const totalSteps = forecast.datetime.length
+  const arrayDailyBreakPoints = Array.from({length: Math.ceil(totalSteps / stepsPerDay)}, (_, i) => i * stepsPerDay)
+
+  // dailyArrays has shape [numMembers, numberOfDays] where each entry is the daily maximum for that member
+  const numMembers = Array.isArray(forecast.discharge) ? forecast.discharge.length : 0
+  const dailyArrays = (forecast.discharge || []).map(memberArray => {
+    return arrayDailyBreakPoints.map(startIdx => {
+      const daySlice = memberArray.slice(startIdx, startIdx + stepsPerDay)
+      return daySlice.length ? Math.max(...daySlice) : Number.NEGATIVE_INFINITY
+    })
   })
+
+  // Build one column per day using the datetime array (assumes uniform step of 3 hours => 8/day)
   const dailyDateStrings = forecast
     .datetime
     .filter((_, index) => index % stepsPerDay === 0)
@@ -213,29 +237,30 @@ const forecastProbabilityTable = ({forecast, rp}) => {
       day: 'numeric',
       timeZone: 'UTC'
     }))
+
   const headerRow = `<tr><th>${text.words.returnPeriods}</th>${dailyDateStrings.map(date => `<th>${date}</th>`).join('')}</tr>`
 
   const returnPeriods = ['2', '5', '10', '25', '50', '100']
   const bodyRows = returnPeriods.map(rpKey => {
-    const rpThreshold = rp.return_periods[rpKey]
     const percentages = dailyDateStrings.map((_, index) => {
-      const countAboveThreshold = dailyArrays.reduce((count, dailyArray) => {
-        return count + (dailyArray[index] > rpThreshold ? 1 : 0)
-      }, 0)
-      return (countAboveThreshold / memberKeys.length * 100).toFixed(0)
+      const countAboveThreshold = dailyArrays
+        .reduce((count, dailyArray) => count + (dailyArray[index] > rp[rpKey] ? 1 : 0), 0)
+      return (numMembers ? (countAboveThreshold / numMembers * 100) : 0).toFixed(0)
     })
-    return `<tr><td>${rpKey} (${rpThreshold.toFixed(0)} m³/s)</td>${percentages.map(p => `<td style="background-color: ${returnPeriodColors[rpKey].replace('rgb', 'rgba').replace(')', `, ${p === "0" ? 0 : 0.25 + 0.75 * (p / 100)})`)}">${p}%</td>`).join('')}</tr>`
+    return `<tr><td>${rpKey} (${rp[rpKey].toFixed(0)} m³/s)</td>${percentages.map(p => `<td style="background-color: ${returnPeriodColors[rpKey].replace('rgb', 'rgba').replace(')', `, ${p === "0" ? 0 : 0.25 + 0.75 * (p / 100)})`)}">${p}%</td>`).join('')}</tr>`
   })
+
   return `<table class="forecast-probability-table"><thead>${headerRow}</thead><tbody>${bodyRows.join('')}</tbody></table>`
 }
-const plotRetrospective = ({daily, monthly, riverid, chartDiv, biasCorrected}) => {
+
+const plotRetrospective = ({daily, monthly, riverId, chartDiv, biasCorrected}) => {
   chartDiv.innerHTML = ""
   Plotly.newPlot(
     chartDiv,
     [
       {
         x: daily.datetime,
-        y: daily[riverid],
+        y: daily.discharge,
         type: 'lines',
         name: `${text.words.dailyAverage}`,
       },
@@ -247,10 +272,10 @@ const plotRetrospective = ({daily, monthly, riverid, chartDiv, biasCorrected}) =
         line: {color: 'rgb(0, 166, 255)'},
         visible: 'legendonly'
       },
-      // if there is a key ${river_id}_original, plot it also
+      // todo if there is a key ${river_id}_original, plot it also
       ...(biasCorrected ? [{
         x: daily.datetime,
-        y: daily[`${riverid}_original`],
+        y: daily[`${riverId}_original`],
         type: 'lines',
         name: `${text.words.dailyAverageOriginal}`,
         line: {color: 'rgb(255, 0, 0)'},
@@ -258,7 +283,7 @@ const plotRetrospective = ({daily, monthly, riverid, chartDiv, biasCorrected}) =
       }] : [])
     ],
     {
-      title: {text: `${text.plots.retroTitle} ${riverid}`},
+      title: {text: `${text.plots.retroTitle} ${riverId}`},
       annotations: biasCorrected ? experimentalPlotWatermark : [],
       legend: {orientation: 'h', x: 0, y: 1},
       hovermode: 'x',
@@ -309,7 +334,7 @@ const plotRetrospective = ({daily, monthly, riverid, chartDiv, biasCorrected}) =
     }
   )
 }
-const plotYearlyVolumes = ({yearly, averages, riverid, chartDiv, biasCorrected}) => {
+const plotYearlyVolumes = ({yearly, averages, riverId, chartDiv, biasCorrected}) => {
   chartDiv.innerHTML = ""
   Plotly.newPlot(
     chartDiv,
@@ -335,7 +360,7 @@ const plotYearlyVolumes = ({yearly, averages, riverid, chartDiv, biasCorrected})
       }) || []
     ],
     {
-      title: {text: `${text.plots.volumeTitle}${riverid}`},
+      title: {text: `${text.plots.volumeTitle}${riverId}`},
       annotations: biasCorrected ? experimentalPlotWatermark : [],
       legend: {orientation: 'h'},
       hovermode: 'x',
@@ -347,7 +372,7 @@ const plotYearlyVolumes = ({yearly, averages, riverid, chartDiv, biasCorrected})
     }
   )
 }
-const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, riverid, chartDiv, biasCorrected}) => {
+const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, riverId, chartDiv, biasCorrected}) => {
   chartDiv.innerHTML = ""
   const years = Array.from(new Set(Object.keys(monthlyAverageTimeseries).map(k => k.split('-')[0]))).sort((a, b) => a - b)
 
@@ -398,7 +423,7 @@ const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, rive
       })
     ],
     {
-      title: {text: `${text.plots.statusTitle}${riverid}`},
+      title: {text: `${text.plots.statusTitle}${riverId}`},
       annotations: biasCorrected ? experimentalPlotWatermark : [],
       xaxis: {
         title: {text: `${text.words.month}`},
@@ -413,7 +438,7 @@ const plotStatuses = ({statuses, monthlyAverages, monthlyAverageTimeseries, rive
     }
   )
 }
-const plotFdc = ({fdc, monthlyFdc, riverid, chartDiv, biasCorrected}) => {
+const plotFdc = ({fdc, monthlyFdc, riverId, chartDiv, biasCorrected}) => {
   chartDiv.innerHTML = ""
   Plotly.newPlot(
     chartDiv,
@@ -438,7 +463,7 @@ const plotFdc = ({fdc, monthlyFdc, riverid, chartDiv, biasCorrected}) => {
         })
     ],
     {
-      title: {text: `${text.plots.fdcTitle}${riverid}`},
+      title: {text: `${text.plots.fdcTitle}${riverId}`},
       annotations: biasCorrected ? experimentalPlotWatermark : [],
       xaxis: {title: {text: `${text.words.percentile} (%)`}},
       yaxis: {
@@ -845,7 +870,13 @@ const clearCharts = chartTypes => {
   }
 }
 //////////////////////////////////////////////////////////////////////// Plotting Managers
-const plotAllRetro = ({retro, riverid}) => {
+const plotAllRetro = ({retro, riverId}) => {
+  /*
+  retro: object with structure
+    datetime: [Date, Date, ...],
+    discharge: [Number, Number, ...],
+  riverId: Number (integer)
+   */
   let monthlyAverages = []
   let yearlyVolumes = []
   let monthlyAverageTimeseries = {}
@@ -853,17 +884,17 @@ const plotAllRetro = ({retro, riverid}) => {
   let monthlyStatusValues = {}
   let yearlyPeaks = {}
   text.statusLabels.forEach(label => monthlyStatusValues[label] = [])
-  const biasCorrected = retro.hasOwnProperty(`${riverid}_original`)
+  const biasCorrected = retro.hasOwnProperty(`${riverId}_original`)
 
   // Get subsets of data with the same YYYY-MM timestamp
   let monthlyValues = retro.datetime.reduce((acc, currentValue, currentIndex) => {
     const date = new Date(currentValue)
     const datestring = date.toISOString().slice(0, 7)
     if (!acc[datestring]) acc[datestring] = []
-    acc[datestring].push(retro[riverid][currentIndex])
+    acc[datestring].push(retro.discharge[currentIndex])
     return acc
   }, {})
-  const fdc = sortedArrayToPercentiles(retro[riverid].toSorted((a, b) => a - b))
+  const fdc = sortedArrayToPercentiles(retro.discharge.toSorted((a, b) => a - b))
   const years = Array.from(new Set(Object.keys(monthlyValues).map(k => k.split('-')[0]))).sort((a, b) => a - b)
 
   // Calculate yearly discharge peaks.
@@ -934,9 +965,9 @@ yearlyPeaks = Object.values(yearlyPeaks).sort((a, b) => a.year - b.year)
   plotHeatMap({retro, riverid, chartDiv: divHeatMap})
     plotCumulativeVolumes({retro, riverid, chartDiv: divCumulativeVolume})
 }
-const plotAllForecast = ({forecast, rp, riverid, showMembers}) => {
-  showMembers ? plotForecastMembers({forecast, rp, riverid, chartDiv: divChartForecast}) : plotForecast({forecast, rp, riverid, chartDiv: divChartForecast})
-  divTableForecast.innerHTML = showMembers ? forecastProbabilityTable({forecast, rp}) : ''
+const plotAllForecast = ({forecast, rp, riverId, showStats}) => {
+  showStats ? plotForecast({forecast, rp, riverId, chartDiv: divChartForecast}) : plotForecastMembers({forecast, rp, riverId, chartDiv: divChartForecast})
+  divTableForecast.innerHTML = forecastProbabilityTable({forecast, rp})
 }
 
 //////////////////////////////////////////////////////////////////////// Event Listeners

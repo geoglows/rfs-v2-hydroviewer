@@ -53,7 +53,7 @@ export const bookmarks = (() => {
         <td>${b.id}</td>
         <td>${b.name}</td>
         <td>
-          <a data-position="bottom" class="btn modal-trigger" onclick="M.Modal.getInstance(document.getElementById('bookmarks-modal')).close(); setRiverId(${b.id})"><i class="material-icons">timeline</i></a>
+          <a data-position="bottom" class="btn modal-trigger" onclick="M.Modal.getInstance(document.getElementById('bookmarks-modal')).close(); setRiverIdFromInput(${b.id})"><i class="material-icons">timeline</i></a>
           <a data-position="bottom" class="btn red" data-bookmarkId="${b.id}"><i class="material-icons">delete</i></a>
         </td>
       </tr>`

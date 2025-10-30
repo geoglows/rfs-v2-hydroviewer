@@ -1,156 +1,52 @@
-import {LoadStatus, RiverId, UseBiasCorrected, useForecastMembers} from "./states/state.js"
+import {LoadStatus, RiverId, UseBiasCorrected, UseSimpleForecast} from "./states/state.js"
 import {clearCharts, plotAllForecast, plotAllRetro} from "./plots.js"
-import {inputForecastDate} from "./ui.js"
+import {inputForecastDate, downloadForecastButton, downloadRetroButton} from "./ui.js"
+import {fetchForecast, fetchRetro, fetchReturnPeriods} from "./rfsZarrFetcher.js";
+import {cacheData, cacheKey, clearCache, readCache} from "./cache.js";
 
-const REST_ENDPOINT = 'https://geoglows.ecmwf.int/api/v2'
 
-const CACHE_SIZE = 125
-const DB_NAME = 'RiverCacheDB'
-const STORE_NAME = 'cache'
-
-const cacheKey = ({riverid, biasCorrected, type, date}) => `${riverid}-${biasCorrected}-${type}-${date}`
-const openCacheDB = () => {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1)
-    request.onupgradeneeded = event => {
-      const db = event.target.result
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, {keyPath: 'key'})
-      }
-    }
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error)
-  })
-}
-const pruneCacheIfNeeded = async db => {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readwrite")
-    const store = tx.objectStore(STORE_NAME)
-    const req = store.getAll()
-
-    req.onsuccess = function () {
-      const items = req.result
-      if (items.length > CACHE_SIZE) {
-        items.sort((a, b) => a.timestamp - b.timestamp)
-        const toRemove = items.length - CACHE_SIZE
-        for (let i = 0; i < toRemove; i++) {
-          store.delete(items[i].key)
-        }
-      }
-      resolve()
-    }
-    req.onerror = () => reject(req.error)
-  })
-}
-const dataIsCached = async key => {
-  const db = await openCacheDB()
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readonly')
-    const store = tx.objectStore(STORE_NAME)
-    const req = store.get(key)
-    req.onsuccess = () => resolve(!!req.result)
-    req.onerror = () => reject(req.error)
-  })
-}
-const getCachedData = async key => {
-  const db = await openCacheDB()
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readonly')
-    const store = tx.objectStore(STORE_NAME)
-    const req = store.get(key)
-    req.onsuccess = () => resolve(req.result ? req.result.data : undefined)
-    req.onerror = () => reject(req.error)
-  })
-}
-const cacheData = async (data, key) => {
-  const db = await openCacheDB()
-  const tx = db.transaction(STORE_NAME, 'readwrite')
-  const store = tx.objectStore(STORE_NAME)
-  store.put({key, data, timestamp: Date.now()})
-  tx.oncomplete = () => pruneCacheIfNeeded(db)
-  tx.onerror = () => {
-  }
-}
-const clearCache = async () => {
-  const db = await openCacheDB()
-  const tx = db.transaction(STORE_NAME, 'readwrite')
-  const store = tx.objectStore(STORE_NAME)
-  store.clear()
+const getAndCacheForecast = async ({riverId, date, corrected}) => {
+  const key = cacheKey({riverId, type: 'forecast', corrected, date})
+  const cachedData = await readCache(key)
+  if (cachedData) return Promise.resolve(cachedData)
+  const data = corrected ? null : await fetchForecast({riverId, date})
+  await cacheData(data, key)
+  return Promise.resolve(data)
 }
 
-const fetchForecastPromise = async ({riverid, date}) => {
-  const biasCorrected = UseBiasCorrected.get()
-  let key = cacheKey({riverid, biasCorrected, type: 'forecast', date: date})
-  if (await dataIsCached(key)) return getCachedData(key)
-  return fetch(`${REST_ENDPOINT}/forecast/${riverid}/?format=json&date=${date}&bias_corrected=${biasCorrected}`)
-    .then(response => response.json())
-    .then(response => {
-      cacheData(response, key)
-      return response
-    })
-}
-const fetchForecastMembersPromise = async ({riverid, date}) => {
-  const biasCorrected = UseBiasCorrected.get()
-  let key = cacheKey({riverid, biasCorrected, type: 'forecastMembers', date})
-  if (await dataIsCached(key)) return getCachedData(key)
-  return fetch(`${REST_ENDPOINT}/forecastensemble/${riverid}/?format=json&date=${date}&bias_corrected=${biasCorrected}`)
-    .then(response => response.json())
-    .then(response => {
-      if (response.hasOwnProperty('ensemble_52')) delete response.ensemble_52
-      const memberKeys = Object.keys(response).filter(key => key.startsWith('ensemble_'))
-      const goodIndexes = response.ensemble_01.reduce((acc, value, index) => {
-        if (value !== "") acc.push(index)
-        return acc
-      }, [])
-      return {
-        datetime: response.datetime.filter((_, index) => goodIndexes.includes(index)),
-        ...memberKeys.reduce((acc, key) => {
-          acc[key] = response[key].filter((_, index) => goodIndexes.includes(index))
-          return acc
-        }, {})
-      }
-    })
-    .then(response => {
-      cacheData(response, key)
-      return response
-    })
-}
-const fetchReturnPeriodsPromise = async riverid => {
-  const biasCorrected = UseBiasCorrected.get()
-  const key = cacheKey({riverid, biasCorrected, type: 'returnPeriods', date: 'static'})
-  if (await dataIsCached(key)) return getCachedData(key)
-  return fetch(`${REST_ENDPOINT}/returnperiods/${riverid}/?format=json&bias_corrected=${biasCorrected}`)
-    .then(response => response.json())
-    .then(response => {
-      cacheData(response, key)
-      return response
-    })
-}
-const fetchRetroPromise = async riverid => {
-  const biasCorrected = UseBiasCorrected.get()
-  const key = cacheKey({riverid, biasCorrected, type: 'retro', date: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString().slice(0, 10).replaceAll('-', '')})
-  if (await dataIsCached(key)) return getCachedData(key)
-  return fetch(`${REST_ENDPOINT}/retrospective/${riverid}/?format=json&bias_corrected=${biasCorrected}`)
-    .then(response => response.json())
-    .then(response => {
-      cacheData(response, key)
-      return response
-    })
+const getAndCacheRetrospective = async ({riverId, corrected}) => {
+  const key = cacheKey({riverId, type: 'retro', corrected})
+  const cachedData = await readCache(key)
+  if (cachedData) return Promise.resolve(cachedData)
+  const data = corrected ? null : await fetchRetro({riverId, resolution: 'daily'})
+  await cacheData(data, key)
+  return Promise.resolve(data)
 }
 
-const getForecastData = riverid => {
-  riverid = riverid || RiverId.get()
-  if (!riverid) return
+const getAndCacheReturnPeriods = async riverId => {
+  const corrected = UseBiasCorrected.get()
+  const key = cacheKey({riverId, type: 'returnPeriods', corrected})
+  const cachedData = await readCache(key)
+  if (cachedData) return Promise.resolve(cachedData)
+  const data = await fetchReturnPeriods({riverId, corrected})
+  await cacheData(data, key)
+  return data
+}
+
+const getForecastData = riverId => {
+  riverId = riverId || RiverId.get()
+  if (!riverId) return
   clearCharts('forecast')
   LoadStatus.update({forecast: "load"})
   const date = inputForecastDate.value.replaceAll("-", "")
-  const showMembers = useForecastMembers()
-  const forecastFetcher = showMembers ? fetchForecastMembersPromise : fetchForecastPromise
+  const corrected = UseBiasCorrected.get()
+  const stats = UseSimpleForecast.get()
   Promise
-    .all([forecastFetcher({riverid, date}), fetchReturnPeriodsPromise(riverid)])
+    .all([getAndCacheForecast({riverId, date, corrected}), getAndCacheReturnPeriods(riverId)])
     .then(responses => {
-      plotAllForecast({forecast: responses[0], rp: responses[1], riverid: riverid, showMembers})
+      plotAllForecast({forecast: responses[0], rp: responses[1], riverId, corrected, showStats: stats})
       LoadStatus.update({forecast: "ready"})
+      updateDownloadLinks({forecast: responses[0], riverId})
     })
     .catch(error => {
       console.error(error)
@@ -158,15 +54,17 @@ const getForecastData = riverid => {
       clearCharts('forecast')
     })
 }
-const getRetrospectiveData = riverid => {
-  riverid = riverid || RiverId.get()
-  if (!riverid) return
+const getRetrospectiveData = riverId => {
+  riverId = riverId || RiverId.get()
+  if (!riverId) return
   clearCharts('retro')
   LoadStatus.update({retro: "load"})
-  fetchRetroPromise(RiverId.get())
+  const corrected = UseBiasCorrected.get()
+  getAndCacheRetrospective({riverId, corrected})
     .then(response => {
-      plotAllRetro({retro: response, riverid: RiverId.get()})
+      plotAllRetro({retro: response, riverId})
       LoadStatus.update({retro: "ready"})
+      updateDownloadLinks({retro: response, riverId})
     })
     .catch(error => {
       console.error(error)
@@ -174,19 +72,78 @@ const getRetrospectiveData = riverid => {
       clearCharts('retro')
     })
 }
-const fetchData = ({riverid, display = true} = {}) => {
-  getForecastData(riverid)
-  getRetrospectiveData(riverid)
-  if (display) {
-    M.Modal.getInstance(document.getElementById('charts-modal')).open()
-  }
+const fetchData = ({riverId, display = true} = {}) => {
+  getForecastData(riverId)
+  getRetrospectiveData(riverId)
+  if (display) M.Modal.getInstance(document.getElementById('charts-modal')).open()
 }
 
-const updateDownloadLinks = riverid => {
-  const hrefForecast = riverid ? `${REST_ENDPOINT}/forecast/${riverid}` : ""
-  const hrefRetro = riverid ? `${REST_ENDPOINT}/retrospective/${riverid}` : ""
-  document.getElementById("download-forecast-link").href = hrefForecast
-  document.getElementById("download-retrospective-link").href = hrefRetro
+const addCsvDownloadToButton = (button, csvString, filename) => {
+  button.disabled = false;
+  button.onclick = async () => {
+    // Prefer native save dialog if supported (Chrome/Edge, not Safari/Firefox)
+    if (window.showSaveFilePicker) {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [{description: 'CSV', accept: {'text/csv': ['.csv']}}],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(new Blob([csvString], {type: 'text/csv'}));
+        await writable.close();
+        return;
+      } catch (err) {
+        // If user cancels, just stop; otherwise fall back
+        if (err?.name === 'AbortError') return;
+        console.warn('showSaveFilePicker failed, falling back to anchor download', err);
+      }
+    }
+
+    // Fallback that avoids opening a new tab
+    const blob = new Blob([csvString], {type: 'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.target = '_blank';
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  };
+};
+
+const updateDownloadLinks = ({forecast = null, retro = null, riverId = null, clear = false}) => {
+  if (clear) {
+    downloadForecastButton.disabled = true
+    downloadRetroButton.disabled = true
+    downloadForecastButton.onclick = null
+    downloadRetroButton.onclick = null
+    downloadForecastButton.href = ''
+    downloadRetroButton.href = ''
+    return
+  }
+  if (forecast) {
+    const memberHeaders = forecast.discharge.map((_, index) => `member${index + 1}`).join(",")
+    const statsHeaders = Object.keys(forecast.stats).map(stat => stat.charAt(0).toUpperCase() + stat.slice(1)).join(",")
+    const csvHeaders = `Date,${memberHeaders},${statsHeaders}`
+    const csvContent = forecast.datetime.map((time, index) => {
+      const memberValues = forecast.discharge.map(memberArray => memberArray[index].toFixed(2)).join(",")
+      const statsValues = Object.values(forecast.stats).map(statArray => statArray[index].toFixed(2)).join(",")
+      return `${time.toISOString()},${memberValues},${statsValues}`
+    }).join("\n")
+    const csvString = csvHeaders + "\n" + csvContent
+    addCsvDownloadToButton(downloadForecastButton, csvString, `forecast_${riverId}_${forecast.datetime[0].toISOString().slice(0, 10)}.csv`)
+  }
+  if (retro) {
+    const csvHeaders = "Date,Discharge"
+    const csvContent = retro.datetime.map((time, index) => {
+      return `${time.toISOString()},${retro.discharge[index].toFixed(2)}`
+    }).join("\n")
+    const csvString = csvHeaders + "\n" + csvContent
+    addCsvDownloadToButton(downloadRetroButton, csvString, `retrospective_${riverId}.csv`)
+  }
 }
 
 ////////////////// Event Listeners
@@ -201,10 +158,6 @@ clearCacheButtons.forEach(btn => {
 
 ////////////////// Module Exports
 export {
-  fetchForecastPromise,
-  fetchForecastMembersPromise,
-  fetchReturnPeriodsPromise,
-  fetchRetroPromise,
   updateDownloadLinks,
   getRetrospectiveData,
   getForecastData,
