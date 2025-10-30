@@ -5,7 +5,6 @@ import outletCountries from "/static/json/outletCountries.json" with {type: "jso
 import vpuList from "/static/json/vpuList.json" with {type: "json"};
 
 const timeSliderForecastDiv = document.getElementById('timeSliderForecastWrapper')
-const timeSliderFfiDiv = document.getElementById('timeSliderFfiWrapper')
 const timeSliderStatusDiv = document.getElementById('timeSliderHydroSOSWrapper')
 
 selectRiverCountry.innerHTML += riverCountries.map(c => `<option value="${c}">${c}</option>`).join('')
@@ -107,17 +106,6 @@ require(
       timeSliderForecastButton.innerHTML = `<span class="esri-icon-time-clock"></span>`;
       timeSliderForecastButton.addEventListener('click', () => {
         timeSliderForecastDiv.classList.toggle('show-slider')
-        timeSliderFfiDiv.classList.remove('show-slider')
-        timeSliderStatusDiv.classList.remove('show-slider')
-      })
-
-      const timeSliderFfiButton = document.createElement('div');
-      timeSliderFfiButton.setAttribute("title", 'RFS v2 Flash Flood Indicators Time steps');
-      timeSliderFfiButton.className = "esri-widget--button esri-widget esri-interactive";
-      timeSliderFfiButton.innerHTML = `FFI`;
-      timeSliderFfiButton.addEventListener('click', () => {
-        timeSliderForecastDiv.classList.remove('show-slider')
-        timeSliderFfiDiv.classList.toggle('show-slider')
         timeSliderStatusDiv.classList.remove('show-slider')
       })
 
@@ -127,7 +115,6 @@ require(
       timeSliderHydroSOSButton.innerHTML = `SOS`;
       timeSliderHydroSOSButton.addEventListener('click', () => {
         timeSliderForecastDiv.classList.remove('show-slider')
-        timeSliderFfiDiv.classList.remove('show-slider')
         timeSliderStatusDiv.classList.toggle('show-slider')
       })
 
@@ -139,14 +126,6 @@ require(
         label: "Forecast Layer Time Steps",
         mode: "instant",
       });
-      const timeSliderFfi = new TimeSlider({
-        container: "timeSliderFfi",
-        playRate: 1250,
-        loop: true,
-        label: "RFS v2 Flash Flood Indicators Time Steps",
-        mode: "instant",
-        queryParameters: {intercept: true},
-      })
       const timeSliderStatus = new TimeSlider({
         container: "timeSliderHydroSOS",
         playRate: 3000,
@@ -169,7 +148,6 @@ require(
       view.navigation.browserTouchPanEnabled = true;
       view.ui.add(filterButton, "top-left");
       view.ui.add(timeSliderForecastButton, "top-left");
-      view.ui.add(timeSliderFfiButton, "top-left");
       view.ui.add(timeSliderHydroSOSButton, "top-left");
 
       const rfsLayer = new MapImageLayer({
@@ -177,14 +155,7 @@ require(
         title: "GEOGLOWS River Forecast System v2",
         sublayers: [{id: 0, definitionExpression}]
       })
-      const rfsFfi = new MapImageLayer({
-        url: 'customflashfloodlogic',
-        title: "RFS v2 Flash Flood Indicators (Beta)",
-        sublayers: [{id: 0, definitionExpression: 'returnperiod > 1'}],
-        visible: false,
-      })
       let cogMonthlyStatusLayer = new ImageryTileLayer({
-        // url: "https://d2sl0kux8qc7kl.cloudfront.net/hydrosos/cogs/2025-07.tif",
         url:`https://d2sl0kux8qc7kl.cloudfront.net/hydrosos/cogs/${lastHydroSOSDate.getFullYear()}-${String(lastHydroSOSDate.getMonth() + 1).padStart(2, '0')}.tif`,
         title: "HydroSOS Monthly Status Indicators",
         visible: false,
@@ -215,38 +186,12 @@ require(
         title: "GOES Weather Satellite Colorized Infrared Imagery",
         visible: false,
       })
-      map.addMany([goesImageryColorized, viirsThermalAnomalies, viirsTrueColor, viirsWaterStates, viirsFloodClassified, rfsFfi, cogMonthlyStatusLayer, rfsLayer])
+      map.addMany([goesImageryColorized, viirsThermalAnomalies, viirsTrueColor, viirsWaterStates, viirsFloodClassified, cogMonthlyStatusLayer, rfsLayer])
 
       // handle interactions with the rfs layer
       view.whenLayerView(rfsLayer.findSublayerById(0).layer).then(_ => {
         timeSliderForecast.fullTimeExtent = rfsLayer.findSublayerById(0).layer.timeInfo.fullTimeExtent.expandTo("hours");
         timeSliderForecast.stops = {interval: rfsLayer.findSublayerById(0).layer.timeInfo.interval}
-      })
-
-      // handle interactions with the flash flood indicators layer
-      view.whenLayerView(rfsFfi.findSublayerById(0).layer).then(_ => {
-        timeSliderFfi.fullTimeExtent = {
-          start: rfsFfi.findSublayerById(0).layer.timeInfo.fullTimeExtent.start,
-          end: new Date(rfsFfi.findSublayerById(0).layer.timeInfo.fullTimeExtent.start.getTime() + 72 * 60 * 60 * 1000) // 72 hours later
-        }
-        timeSliderFfi.stops = {interval: rfsFfi.findSublayerById(0).layer.timeInfo.interval}
-      })
-      reactiveUtils.watch(() => timeSliderFfi.timeExtent, () => rfsFfi.refresh())
-      config.request.interceptors.push({
-        urls: /customflashfloodlogic/,
-        before: params => {
-          params.url = params.requestOptions.query.bbox ? `${RFS_LAYER_URL}/export` : `${RFS_LAYER_URL}`
-          params.requestOptions.query.time = timeSliderFfi?.timeExtent?.start?.getTime() || null
-          delete params.requestOptions.query._ts
-        }
-      })
-      reactiveUtils.watch(() => rfsFfi.visible, visible => {
-        rfsLayer.visible = !visible
-        timeSliderFfiDiv.classList.toggle('show-slider', visible)
-        if (visible) {
-          timeSliderForecastDiv.classList.remove('show-slider')
-          timeSliderStatusDiv.classList.remove('show-slider')
-        }
       })
 
       // handle interactions with the monthly status tile layer

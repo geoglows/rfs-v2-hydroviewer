@@ -34,15 +34,15 @@ export const pubSubState = ({initialValue, localStorageKey}) => {
     if (loggingEnabled) console.log('Publishing state change:', possiblyPartialStateChange)
     subscribers.forEach(callback => callback(possiblyPartialStateChange))
   }
-  const subscribe = (callback) => {
+  const addSubscriber = (callback) => {
     if (loggingEnabled) console.log('New subscriber added.', callback)
     if (typeof callback !== 'function') return console.error('Subscriber must be a function')
     subscribers.add(callback)
   }
-  const subscribeAndInit = (callback) => {
-    subscribe(callback)
+  const addSubscriberAndInit = (callback) => {
+    addSubscriber(callback)
     callback(state)
   }
   const unsubscribe = (callback) => subscribers.delete(callback)
-  return {get, set, update, reset, subscribe, subscribeAndInit, unsubscribe}
+  return {get, set, update, reset, addSubscriber, addSubscriberAndInit, unsubscribe}
 }

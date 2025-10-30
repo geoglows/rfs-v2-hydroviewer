@@ -1,7 +1,7 @@
 import {displayLoadingStatus, displayRiverNumber, lang, riverIdInput} from "./ui.js";
-import {fetchData} from "./data.js";
+import {fetchData, updateDownloadLinks} from "./data.js";
 import {bookmarks} from "./bookmarks.js";
-import {LoadStatus, RiverId, UseBiasCorrected} from "./states/state.js";
+import {LoadStatus, RiverId, UseBiasCorrected, UseSimpleForecast} from "./states/state.js";
 
 //////////////////////////////////////////////////////////////////////// INITIAL LOAD
 M.AutoInit();
@@ -14,16 +14,18 @@ Plotly.setPlotConfig({'locale': lang})
 if (window.innerWidth < 800) M.toast({html: text.prompts.mobile, classes: "blue custom-toast-placement", displayLength: 7500})
 
 // subscribers to RiverId changes - don't change the order
-RiverId.subscribe(LoadStatus.reset)
-RiverId.subscribe(displayRiverNumber)
-RiverId.subscribe(fetchData)
-RiverId.subscribe(bookmarks.setFavoriteIcon)
+RiverId.addSubscriber(LoadStatus.reset)
+RiverId.addSubscriber(displayRiverNumber)
+RiverId.addSubscriber(() => updateDownloadLinks({clear: true}))
+RiverId.addSubscriber(fetchData)
+RiverId.addSubscriber(bookmarks.setFavoriteIcon)
 
 // subscribers to loadingStatus changes
-LoadStatus.subscribe(displayLoadingStatus)
+LoadStatus.addSubscriber(displayLoadingStatus)
 
-// UseBiasCorrected subscriber to sync checkbox state
-UseBiasCorrected.subscribe(() => fetchData({display: false}))
+// Settings state subscribers
+UseSimpleForecast.addSubscriber(() => fetchData({display: false}))
+UseBiasCorrected.addSubscriber(() => fetchData({display: false}))
 
 // event listeners
 const forecastDatePicker = document.getElementById('forecast-date-calendar')
@@ -57,13 +59,13 @@ nextDateArrow.onclick = () => {
   nextDateArrow.disabled = forecastDatePicker.value === latestDate
   fetchData()
 }
-riverIdInput.addEventListener("keydown", event => {
-  if (event.key !== "Enter") return
-  let possibleId = riverIdInput.value
+
+window.setRiverIdFromInput = riverid => {
+  let possibleId = riverid || riverIdInput.value
   if (/^\d{9}$/.test(possibleId)) RiverId.set(parseInt(possibleId))
   else alert(text.prompts.invalidRiverID)
   M.Modal.getInstance(document.getElementById('enter-river-id-modal')).close()
+}
+riverIdInput.addEventListener("keydown", event => {
+  if (event.key === "Enter") setRiverIdFromInput()
 })
-
-// set global variables for html inline
-window.setRiverId = RiverId.set
