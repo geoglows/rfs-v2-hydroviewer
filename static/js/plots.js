@@ -813,7 +813,6 @@ const plotCumulativeVolumes = ({retro, riverid, chartDiv}) => {
       },
       yaxis: {
           title: { text: text.plots.cumVolumeYaxis},
-          // fixedrange: true
       },
       legend: {
           x: 1.05,
