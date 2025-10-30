@@ -60,8 +60,8 @@ nextDateArrow.onclick = () => {
   fetchData()
 }
 
-const setRiverIdFromInput = () => {
-  let possibleId = riverIdInput.value
+window.setRiverIdFromInput = riverid => {
+  let possibleId = riverid || riverIdInput.value
   if (/^\d{9}$/.test(possibleId)) RiverId.set(parseInt(possibleId))
   else alert(text.prompts.invalidRiverID)
   M.Modal.getInstance(document.getElementById('enter-river-id-modal')).close()
@@ -69,4 +69,3 @@ const setRiverIdFromInput = () => {
 riverIdInput.addEventListener("keydown", event => {
   if (event.key === "Enter") setRiverIdFromInput()
 })
-window.setRiverIdFromInput = setRiverIdFromInput
