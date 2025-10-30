@@ -24,11 +24,14 @@
   <script src="https://js.arcgis.com/4.33/"></script>
   <script type="module" src="https://js.arcgis.com/4.33/map-components/"></script>
   <!-- App -->
+  <script type="module" defer src="https://cdn.jsdelivr.net/npm/zarrita/+esm"></script>
   <link rel="stylesheet" href="/static/css/main.css"/>
   <link rel="stylesheet" href="/static/css/materialize.overrides.css"/>
   <script type="application/javascript" src="/static/js/locales/en-US.js" async></script>
   <script type="module" defer src="/static/js/plots.js"></script>
   <script type="module" defer src="/static/js/ui.js"></script>
+  <script type="module" defer src="/static/js/cache.js"></script>
+  <script type="module" defer src="/static/js/rfsZarrFetcher.js"></script>
   <script type="module" defer src="/static/js/data.js"></script>
   <script type="module" defer src="/static/js/map.js"></script>
   <script type="module" defer src="/static/js/main.js"></script>
@@ -68,14 +71,14 @@
     <h5>Chart Options</h5>
     <div class="options-wrapper">
       <label>
-        <input type="checkbox" class="filled-in" id="settingsShowEnsembleMembers"/>
-        <span>Show forecast ensemble members</span>
+        <input type="checkbox" class="filled-in" id="settingsShowSimpleForecast" checked/>
+        <span>Display simplified forecast stats</span>
       </label>
     </div>
 <!--    <div class="options-wrapper">-->
 <!--      <label>-->
 <!--        <input type="checkbox" class="filled-in" id="settingsUseBiasCorrected"/>-->
-<!--        <span>Use experimental global bias correction on all datasets</span>-->
+<!--        <span>Use experimental bias correction</span>-->
 <!--      </label>-->
 <!--    </div>-->
     <h5>Data and Cache Options</h5>
@@ -98,8 +101,8 @@
         <button id="showRetroCharts" class="btn status-btn" onclick="showChartView('retro')">Retro<span class="hide-on-small-only">spective</span><span id="retro-load-icon"></span></button>
         <a class="btn btn-flat waves-effect waves-teal tooltipped dropdown-trigger" data-target="download-select" data-tooltip="Download CSVs"><i class="material-icons">download</i></a>
         <ul id="download-select" class="dropdown-content">
-          <li><a id="download-forecast-link" target="_blank">Save Forecast Data (CSV)</a></li>
-          <li><a id="download-retrospective-link" target="_blank">Save Retrospective Data (CSV)</a></li>
+          <li style="display: flex; justify-content: center"><button class="btn waves-effect waves-light" id="download-forecast-link" disabled>Save Forecast Data (CSV)</button></li>
+          <li style="display: flex; justify-content: center"><button class="btn waves-effect waves-light" id="download-retrospective-link" disabled>Save Retrospective Data (CSV)</button></li>
         </ul>
         <button class="btn modal-close waves-effect waves-red btn-flat">X</button>
       </div>
@@ -137,7 +140,7 @@
     <div style="display: flex; flex-direction: row; align-items: center; gap: 5px; justify-content: center; width: 100%">
       <label for="river-id">River ID</label>
       <input type="number" id="river-id" placeholder="Enter 9 Digit River ID" onchange="this.value = this.value.slice(0, 9)" style="max-width: 200px"/>
-      <button class="waves-effect waves-light btn" onclick="setRiverId()">Submit</button>
+      <button class="waves-effect waves-light btn" onclick="setRiverIdFromInput()">Submit</button>
     </div>
   </div>
 </div>
@@ -273,10 +276,6 @@
   <div id="timeSliderForecastWrapper" data-category="map" class="time-sliders">
     <div class="time-slider-title">Stream Layer Forecast Time Steps</div>
     <div id="timeSliderForecast"></div>
-  </div>
-  <div id="timeSliderFfiWrapper" data-category="map" class="time-sliders">
-    <div class="time-slider-title">Flash Flood Forecast Time Steps</div>
-    <div id="timeSliderFfi"></div>
   </div>
   <div id="timeSliderHydroSOSWrapper" data-category="map" class="time-sliders">
     <div class="time-slider-title">HydroSOS Monthly Status Indicators</div>

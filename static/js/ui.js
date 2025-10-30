@@ -1,10 +1,12 @@
 /// URLs
-import {updateDownloadLinks} from "./data.js";
 import {clearCharts} from "./plots.js";
 
 export const RFS_LAYER_URL = 'https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer'
 
 //// DOM Elements
+// buttons
+const downloadForecastButton = document.getElementById("download-forecast-link")
+const downloadRetroButton = document.getElementById("download-retrospective-link")
 // filter inputs
 export const selectRiverCountry = document.getElementById('riverCountry')
 export const selectOutletCountry = document.getElementById('outletCountry')
@@ -81,9 +83,8 @@ const updateHash = ({lon, lat, zoom, definition}) => {
   window.location.hash = hashParams.toString()
 }
 
-const displayRiverNumber = (riverid) => {
-  divSelectedRiverId.innerText = riverid ? riverid : ""
-  updateDownloadLinks(riverid)
+const displayRiverNumber = riverId => {
+  divSelectedRiverId.innerText = riverId ? riverId : ""
   clearCharts()
 }
 const displayLoadingStatus = statusChanges => {
@@ -117,4 +118,5 @@ window.toggleVisibleRiverInput = toggleVisibleRiverInput
 export {
   showChartView, updateHash, resetFilterForm, buildFilterExpression,
   toggleVisibleRiverInput, displayRiverNumber, displayLoadingStatus,
+  downloadForecastButton, downloadRetroButton
 }
