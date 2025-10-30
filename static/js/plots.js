@@ -762,7 +762,7 @@ const plotCumulativeVolumes = ({retro, riverid, chartDiv}) => {
             mode: "lines",
             line: { color: "lightgray", width: 0.8 },
             name: year,
-            hoverinfo: "skip",
+            hovertemplate: `${text.words.year}: ${year}<extra></extra>`,
             showlegend: false,
         });
     });
@@ -775,7 +775,7 @@ const plotCumulativeVolumes = ({retro, riverid, chartDiv}) => {
             mode: "lines",
             line: { color, width: 2},
             name: label,
-            hoverinfo: "skip",
+            hovertemplate: `${text.words.year}: ${year}<extra></extra>`,
             showlegend: true,
         });
     };
@@ -813,7 +813,7 @@ const plotCumulativeVolumes = ({retro, riverid, chartDiv}) => {
       },
       yaxis: {
           title: { text: text.plots.cumVolumeYaxis},
-          fixedrange: true,
+          // fixedrange: true
       },
       legend: {
           x: 1.05,
@@ -829,7 +829,7 @@ const plotCumulativeVolumes = ({retro, riverid, chartDiv}) => {
   const config = {
       displaylogo: false,
       doubleClick: false,
-      scrollZoom: false,
+      scrollZoom: true,
       responsive: true,
   };
   Plotly.newPlot(chartDiv, traces, layout, config);
