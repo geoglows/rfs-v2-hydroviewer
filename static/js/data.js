@@ -1,6 +1,6 @@
 import {LoadStatus, RiverId, UseBiasCorrected, UseSimpleForecast} from "./states/state.js"
 import {clearCharts, plotAllForecast, plotAllRetro} from "./plots.js"
-import {inputForecastDate, downloadForecastButton, downloadRetroButton} from "./ui.js"
+import {inputForecastDate, downloadForecastButton, downloadRetroButton, divModalCharts} from "./ui.js"
 import {fetchForecast, fetchRetro, fetchReturnPeriods} from "./rfsZarrFetcher.js";
 import {cacheData, cacheKey, clearCache, readCache} from "./cache.js";
 
@@ -73,9 +73,9 @@ const getRetrospectiveData = riverId => {
     })
 }
 const fetchData = ({riverId, display = true} = {}) => {
+  if (display) M.Modal.getInstance(divModalCharts).open()
   getForecastData(riverId)
   getRetrospectiveData(riverId)
-  if (display) M.Modal.getInstance(document.getElementById('charts-modal')).open()
 }
 
 const addCsvDownloadToButton = (button, csvString, filename) => {
