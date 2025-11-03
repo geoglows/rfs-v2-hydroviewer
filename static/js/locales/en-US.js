@@ -23,6 +23,17 @@ window.text = {
     "flowDurationCurve": "Flow Duration Curve",
     "fdc": "FDC",
     "ensMembers": "Ensemble Members",
+    "annualPeak": "Annual Peak",
+    "temporalOutliers": "Outliers (Q3+1.5×IQR rule)",
+    "medianDOY": "Median DOY",
+    "doy": "Day of Year",
+    "peakDischarge": "Peak Discharge",
+    "discharge": "Discharge",
+    "date": "Date",
+    "wettestYear": "Wettest Year",
+    "driestYear": "Driest Year",
+    "medianYear": "Median Year",
+    "average": "Average"
   },
   "statusLabels": [
     "Very Wet",
@@ -59,6 +70,13 @@ window.text = {
     "volumeTitle": "Yearly Cumulative Discharge Volume for River: ",
     "statusTitle": "Monthly Average Flow by Year for River: ",
     "fdcTitle": "Flow Duration Curves for River: ",
-    "experimentalOverlay": "Experimental<br>Bias Correction"
+    "experimentalOverlay": "Experimental<br>Bias Correction",
+    "peaksTitle": "Date of Annual Peak Discharge for River: ",
+    "peaksXaxis": "Month",
+    "heatMapTitle": "Average Daily Discharge for River: ",
+    "heatMapXaxis": "Month",
+    "cumVolumeTitle": "Cumulative Volume by Year for River: ",
+    "cumVolumeYaxis": "Cumulative Volume (million m³)",
+
   }
 }

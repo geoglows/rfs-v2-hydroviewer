@@ -22,6 +22,17 @@ window.text = {
     "flowDurationCurve": "Curva de Duración de Flujo",
     "fdc": "CDF",
     "ensMembers": "Miembros del Ensamble",
+    "annualPeak": "Pico Anual",
+    "temporalOutliers": "Valores atípicos (regla Q3+1,5×RIC)",
+    "medianDOY": "Día Promedio del Año",
+    "doy": "Día del Año",
+    "discharge": "Caudal",
+    "peakDischarge": "Caudal Máximo",
+    "date": "Fecha",
+    "wettestYear": "Año Más Lluvioso",
+    "driestYear": "Año Más Seco",
+    "medianYear": "Año Medio",
+    "average": "Promedio"
   },
   "statusLabels": [
     "Muy Mojado",
@@ -44,24 +55,29 @@ window.text = {
     "legend": "Leyenda"
   },
   "inputs": {
-    "forecast": "Mostrar Gráficos de Pronóstico",
-    "retro": "Mostrar Gráficos Históricos"
+    "forecast": "Mostrar gráficos de pronóstico",
+    "retro": "Mostrar gráficos históricos"
   },
   "plots": {
     "fcXaxis": "Fecha",
     "fcYaxis": "Caudal",
     "fcLineUncertainty": "Incertidumbre",
     "fcLineUncertaintyOriginal": "Incertidumbre (No Corregida)",
-    "fcLineMedian": "Flujo Predicho",
-    "fcLineMedianOriginal": "Flujo Predicho (No Corregido)",
-    "fcMembersTitle": "Miembros del Pronóstico para Río: ",
+    "fcLineMedian": "Flujo predicho",
+    "fcLineMedianOriginal": "Flujo predicho (No Corregido)",
+    "fcMembersTitle": "Miembros del pronóstico para Río: ",
     "retroXaxis": "Fecha",
     "retroYaxis": "Caudal",
-    "fcTitle": "Pronóstico para",
+    "fcTitle": "Pronóstico para: ",
     "retroTitle": "Caudal Histórico para",
-    "volumeTitle": "Volumen Anual Acumulado de Caudal para Río: ",
-    "statusTitle": "Estado Anual por Mes para Río: ",
-    "fdcTitle": "Curvas de Duración de Flujo para Río: ",
-    "experimentalOverlay": "Corrección<br>Experimental"
+    "volumeTitle": "Volumen anual acumulado de caudal para río: ",
+    "cumVolumeTitle": "Volumen de caudal diario acumulado del río: ",
+    "statusTitle": "Estado anual por Mes para Río: ",
+    "fdcTitle": "Curvas de duración de Flujo para Río: ",
+    "experimentalOverlay": "Corrección<br>Experimental",
+    "peaksTitle": "Fecha de caudal máximo anual del río: ",
+    "peaksXaxis": "Mes",
+    "heatMapTitle": "Caudal río promedio para el río: ",
+    "heatMapXaxis": "Mes"
   }
 }

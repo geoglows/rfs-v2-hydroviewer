@@ -1,4 +1,5 @@
-import {divChartFdc, divChartForecast, divChartRetro, divChartStatus, divChartYearlyVol, divTableForecast, lang} from './ui.js'
+import {divChartFdc, divChartForecast, divChartRetro, divChartStatus, divChartYearlyVol, divCumulativeVolume, divRasterHydrograph, divTableForecast, divYearlyPeaks, lang} from './ui.js'
+import {UseShowExtraRetroGraphs} from "./states/state.js";
 
 //////////////////////////////////////////////////////////////////////// Constants and configs
 const defaultDateRange = ['2015-01-01', new Date().toISOString().split("T")[0]]
@@ -475,6 +476,342 @@ const plotFdc = ({fdc, monthlyFdc, riverId, chartDiv, biasCorrected}) => {
     }
   )
 }
+const plotYearlyPeaks = ({yearlyPeaks, riverId, chartDiv}) => {
+  chartDiv.innerHTML = "";
+
+  const currentYear = new Date().getFullYear();
+  yearlyPeaks = yearlyPeaks.filter(p => p.year < currentYear).sort((a, b) => a.year - b.year);
+
+  const formatVal = val => {
+    if (val >= 1000) return `${Math.round((val / 1000) * 10) / 10}k`;
+    if (val === 0) return "0";
+    const magnitude = Math.floor(Math.log10(Math.abs(val)));
+    const factor = 10 ** (magnitude - 2);
+    return Math.round(val / factor) * factor;
+  };
+
+  // --- Circular logic for outlier detection ---
+  const angles = yearlyPeaks.map(d => (2 * Math.PI * (d.doy - 1)) / 365);
+  const circDist = (a1, a2) => Math.min(Math.abs(a1 - a2), 2 * Math.PI - Math.abs(a1 - a2));
+
+  // Compute circular median angle
+  const circMedian = arr => arr.reduce((best, a) => {
+    const total = arr.reduce((sum, x) => sum + circDist(x, a), 0);
+    return total < best.dist ? {ang: a, dist: total} : best;
+  }, {ang: 0, dist: Infinity}).ang;
+  const medianAngle = circMedian(angles);
+  const medianDoy = Math.round((medianAngle / (2 * Math.PI)) * 365) + 1;
+
+  // Distances from median
+  const distancesDays = angles.map(a => circDist(a, medianAngle) * (365 / (2 * Math.PI)));
+  const sorted = [...distancesDays].sort((a, b) => a - b);
+  const q1 = sorted[Math.floor(sorted.length * 0.25)];
+  const q3 = sorted[Math.floor(sorted.length * 0.75)];
+  const iqr = q3 - q1;
+  const threshold = q3 + 1.5 * iqr;
+
+  // Identify outliers - iqr rule and more than 30 days from median
+  const outlierIndices = distancesDays
+    .map((d, i) => (d > threshold && d > 30 ? i : -1))
+    .filter(i => i !== -1);
+  const outliers = outlierIndices.map(i => yearlyPeaks[i]);
+  const normalPoints = yearlyPeaks.filter((_, i) => !outlierIndices.includes(i));
+
+  // --- Bins + color setup ---
+  const peaks = yearlyPeaks.map(p => p.peak);
+  const minVal = Math.min(...peaks);
+  const maxVal = Math.max(...peaks);
+  const nBins = 5;
+  const viridis = ["#440154", "#3b528b", "#21918c", "#5ec962", "#fde725"];
+  const traces = [];
+
+  // --- Build bin traces ---
+  for (let i = 0; i < nBins; i++) {
+    const lower = minVal + (i * (maxVal - minVal)) / nBins;
+    const upper = minVal + ((i + 1) * (maxVal - minVal)) / nBins;
+    const inBin = p => p.peak >= lower && p.peak < upper;
+
+    const binPoints = normalPoints.filter(inBin);
+    const outlierBinPoints = outliers.filter(inBin);
+    const allPoints = [...binPoints, ...outlierBinPoints];
+
+    if (allPoints.length) {
+      const legendgroup = `bin-${i}`;
+      traces.push({
+        name: `${formatVal(lower)}–${formatVal(upper)} m³/s`,
+        legendgroup,
+        x: allPoints.map(p => p.doy),
+        y: allPoints.map(p => p.year),
+        mode: "markers",
+        type: "scatter",
+        marker: {size: 9, color: viridis[i], line: {width: 0}},
+        text: allPoints.map(
+          p => `${text.words.year}: ${p.year}<br>${text.words.date}: ${p.date.toLocaleDateString(undefined, {
+            "month": "short",
+            "day": "numeric"
+          })}<br>${text.words.discharge}: ${formatVal(p.peak)} m³/s`
+        ),
+        hoverinfo: "text",
+        showlegend: true,
+      });
+
+      // Red outline
+      if (outlierBinPoints.length)
+        traces.push({
+          legendgroup,
+          showlegend: false,
+          x: outlierBinPoints.map(p => p.doy),
+          y: outlierBinPoints.map(p => p.year),
+          mode: "markers",
+          type: "scatter",
+          marker: {size: 15, color: "rgba(0,0,0,0)", line: {color: "red", width: 2}},
+          hoverinfo: "skip",
+        });
+    }
+  }
+
+  // --- legend symbol for red outlier rings ---
+  traces.push({
+    name: `${text.words.temporalOutliers}`,
+    x: [null],
+    y: [null],
+    mode: "markers",
+    type: "scatter",
+    marker: {size: 15, color: "rgba(0,0,0,0)", line: {color: "red", width: 2}},
+    hoverinfo: "skip",
+    showlegend: true,
+  });
+
+  // --- Median DOY line ---
+  const minYear = Math.min(...yearlyPeaks.map(p => p.year));
+  const maxYear = Math.max(...yearlyPeaks.map(p => p.year));
+  traces.push({
+    x: [medianDoy, medianDoy],
+    y: [minYear - 1, maxYear + 1],
+    mode: "lines",
+    line: {dash: "dash", width: 1, color: "black"},
+    hoverinfo: "none",
+    name: `${text.words.medianDOY}`,
+    showlegend: true,
+  });
+
+  const monthStarts = monthNames.map((_, i) => Math.floor((Date.UTC(2023, i, 1) - Date.UTC(2023, 0, 0)) / 86400000) + 1);
+
+  const layout = {
+    uirevision: "peaks-locked",
+    title: {text: `${text.plots.peaksTitle}${riverId}`, x: 0.5},
+    xaxis: {
+      title: {text: text.plots.peaksXaxis},
+      tickmode: "array",
+      tickvals: monthStarts,
+      ticktext: monthNames,
+      autorange: false,
+      range: [1, 366],
+      fixedrange: true,
+    },
+    yaxis: {
+      title: {text: text.words.year},
+      autorange: false,
+      range: [minYear - 1, maxYear + 1],
+      fixedrange: true,
+    },
+    height: 560,
+    margin: {t: 80, l: 80, r: 180, b: 70},
+    legend: {
+      x: 1.05,
+      y: 1,
+      bgcolor: "rgba(255,255,255,0)",
+      bordercolor: "rgba(0,0,0,0)",
+      title: {text: `${text.words.peakDischarge} (m³/s)`},
+    },
+  };
+
+  const config = {
+    displaylogo: false,
+    doubleClick: false,
+    scrollZoom: false,
+    responsive: true,
+  };
+
+  Plotly.newPlot(chartDiv, traces, layout, config);
+}
+const plotRasterHydrograph = ({retro, riverId, chartDiv}) => {
+  chartDiv.innerHTML = "";
+
+  // --- Helper functions ---
+  const formatVal = v =>
+    v == null ? null :
+      v >= 1000 ? `${Math.round((v / 1000) * 10) / 10}k` :
+        v === 0 ? "0" :
+          (() => {
+            const m = Math.floor(Math.log10(Math.abs(v)));
+            const f = 10 ** (m - 2);
+            return Math.round(v / f) * f;
+          })();
+
+  // --- Preprocess data into (year, doy, flow) ---
+  const firstYear = retro.datetime[0].getUTCFullYear();
+  const lastYear = retro.datetime[retro.datetime.length - 1].getUTCFullYear();
+  const nYears = lastYear + 1 - firstYear;
+  const yYears = Array.from({length: nYears}, (_, i) => firstYear + i)
+  const xDays = Array.from({length: 366}, (_, i) => i + 1)
+  const zValues = Array.from({length: nYears}, () => Array.from({length: 366}, () => null));
+  // get a list of all 366 possible days in month-day format then for each year, create a label list
+  const allDays = Array.from({length: 366}, (_, i) => {
+    const d = new Date(Date.UTC(2023, 0, i + 1));
+    return `${d.toLocaleString(lang, {month: "short", timeZone: "UTC"})} ${d.getUTCDate()}`;
+  });
+  const hoverLabelData = yYears.map(year => {
+    return allDays.map(date => {
+      return {year, date}
+    });
+  });
+
+  let currentYear = firstYear;
+  let yearIdx = 0;
+  let doyIdx = -1;
+  retro.datetime.forEach((date, idx) => {
+    const year = date.getUTCFullYear();
+    if (year !== currentYear) {
+      currentYear = year;
+      doyIdx = 0;
+      yearIdx += 1;
+    } else {
+      doyIdx += 1;
+    }
+    zValues[yearIdx][doyIdx] = retro.discharge[idx];
+  });
+
+  // --- Data range + bin setup ---
+  const valsFlat = zValues.flat()
+  const vmin = Math.min(...valsFlat);
+  const vmax = Math.max(...valsFlat);
+  const nBins = 7;
+  const viridis = ["#440154", "#414487", "#2a788e", "#22a884", "#7ad151", "#bddf26", "#fde725"];
+  const binEdges = Array.from({length: nBins + 1}, (_, i) => vmin + (i * (vmax - vmin)) / nBins);
+  const colorscale = binEdges.slice(0, -1).flatMap((_, i) => {
+    const p = i / nBins, c = viridis[i];
+    return [[p, c], [(i + 1) / nBins, c]];
+  });
+
+  // --- Map values to bin midpoints ---
+  const binMid = binEdges.map((v, i) => (v + binEdges[i + 1]) / 2).slice(0, -1);
+  const binnedMatrix = zValues.map(row => {
+    return row.map(v => v == null ? null : binMid.find((_, i) => v <= binEdges[i + 1]) ?? binMid.at(-1))
+  })
+
+  Plotly.newPlot(chartDiv, [{
+    z: binnedMatrix,
+    x: xDays,
+    y: yYears,
+    type: "heatmap",
+    colorscale,
+    zmin: vmin,
+    zmax: vmax,
+    customdata: hoverLabelData,
+    hovertemplate: `${text.words.year}: %{y}<br>${text.words.date}: %{customdata.date}<br>${text.words.discharge}: %{z} m³/s<extra></extra>`,
+    colorbar: {
+      title: {text: `${text.words.discharge} (m³/s)`, side: "top"},
+      tickvals: binMid,
+      ticktext: binMid.map((v, i) => `${formatVal(binEdges[i])}–${formatVal(binEdges[i + 1])}`)
+    },
+    hoverinfo: "skip"
+  }], {
+    title: {text: `${text.plots.heatMapTitle}${riverId}`, x: 0.5},
+    xaxis: {title: text.plots.heatMapXaxis, side: "bottom", fixedrange: true, tickvals: [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335], ticktext: monthNames},
+    yaxis: {title: text.words.year, fixedrange: true},
+    margin: {t: 80, l: 80, r: 80, b: 70},
+  });
+};
+const plotCumulativeVolumes = ({retro, riverId, chartDiv}) => {
+  chartDiv.innerHTML = "";
+
+  const cumulative = {}
+  retro
+    .datetime
+    .forEach((date, currentIndex) => {
+      const year = date.getUTCFullYear();
+      if (!cumulative[year]) cumulative[year] = {x: [], y: []}
+      const flow = retro.discharge[currentIndex];
+      const volumeM3 = flow * 86400;
+      const cumulativeVolumeM3 = cumulative[year].y.length ? cumulative[year].y[cumulative[year].y.length - 1] + volumeM3 : volumeM3;
+      cumulative[year].x.push(`2000-${date.toISOString().slice(5, 10)}`)
+      cumulative[year].y.push(cumulativeVolumeM3) // million cubic meters
+    });
+
+  const totals = Object.entries(cumulative).map(([year, arr]) => ({
+    year: +year,
+    total: arr.y[arr.y.length - 1]
+  }));
+
+  const sortedTotals = [...totals].sort((a, b) => a.total - b.total);
+  const driestYear = sortedTotals[0].year;
+  const wettestYear = sortedTotals[sortedTotals.length - 1].year;
+  const medianYear = sortedTotals[Math.floor(sortedTotals.length / 2)].year;
+
+  const traces = Object
+    .entries(cumulative)
+    .map(([year, arr]) => {
+      let lineStyle = {color: "lightgray", width: 0.8}
+      let hovertemplate = null
+      let name = year
+      let showlegend = false
+      let zorder = 0
+      if (+year === wettestYear) {
+        lineStyle = {color: "blue", width: 2}
+        hovertemplate = `${text.words.year}: ${year} (${text.words.wettestYear})`
+        name = `${text.words.wettestYear}: ${year}`
+        showlegend = true
+        zorder = 2
+      } else if (+year === driestYear) {
+        lineStyle = {color: "red", width: 2}
+        hovertemplate = `${text.words.year}: ${year} (${text.words.driestYear})`
+        name = `${text.words.driestYear}: ${year}`
+        showlegend = true
+        zorder = 2
+      } else if (+year === medianYear) {
+        lineStyle = {color: "green", width: 2}
+        hovertemplate = `${text.words.year}: ${year} (${text.words.medianYear})`
+        name = `${text.words.medianYear}: ${year}`
+        showlegend = true
+        zorder = 2
+      }
+      return ({
+        x: arr.x,
+        y: arr.y.map(v => v / 1e6), // million cubic meters
+        mode: "lines",
+        line: lineStyle,
+        name: name,
+        hovermode: "text",
+        hovertemplate,
+        showlegend,
+        zorder,
+      })
+    })
+
+  const layout = {
+    title: {text: `${text.plots.cumVolumeTitle}${riverId}`},
+    xaxis: {
+      type: "date",
+      title: {text: text.words.months},
+      tickformat: "%b %d",
+    },
+    yaxis: {
+      title: {text: text.plots.cumVolumeYaxis},
+    },
+    legend: {
+      x: 1.05,
+      y: 1,
+      bgcolor: "rgba(255,255,255,0)",
+      bordercolor: "rgba(0,0,0,0)",
+    },
+  };
+
+  const config = {
+    responsive: true,
+  };
+  Plotly.newPlot(chartDiv, traces, layout, config);
+};
 
 //////////////////////////////////////////////////////////////////////// Helper Functions
 const clearCharts = chartTypes => {
@@ -483,11 +820,10 @@ const clearCharts = chartTypes => {
       .forEach(el => el.innerHTML = '')
   }
   if (chartTypes === "retro" || chartTypes === null || chartTypes === undefined) {
-    [divChartRetro, divChartYearlyVol, divChartStatus, divChartFdc]
+    [divChartRetro, divChartYearlyVol, divChartStatus, divChartFdc, divYearlyPeaks, divRasterHydrograph, divCumulativeVolume]
       .forEach(el => el.innerHTML = '')
   }
 }
-
 //////////////////////////////////////////////////////////////////////// Plotting Managers
 const plotAllRetro = ({retro, riverId}) => {
   /*
@@ -501,6 +837,7 @@ const plotAllRetro = ({retro, riverId}) => {
   let monthlyAverageTimeseries = {}
   let monthlyFdc = {}
   let monthlyStatusValues = {}
+  let yearlyPeaks = {}
   text.statusLabels.forEach(label => monthlyStatusValues[label] = [])
   const biasCorrected = retro.hasOwnProperty(`${riverId}_original`)
 
@@ -514,6 +851,26 @@ const plotAllRetro = ({retro, riverId}) => {
   }, {})
   const fdc = sortedArrayToPercentiles(retro.discharge.toSorted((a, b) => a - b))
   const years = Array.from(new Set(Object.keys(monthlyValues).map(k => k.split('-')[0]))).sort((a, b) => a - b)
+
+  // Calculate yearly discharge peaks.
+  const dateToDoy = date => {
+    const start = new Date(date.getUTCFullYear(), 0, 0)
+    const diff = date - start
+    return Math.floor(diff / 86400000)
+  }
+  retro.datetime.forEach((currentValue, currentIndex) => {
+    const doy = dateToDoy(currentValue)
+    const value = retro.discharge[currentIndex]
+    const year = currentValue.getUTCFullYear()
+
+    // store max per year with its day of year
+    if (!yearlyPeaks[year] || value > yearlyPeaks[year].peak) {
+      yearlyPeaks[year] = {year, date: currentValue, doy, peak: value}
+    }
+  })
+
+  // convert to array
+  yearlyPeaks = Object.values(yearlyPeaks).sort((a, b) => a.year - b.year)
 
   // Calculate monthly averages from the monthly values. Minimum 20 values to calculate a monthly average.
   Object
@@ -557,9 +914,14 @@ const plotAllRetro = ({retro, riverId}) => {
     }))
 
   plotRetrospective({daily: retro, monthly: monthlyAverageTimeseries, riverId, chartDiv: divChartRetro, biasCorrected})
-  plotYearlyVolumes({yearly: yearlyVolumes, averages: fiveYearlyAverages, riverId, chartDiv: divChartYearlyVol, biasCorrected})
   plotStatuses({statuses: monthlyStatusValues, monthlyAverages, monthlyAverageTimeseries, riverId, chartDiv: divChartStatus, biasCorrected})
-  plotFdc({fdc, monthlyFdc, riverId, chartDiv: divChartFdc, biasCorrected})
+  if (UseShowExtraRetroGraphs.get()) {
+    plotYearlyVolumes({yearly: yearlyVolumes, averages: fiveYearlyAverages, riverId, chartDiv: divChartYearlyVol, biasCorrected})
+    plotYearlyPeaks({yearlyPeaks, riverId, chartDiv: divYearlyPeaks})
+    plotRasterHydrograph({retro, riverId, chartDiv: divRasterHydrograph})
+    plotCumulativeVolumes({retro, riverId, chartDiv: divCumulativeVolume})
+    plotFdc({fdc, monthlyFdc, riverId, chartDiv: divChartFdc, biasCorrected})
+  }
 }
 const plotAllForecast = ({forecast, rp, riverId, showStats}) => {
   showStats ? plotForecast({forecast, rp, riverId, chartDiv: divChartForecast}) : plotForecastMembers({forecast, rp, riverId, chartDiv: divChartForecast})
@@ -567,6 +929,6 @@ const plotAllForecast = ({forecast, rp, riverId, showStats}) => {
 }
 
 //////////////////////////////////////////////////////////////////////// Event Listeners
-window.addEventListener('resize', () => [divChartForecast, divChartRetro, divChartYearlyVol, divChartStatus, divChartFdc].forEach(chart => Plotly.Plots.resize(chart)))
+window.addEventListener('resize', () => [divChartForecast, divChartRetro, divChartYearlyVol, divYearlyPeaks, divChartStatus, divRasterHydrograph, divCumulativeVolume, divChartFdc].forEach(chart => Plotly.Plots.resize(chart)))
 
 export {plotAllRetro, plotAllForecast, clearCharts}

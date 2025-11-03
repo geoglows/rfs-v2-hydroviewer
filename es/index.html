@@ -81,6 +81,12 @@
     <!--        <span>Usar pronósticos experimentales corregidos por sesgo </span>-->
     <!--      </label>-->
     <!--    </div>-->
+    <div class="options-wrapper">
+      <label>
+        <input type="checkbox" class="filled-in" id="settingsShowExtraRetroGraphs" checked/>
+        <span>Mostrar gráficos adicionales que analizan datos retrospectivos.</span>
+      </label>
+    </div>
     <h5>Data and Cache Options</h5>
     <button class="btn red clear-cache">Borrar caché de datos</button>
     <button class="btn red delete-all-bookmarks">Borrar todos los marcadores de ríos</button>
@@ -129,7 +135,10 @@
           <h4>Ingresar un ID del río o usar el mapa para hacer clic en un río y ver los datos del río</h4>
         </div>
         <div id="yearlyVolPlot" class="chart"></div>
+        <div id="cumVolume" class="chart"></div>
         <div id="yearlyStatusPlot" class="chart"></div>
+        <div id="yearlyPeaksPlot" class="chart"></div>
+        <div id="rasterHydrographPlot" class="chart"></div>
         <div id="fdcPlot" class="chart"></div>
       </div>
     </div>

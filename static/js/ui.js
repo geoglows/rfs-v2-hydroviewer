@@ -27,6 +27,9 @@ export const divChartRetro = document.getElementById("retroPlot")
 export const divChartYearlyVol = document.getElementById("yearlyVolPlot")
 export const divChartStatus = document.getElementById("yearlyStatusPlot")
 export const divChartFdc = document.getElementById("fdcPlot")
+export const divYearlyPeaks = document.getElementById("yearlyPeaksPlot")
+export const divRasterHydrograph = document.getElementById("rasterHydrographPlot")
+export const divCumulativeVolume = document.getElementById("cumVolume")
 
 // Misc constants
 export const lang = window.location.pathname.split("/").filter(x => x && !x.includes(".html") && !x.includes('viewer'))[0] || 'en-US'

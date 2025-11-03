@@ -75,12 +75,18 @@
         <span>Display simplified forecast stats</span>
       </label>
     </div>
-<!--    <div class="options-wrapper">-->
-<!--      <label>-->
-<!--        <input type="checkbox" class="filled-in" id="settingsUseBiasCorrected"/>-->
-<!--        <span>Use experimental bias correction</span>-->
-<!--      </label>-->
-<!--    </div>-->
+    <!--    <div class="options-wrapper">-->
+    <!--      <label>-->
+    <!--        <input type="checkbox" class="filled-in" id="settingsUseBiasCorrected"/>-->
+    <!--        <span>Use experimental bias correction</span>-->
+    <!--      </label>-->
+    <!--    </div>-->
+    <div class="options-wrapper">
+      <label>
+        <input type="checkbox" class="filled-in" id="settingsShowExtraRetroGraphs" checked/>
+        <span>Show additional plots analyzing retrospective data</span>
+      </label>
+    </div>
     <h5>Data and Cache Options</h5>
     <button class="btn red clear-cache">Clear local cache of downloaded data</button>
     <button class="btn red delete-all-bookmarks">Remove all bookmarked rivers</button>
@@ -101,8 +107,12 @@
         <button id="showRetroCharts" class="btn status-btn" onclick="showChartView('retro')">Retro<span class="hide-on-small-only">spective</span><span id="retro-load-icon"></span></button>
         <a class="btn btn-flat waves-effect waves-teal tooltipped dropdown-trigger" data-target="download-select" data-tooltip="Download CSVs"><i class="material-icons">download</i></a>
         <ul id="download-select" class="dropdown-content">
-          <li style="display: flex; justify-content: center"><button class="btn waves-effect waves-light" id="download-forecast-link" disabled>Save Forecast Data (CSV)</button></li>
-          <li style="display: flex; justify-content: center"><button class="btn waves-effect waves-light" id="download-retrospective-link" disabled>Save Retrospective Data (CSV)</button></li>
+          <li style="display: flex; justify-content: center">
+            <button class="btn waves-effect waves-light" id="download-forecast-link" disabled>Save Forecast Data (CSV)</button>
+          </li>
+          <li style="display: flex; justify-content: center">
+            <button class="btn waves-effect waves-light" id="download-retrospective-link" disabled>Save Retrospective Data (CSV)</button>
+          </li>
         </ul>
         <button class="btn modal-close waves-effect waves-red btn-flat">X</button>
       </div>
@@ -125,7 +135,10 @@
           <h4>Enter a River ID or use the map to click on a stream to view data</h4>
         </div>
         <div id="yearlyVolPlot" class="chart"></div>
+        <div id="cumVolume" class="chart"></div>
         <div id="yearlyStatusPlot" class="chart"></div>
+        <div id="yearlyPeaksPlot" class="chart"></div>
+        <div id="rasterHydrographPlot" class="chart"></div>
         <div id="fdcPlot" class="chart"></div>
       </div>
     </div>
