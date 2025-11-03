@@ -753,25 +753,25 @@ const plotCumulativeVolumes = ({retro, riverId, chartDiv}) => {
     .entries(cumulative)
     .map(([year, arr]) => {
       let lineStyle = {color: "lightgray", width: 0.8}
-      let hoverinfo = null
+      let hovertemplate = null
       let name = year
       let showlegend = false
       let zorder = 0
       if (+year === wettestYear) {
         lineStyle = {color: "blue", width: 2}
-        hoverinfo = `${text.words.year}: ${year} (${text.words.wettestYear})`
+        hovertemplate = `${text.words.year}: ${year} (${text.words.wettestYear})`
         name = `${text.words.wettestYear}: ${year}`
         showlegend = true
         zorder = 2
       } else if (+year === driestYear) {
         lineStyle = {color: "red", width: 2}
-        hoverinfo = `${text.words.year}: ${year} (${text.words.driestYear})`
+        hovertemplate = `${text.words.year}: ${year} (${text.words.driestYear})`
         name = `${text.words.driestYear}: ${year}`
         showlegend = true
         zorder = 2
       } else if (+year === medianYear) {
         lineStyle = {color: "green", width: 2}
-        hoverinfo = `${text.words.year}: ${year} (${text.words.medianYear})`
+        hovertemplate = `${text.words.year}: ${year} (${text.words.medianYear})`
         name = `${text.words.medianYear}: ${year}`
         showlegend = true
         zorder = 2
@@ -783,14 +783,14 @@ const plotCumulativeVolumes = ({retro, riverId, chartDiv}) => {
         line: lineStyle,
         name: name,
         hovermode: "text",
-        hoverinfo,
+        hovertemplate,
         showlegend,
         zorder,
       })
     })
 
   const layout = {
-    title: {text: `${text.plots.cumVolumeTitle}` + riverId},
+    title: {text: `${text.plots.cumVolumeTitle}${riverId}`},
     xaxis: {
       type: "date",
       title: {text: text.words.months},
@@ -854,7 +854,7 @@ const plotAllRetro = ({retro, riverId}) => {
 
   // Calculate yearly discharge peaks.
   const dateToDoy = date => {
-    const start = new Date(date.getFullYear(), 0, 0)
+    const start = new Date(date.getUTCFullYear(), 0, 0)
     const diff = date - start
     return Math.floor(diff / 86400000)
   }

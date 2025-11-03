@@ -24,16 +24,15 @@ window.text = {
     "ensMembers": "Miembros del Ensamble",
     "annualPeak": "Pico Anual",
     "temporalOutliers": "Valores atípicos (regla Q3+1,5×RIC)",
-    "medianDOY": "Dia Promedio del Año",
-    "doy": "Dia del Año",
+    "medianDOY": "Día Promedio del Año",
+    "doy": "Día del Año",
     "discharge": "Caudal",
     "peakDischarge": "Caudal Máximo",
-      "date": "Fecha",
-      "wettestYear": "Año Más Lluvioso",
-      "driestYear": "Año Más Seco",
-      "medianYear": "Año Medio",
-      "average": "Promedio"
-
+    "date": "Fecha",
+    "wettestYear": "Año Más Lluvioso",
+    "driestYear": "Año Más Seco",
+    "medianYear": "Año Medio",
+    "average": "Promedio"
   },
   "statusLabels": [
     "Muy Mojado",
@@ -76,9 +75,9 @@ window.text = {
     "statusTitle": "Estado anual por Mes para Río: ",
     "fdcTitle": "Curvas de duración de Flujo para Río: ",
     "experimentalOverlay": "Corrección<br>Experimental",
-    "peaksTitle": "Fecha de caudal máximo anual del Rio: ",
+    "peaksTitle": "Fecha de caudal máximo anual del río: ",
     "peaksXaxis": "Mes",
-    "heatMapTitle": "Caudal diaria promedio para el Rio: ",
+    "heatMapTitle": "Caudal río promedio para el río: ",
     "heatMapXaxis": "Mes"
   }
 }
