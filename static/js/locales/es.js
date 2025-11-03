@@ -56,28 +56,29 @@ window.text = {
     "legend": "Leyenda"
   },
   "inputs": {
-    "forecast": "Mostrar Gráficos de Pronóstico",
-    "retro": "Mostrar Gráficos Históricos"
+    "forecast": "Mostrar gráficos de pronóstico",
+    "retro": "Mostrar gráficos históricos"
   },
   "plots": {
     "fcXaxis": "Fecha",
     "fcYaxis": "Caudal",
     "fcLineUncertainty": "Incertidumbre",
     "fcLineUncertaintyOriginal": "Incertidumbre (No Corregida)",
-    "fcLineMedian": "Flujo Predicho",
-    "fcLineMedianOriginal": "Flujo Predicho (No Corregido)",
-    "fcMembersTitle": "Miembros del Pronóstico para Río: ",
+    "fcLineMedian": "Flujo predicho",
+    "fcLineMedianOriginal": "Flujo predicho (No Corregido)",
+    "fcMembersTitle": "Miembros del pronóstico para Río: ",
     "retroXaxis": "Fecha",
     "retroYaxis": "Caudal",
-    "fcTitle": "Pronóstico para",
+    "fcTitle": "Pronóstico para: ",
     "retroTitle": "Caudal Histórico para",
-    "volumeTitle": "Volumen Anual Acumulado de Caudal para Río: ",
-    "statusTitle": "Estado Anual por Mes para Río: ",
-    "fdcTitle": "Curvas de Duración de Flujo para Río: ",
+    "volumeTitle": "Volumen anual acumulado de caudal para río: ",
+    "cumVolumeTitle": "Volumen de caudal diario acumulado del río: ",
+    "statusTitle": "Estado anual por Mes para Río: ",
+    "fdcTitle": "Curvas de duración de Flujo para Río: ",
     "experimentalOverlay": "Corrección<br>Experimental",
-    "peaksTitle": "Fecha de Caudal Máximo Anual del Rio: ",
+    "peaksTitle": "Fecha de caudal máximo anual del Rio: ",
     "peaksXaxis": "Mes",
-    "heatMapTitle": "Caudal Diaria Promedio para el Rio: ",
+    "heatMapTitle": "Caudal diaria promedio para el Rio: ",
     "heatMapXaxis": "Mes"
   }
 }

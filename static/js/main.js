@@ -1,7 +1,7 @@
 import {displayLoadingStatus, displayRiverNumber, lang, riverIdInput} from "./ui.js";
 import {fetchData, updateDownloadLinks} from "./data.js";
 import {bookmarks} from "./bookmarks.js";
-import {LoadStatus, RiverId, UseBiasCorrected, UseSimpleForecast} from "./states/state.js";
+import {LoadStatus, RiverId, UseBiasCorrected, UseSimpleForecast, UseShowExtraRetroGraphs} from "./states/state.js";
 
 //////////////////////////////////////////////////////////////////////// INITIAL LOAD
 M.AutoInit();
@@ -26,6 +26,7 @@ LoadStatus.addSubscriber(displayLoadingStatus)
 // Settings state subscribers
 UseSimpleForecast.addSubscriber(() => fetchData({display: false}))
 UseBiasCorrected.addSubscriber(() => fetchData({display: false}))
+UseShowExtraRetroGraphs.addSubscriber(() => fetchData({display: false}))
 
 // event listeners
 const forecastDatePicker = document.getElementById('forecast-date-calendar')
