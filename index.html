@@ -32,6 +32,7 @@
   <script type="module" defer src="/static/js/ui.js"></script>
   <script type="module" defer src="/static/js/cache.js"></script>
   <script type="module" defer src="/static/js/rfsZarrFetcher.js"></script>
+  <script type="module" defer src="/static/js/biasCorrectedApi.js"></script>
   <script type="module" defer src="/static/js/data.js"></script>
   <script type="module" defer src="/static/js/map.js"></script>
   <script type="module" defer src="/static/js/main.js"></script>
@@ -62,6 +63,24 @@
     </div>
   </div>
 </div>
+<div id="biascorrectionwarning-modal" class="modal">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
+    <div class="modal-header-bar">
+      <h4>Enable Bias Corrected Data?</h4>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+    </div>
+    <div style="width: 100%; max-width: 800px">
+      <p>
+        Global bias correction is an experimental feature based on active research and data collection efforts. You might discover unexpected behaviors
+        and incorrect data. These data are not recommended for operational guidance applications. Are you sure you want to use bias corrected data?
+      </p>
+      <div style="display: flex; flex-direction: row; justify-content: center; gap: 10px; margin-top: 15px">
+        <button class="btn red modal-close waves-effect waves-green btn-flat">No, go back</button>
+        <button class="btn green modal-close waves-effect waves-green btn-flat" id="confirm-use-bias-correction">Yes, use bias corrected data</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div id="settings-modal" class="modal">
   <div class="modal-content">
     <div class="modal-header-bar">
@@ -75,12 +94,12 @@
         <span>Display simplified forecast stats</span>
       </label>
     </div>
-    <!--    <div class="options-wrapper">-->
-    <!--      <label>-->
-    <!--        <input type="checkbox" class="filled-in" id="settingsUseBiasCorrected"/>-->
-    <!--        <span>Use experimental bias correction</span>-->
-    <!--      </label>-->
-    <!--    </div>-->
+    <div class="options-wrapper">
+      <label>
+        <input type="checkbox" class="filled-in" id="settingsUseBiasCorrected"/>
+        <span>Use experimental bias correction</span>
+      </label>
+    </div>
     <div class="options-wrapper">
       <label>
         <input type="checkbox" class="filled-in" id="settingsShowExtraRetroGraphs" checked/>

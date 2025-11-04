@@ -22,6 +22,7 @@ window.text = {
     "flowDurationCurve": "Curva de Duración de Flujo",
     "fdc": "CDF",
     "ensMembers": "Miembros del Ensamble",
+    "ensMembersOriginal": "Miembros del Ensamble (No Corregidos)",
     "annualPeak": "Pico Anual",
     "temporalOutliers": "Valores atípicos (regla Q3+1,5×RIC)",
     "medianDOY": "Día Promedio del Año",

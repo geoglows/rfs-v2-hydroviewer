@@ -23,6 +23,7 @@ window.text = {
     "flowDurationCurve": "Flow Duration Curve",
     "fdc": "FDC",
     "ensMembers": "Ensemble Members",
+    "ensMembersOriginal": "Ensemble Members (Uncorrected)",
     "annualPeak": "Annual Peak",
     "temporalOutliers": "Outliers (Q3+1.5×IQR rule)",
     "medianDOY": "Median DOY",

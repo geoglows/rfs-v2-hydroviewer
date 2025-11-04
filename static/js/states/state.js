@@ -33,9 +33,21 @@ const checkShowExtraRetroGraphs = document.getElementById('settingsShowExtraRetr
 checkShowExtraRetroGraphs.checked = UseShowExtraRetroGraphs.get()
 checkShowExtraRetroGraphs.addEventListener('change', () => UseShowExtraRetroGraphs.set(checkShowExtraRetroGraphs.checked))
 
-// const checkUseBiasCorrected = document.getElementById('settingsUseBiasCorrected')
-// checkUseBiasCorrected.checked = UseBiasCorrected.get()
-// checkUseBiasCorrected.addEventListener('change', () => UseBiasCorrected.set(checkUseBiasCorrected.checked))
+const checkUseBiasCorrected = document.getElementById('settingsUseBiasCorrected')
+checkUseBiasCorrected.addEventListener('click', event => {
+  if (UseBiasCorrected.get()) {
+    UseBiasCorrected.set(false)
+    return
+  }
+  // if unchecked, instead of checking the box, open a model with warnings and confirmation dialog
+  const modal = document.getElementById('biascorrectionwarning-modal')
+  checkUseBiasCorrected.checked = false
+  M.Modal.getInstance(modal).open()
+})
+document.getElementById('confirm-use-bias-correction').addEventListener('click', () => {
+  UseBiasCorrected.set(true)
+  checkUseBiasCorrected.checked = true
+})
 
 export {
   RiverId, LoadStatus, UseBiasCorrected, UseSimpleForecast, UseShowExtraRetroGraphs

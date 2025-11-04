@@ -2,6 +2,7 @@ import {LoadStatus, RiverId, UseBiasCorrected, UseSimpleForecast} from "./states
 import {clearCharts, plotAllForecast, plotAllRetro} from "./plots.js"
 import {inputForecastDate, downloadForecastButton, downloadRetroButton, divModalCharts} from "./ui.js"
 import {fetchForecast, fetchRetro, fetchReturnPeriods} from "./rfsZarrFetcher.js";
+import {fetchForecastCorrected, fetchRetroCorrected} from "./biasCorrectedApi.js";
 import {cacheData, cacheKey, clearCache, readCache} from "./cache.js";
 
 
@@ -9,7 +10,7 @@ const getAndCacheForecast = async ({riverId, date, corrected}) => {
   const key = cacheKey({riverId, type: 'forecast', corrected, date})
   const cachedData = await readCache(key)
   if (cachedData) return Promise.resolve(cachedData)
-  const data = corrected ? null : await fetchForecast({riverId, date})
+  const data = corrected ? await fetchForecastCorrected({riverId}) : await fetchForecast({riverId, date})
   await cacheData(data, key)
   return Promise.resolve(data)
 }
@@ -18,7 +19,7 @@ const getAndCacheRetrospective = async ({riverId, corrected}) => {
   const key = cacheKey({riverId, type: 'retro', corrected})
   const cachedData = await readCache(key)
   if (cachedData) return Promise.resolve(cachedData)
-  const data = corrected ? null : await fetchRetro({riverId, resolution: 'daily'})
+  const data = corrected ? await fetchRetroCorrected({riverId}) : await fetchRetro({riverId, resolution: 'daily'})
   await cacheData(data, key)
   return Promise.resolve(data)
 }
