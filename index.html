@@ -29,11 +29,12 @@
   <link rel="stylesheet" href="/static/css/materialize.overrides.css"/>
   <script type="application/javascript" src="/static/js/locales/en-US.js" async></script>
   <script type="module" defer src="/static/js/plots.js"></script>
+  <script type="module" defer src="/static/js/reports.js"></script>
   <script type="module" defer src="/static/js/ui.js"></script>
-  <script type="module" defer src="/static/js/cache.js"></script>
-  <script type="module" defer src="/static/js/rfsZarrFetcher.js"></script>
-  <script type="module" defer src="/static/js/biasCorrectedApi.js"></script>
-  <script type="module" defer src="/static/js/data.js"></script>
+  <script type="module" defer src="/static/js/data/rfsZarrFetcher.js"></script>
+  <script type="module" defer src="/static/js/data/biasCorrectedApi.js"></script>
+  <script type="module" defer src="/static/js/data/cache.js"></script>
+  <script type="module" defer src="/static/js/data/data.js"></script>
   <script type="module" defer src="/static/js/map.js"></script>
   <script type="module" defer src="/static/js/main.js"></script>
 </head>
@@ -112,6 +113,83 @@
     <button class="btn red delete-all-bookmarks">Remove all bookmarked rivers</button>
   </div>
 </div>
+
+<!-- Reports-->
+<div id="report-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header-bar">
+      <h4>Generate Reports</h4>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+    </div>
+    <h5>1. Select Report Type</h5>
+    <select id="report-type-select" aria-labelledby="report-type-select-label"></select>
+    <h5>2. Select Rivers for Report</h5>
+    <select id="report-river-list-select"></select>
+    <h5>3. Download River Data</h5>
+    <button id="start-report-data-download" class="btn">Start Data Download</button>
+    <progress id="report-data-progress" value="0" max="100" style="width: 100%"></progress>
+    <h5>4. Format Report</h5>
+    <progress id="report-format-progress" value="0" max="100" style="width: 100%"></progress>
+    <h5>5. Download Report PDF</h5>
+    <progress id="report-pdf-progress" value="0" max="100" style="width: 100%"></progress>
+  </div>
+</div>
+<div id="bookmarks-modal" class="modal" data-category="river-bookmarks">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center;">
+    <div class="modal-header-bar">
+      <h4 style="margin: 0">Saved Rivers</h4>
+      <div style="flex-grow: 1"></div>
+      <a data-tooltip="Save River" data-position="bottom" class="btn modal-trigger tooltipped" href="#add-river-bookmark" style="margin-inline: 8px"><i class="material-icons">add</i></a>
+      <button data-tooltip="Restore Default Bookmarks" data-position="bottom" class="btn tooltipped" id="restore-bookmarks-button" style="margin-inline: 8px"><i class="material-icons">restore</i></button>
+      <button data-tooltip="Delete All Bookmarks" data-position="bottom" class="btn tooltipped delete-all-bookmarks" style="margin-inline: 8px"><i class="material-icons">delete_forever</i></button>
+      <button class="modal-close waves-effect waves-green btn-flat">X</button>
+    </div>
+    <div id="bookmarks-table" style="width: 100%">
+      <table class="striped responsive-table bordered">
+        <thead>
+        <tr>
+          <th data-field="riverId" style="width: 20%; min-width: 150px; max-width: 200px">River ID</th>
+          <th data-field="riverName" style="width: 60%; max-width: 450px">River Name</th>
+          <th data-field="actions" style="width: 20%; min-width: 150px; max-width: 200px">Actions</th>
+        </tr>
+        </thead>
+        <tbody id="bookmarks-tbody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div id="add-river-bookmark" class="modal" data-category="river-bookmarks">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
+    <div class="modal-header-bar">
+      <h4>New River Bookmark</h4>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+    </div>
+    <table>
+      <thead>
+      <tr>
+        <th data-field="riverId"><label for="save-river-id">River ID</label></th>
+        <th data-field="riverName"><label for="save-river-name">River Name</label></th>
+        <th data-field="actions">Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td data-field="riverId">
+          <input id="save-river-id" type="number" contenteditable="true" onchange="this.value = this.value.slice(0, 9)" placeholder="9 Digit River ID">
+        </td>
+        <td data-field="riverName">
+          <input id="save-river-name" contenteditable="true" onchange="this.innerText = this.innerText.slice(0, 30)" placeholder="River name">
+        </td>
+        <td data-field="actions">
+          <button class="btn green" id="submit-new-bookmark">Add Bookmark</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
 
 <!-- Data presentation -->
 <div id="charts-modal" class="modal always-large-modal">
@@ -213,63 +291,6 @@
   </div>
 </div>
 
-<!-- River Bookmarking -->
-<div id="bookmarks-modal" class="modal" data-category="river-bookmarks">
-  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center;">
-    <div class="modal-header-bar">
-      <h4 style="margin: 0">Saved Rivers</h4>
-      <div style="flex-grow: 1"></div>
-      <a data-tooltip="Save River" data-position="bottom" class="btn modal-trigger tooltipped" href="#add-river-bookmark" style="margin-inline: 8px"><i class="material-icons">add</i></a>
-      <button data-tooltip="Restore Default Bookmarks" data-position="bottom" class="btn tooltipped" id="restore-bookmarks-button" style="margin-inline: 8px"><i class="material-icons">restore</i></button>
-      <button data-tooltip="Delete All Bookmarks" data-position="bottom" class="btn tooltipped delete-all-bookmarks" style="margin-inline: 8px"><i class="material-icons">delete_forever</i></button>
-      <button class="modal-close waves-effect waves-green btn-flat">X</button>
-    </div>
-    <div id="bookmarks-table" style="width: 100%">
-      <table class="striped responsive-table bordered">
-        <thead>
-        <tr>
-          <th data-field="riverId" style="width: 20%; min-width: 150px; max-width: 200px">River ID</th>
-          <th data-field="riverName" style="width: 60%; max-width: 450px">River Name</th>
-          <th data-field="actions" style="width: 20%; min-width: 150px; max-width: 200px">Actions</th>
-        </tr>
-        </thead>
-        <tbody id="bookmarks-tbody">
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-<div id="add-river-bookmark" class="modal" data-category="river-bookmarks">
-  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
-    <div class="modal-header-bar">
-      <h4>New River Bookmark</h4>
-      <a class="modal-close waves-effect waves-green btn-flat">X</a>
-    </div>
-    <table>
-      <thead>
-      <tr>
-        <th data-field="riverId"><label for="save-river-id">River ID</label></th>
-        <th data-field="riverName"><label for="save-river-name">River Name</label></th>
-        <th data-field="actions">Actions</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr>
-        <td data-field="riverId">
-          <input id="save-river-id" type="number" contenteditable="true" onchange="this.value = this.value.slice(0, 9)" placeholder="9 Digit River ID">
-        </td>
-        <td data-field="riverName">
-          <input id="save-river-name" contenteditable="true" onchange="this.innerText = this.innerText.slice(0, 30)" placeholder="River name">
-        </td>
-        <td data-field="actions">
-          <button class="btn green" id="submit-new-bookmark">Add Bookmark</button>
-        </td>
-      </tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
 <div class="body-wrapper">
   <div class="nav-bar-wrapper">
     <h4 style="font-size: 2rem; font-weight: bolder">
@@ -277,6 +298,7 @@
     </h4>
     <div>
       <a data-tooltip="View Charts" data-position="bottom" class="btn modal-trigger tooltipped" href="#charts-modal"><i class="material-icons">timeline</i></a>
+      <a data-tooltip="Generate Reports" data-position="bottom" class="btn modal-trigger tooltipped" href="#report-modal"><i class="material-icons">assignment</i></a>
       <a data-tooltip="Saved Rivers" data-category="river-bookmarks" data-position="bottom" class="btn modal-trigger tooltipped" href="#bookmarks-modal"><i class="material-icons">bookmark</i></a>
       <a data-tooltip="Learn More" data-position="bottom" class="btn modal-trigger tooltipped" href="#about-modal"><i class="material-icons">help</i></a>
       <a data-tooltip="Settings" data-position="bottom" class="btn modal-trigger tooltipped" href="#settings-modal"><i class="material-icons">settings</i></a>

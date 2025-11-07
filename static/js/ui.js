@@ -1,5 +1,5 @@
 /// URLs
-import {clearCharts} from "./plots.js";
+import {clearCache} from "./data/cache.js";
 
 export const RFS_LAYER_URL = 'https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer'
 
@@ -35,6 +35,26 @@ export const divCumulativeVolume = document.getElementById("cumVolume")
 export const lang = window.location.pathname.split("/").filter(x => x && !x.includes(".html") && !x.includes('viewer'))[0] || 'en-US'
 const loadingImageTag = `<img src="/static/img/loading.gif" alt="loading">`
 
+////////////////// Event Listeners
+const clearCacheButtons = Array.from(document.getElementsByClassName("clear-cache"))
+clearCacheButtons.forEach(btn => {
+  btn.onclick = () => {
+    if (confirm('Are you sure you want to clear downloaded data?')) {
+      clearCache().then(() => alert('Cache cleared!'))
+    }
+  }
+})
+
+const clearCharts = chartTypes => {
+  if (chartTypes === "forecast" || chartTypes === null || chartTypes === undefined) {
+    [divChartForecast, divTableForecast]
+      .forEach(el => el.innerHTML = '')
+  }
+  if (chartTypes === "retro" || chartTypes === null || chartTypes === undefined) {
+    [divChartRetro, divChartYearlyVol, divChartStatus, divChartFdc, divYearlyPeaks, divRasterHydrograph, divCumulativeVolume]
+      .forEach(el => el.innerHTML = '')
+  }
+}
 
 const showChartView = (modal) => {
   M.Modal.getInstance(divModalCharts).open()
@@ -112,6 +132,74 @@ const displayLoadingStatus = statusChanges => {
   }
 }
 
+const addCsvDownloadToButton = (button, csvString, filename) => {
+  button.disabled = false;
+  button.onclick = async () => {
+    // Prefer native save dialog if supported (Chrome/Edge, not Safari/Firefox)
+    if (window.showSaveFilePicker) {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [{description: 'CSV', accept: {'text/csv': ['.csv']}}],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(new Blob([csvString], {type: 'text/csv'}));
+        await writable.close();
+        return;
+      } catch (err) {
+        // If user cancels, just stop; otherwise fall back
+        if (err?.name === 'AbortError') return;
+        console.warn('showSaveFilePicker failed, falling back to anchor download', err);
+      }
+    }
+
+    // Fallback that avoids opening a new tab
+    const blob = new Blob([csvString], {type: 'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.target = '_blank';
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  };
+};
+
+const updateDownloadLinks = ({forecast = null, retro = null, riverId = null, clear = false}) => {
+  if (clear) {
+    downloadForecastButton.disabled = true
+    downloadRetroButton.disabled = true
+    downloadForecastButton.onclick = null
+    downloadRetroButton.onclick = null
+    downloadForecastButton.href = ''
+    downloadRetroButton.href = ''
+    return
+  }
+  if (forecast) {
+    const memberHeaders = forecast.discharge.map((_, index) => `member${index + 1}`).join(",")
+    const statsHeaders = Object.keys(forecast.stats).map(stat => stat.charAt(0).toUpperCase() + stat.slice(1)).join(",")
+    const csvHeaders = `Date,${memberHeaders},${statsHeaders}`
+    const csvContent = forecast.datetime.map((time, index) => {
+      const memberValues = forecast.discharge.map(memberArray => memberArray[index].toFixed(2)).join(",")
+      const statsValues = Object.values(forecast.stats).map(statArray => statArray[index].toFixed(2)).join(",")
+      return `${time.toISOString()},${memberValues},${statsValues}`
+    }).join("\n")
+    const csvString = csvHeaders + "\n" + csvContent
+    addCsvDownloadToButton(downloadForecastButton, csvString, `forecast_${riverId}_${forecast.datetime[0].toISOString().slice(0, 10)}.csv`)
+  }
+  if (retro) {
+    const csvHeaders = "Date,Discharge"
+    const csvContent = retro.datetime.map((time, index) => {
+      return `${time.toISOString()},${retro.discharge[index].toFixed(2)}`
+    }).join("\n")
+    const csvString = csvHeaders + "\n" + csvContent
+    addCsvDownloadToButton(downloadRetroButton, csvString, `retrospective_${riverId}.csv`)
+  }
+}
+
 const toggleVisibleRiverInput = () => riverIdInputContainer.classList.toggle("hide")
 
 //// Export Functions
@@ -121,5 +209,5 @@ window.toggleVisibleRiverInput = toggleVisibleRiverInput
 export {
   showChartView, updateHash, resetFilterForm, buildFilterExpression,
   toggleVisibleRiverInput, displayRiverNumber, displayLoadingStatus,
-  downloadForecastButton, downloadRetroButton
+  updateDownloadLinks, clearCharts,
 }

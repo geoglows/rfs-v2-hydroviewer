@@ -660,8 +660,8 @@ const plotRasterHydrograph = ({retro, riverId, chartDiv}) => {
   const firstYear = retro.datetime[0].getUTCFullYear();
   const lastYear = retro.datetime[retro.datetime.length - 1].getUTCFullYear();
   const nYears = lastYear + 1 - firstYear;
-  const yYears = Array.from({length: nYears}, (_, i) => firstYear + i)
   const xDays = Array.from({length: 366}, (_, i) => i + 1)
+  const yYears = Array.from({length: nYears}, (_, i) => firstYear + i)
   const zValues = Array.from({length: nYears}, () => Array.from({length: 366}, () => null));
   // get a list of all 366 possible days in month-day format then for each year, create a label list
   const allDays = Array.from({length: 366}, (_, i) => {
@@ -820,17 +820,6 @@ const plotCumulativeVolumes = ({retro, riverId, chartDiv}) => {
   Plotly.newPlot(chartDiv, traces, layout, config);
 };
 
-//////////////////////////////////////////////////////////////////////// Helper Functions
-const clearCharts = chartTypes => {
-  if (chartTypes === "forecast" || chartTypes === null || chartTypes === undefined) {
-    [divChartForecast, divTableForecast]
-      .forEach(el => el.innerHTML = '')
-  }
-  if (chartTypes === "retro" || chartTypes === null || chartTypes === undefined) {
-    [divChartRetro, divChartYearlyVol, divChartStatus, divChartFdc, divYearlyPeaks, divRasterHydrograph, divCumulativeVolume]
-      .forEach(el => el.innerHTML = '')
-  }
-}
 //////////////////////////////////////////////////////////////////////// Plotting Managers
 const plotAllRetro = ({retro, riverId}) => {
   /*
@@ -938,4 +927,4 @@ const plotAllForecast = ({forecast, rp, riverId, showStats}) => {
 //////////////////////////////////////////////////////////////////////// Event Listeners
 window.addEventListener('resize', () => [divChartForecast, divChartRetro, divChartYearlyVol, divYearlyPeaks, divChartStatus, divRasterHydrograph, divCumulativeVolume, divChartFdc].forEach(chart => Plotly.Plots.resize(chart)))
 
-export {plotAllRetro, plotAllForecast, clearCharts}
+export {plotAllRetro, plotAllForecast}
