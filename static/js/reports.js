@@ -1,4 +1,5 @@
 import {bookmarks} from "./bookmarks.js";
+import {plotForecast} from "./plots.js";
 
 const reportTypeSelect = document.getElementById('report-type-select');
 const reportRiverListSelect = document.getElementById('report-river-list-select');
@@ -26,10 +27,9 @@ document.getElementById('start-report-data-download').addEventListener('click', 
   const riverListName = reportRiverListSelect.value;
   // todo get the river IDs for the selected river list
   const riverList = bookmarks.list().map(b => b.id);
-  // todo check to see how many of these rivers have data already cached for the report type
   const datasetList = reportTypes.find(r => r.type === reportType).datasets;
-  await fetchReportData({riverList, datasetList});
-  alert('Report data download complete!');
+  const data = await fetchReportData({riverList, datasetList});
+  plotReportData(data)
 })
 
 const fetchReportData = async ({riverList, datasetList}) => {
@@ -44,15 +44,19 @@ const fetchReportData = async ({riverList, datasetList}) => {
   const forecastDate = "20251015" // todo
 
   const perRiverResolvers = new Map(); // riverId -> resolve
-  const perRiverPromises = riverList.map((riverId) =>
-    new Promise((resolve, reject) => perRiverResolvers.set(riverId, {resolve, reject}))
-  );
+  const perRiverPromises = riverList.map(riverId => {
+    return new Promise((resolve, reject) => perRiverResolvers.set(riverId, {resolve, reject}));
+  });
 
   workers.forEach((w) => {
     w.onmessage = (e) => {
       const {status, riverId} = e.data;
       if (status === 'finished') {
-        perRiverResolvers.get(riverId)?.resolve();
+        perRiverResolvers.get(riverId)?.resolve({
+          riverId,
+          forecast: e.data.forecast,
+          returnPeriods: e.data.returnPeriods,
+        });
         nFinished += 1;
         reportDownloadProgress.value = (nFinished / nRivers) * 100;
       }
@@ -67,6 +71,56 @@ const fetchReportData = async ({riverList, datasetList}) => {
 
   riverList.forEach((riverId, i) => workers[i % numWorkers].postMessage({riverId, forecastDate, datasetList}))
 
-  await Promise.all(perRiverPromises);
-  workers.forEach(w => w.terminate());
+  const results = await Promise.all(perRiverPromises);
+  workers.forEach((w) => w.terminate());
+  return results
+}
+
+
+const plotReportData = (data) => {
+  // data should be an array of objects with keys riverId, forecast, returnPeriods, as fetched by the workers
+
+  // now we're going to add a div to #report-results for each river, then plot the data in each.
+  const reportResultsDiv = document.getElementById('report');
+  reportResultsDiv.innerHTML = '';
+  data.forEach(riverData => {
+    const plotDivId = `report-river-forecast-plot-${riverData.riverId}`;
+    const plotImgId = `report-river-forecast-img-${riverData.riverId}`;
+
+    const pageDiv = document.createElement('div');
+    pageDiv.className = 'report-page';
+    reportResultsDiv.appendChild(pageDiv);
+
+    const plotDiv = document.createElement('div');
+    plotDiv.id = plotDivId;
+    pageDiv.appendChild(plotDiv);
+
+    const imgTag = document.createElement('img');
+    imgTag.id = plotImgId;
+    pageDiv.appendChild(imgTag);
+
+    plotForecast({
+      forecast: riverData.forecast,
+      rp: riverData.returnPeriods,
+      riverId: riverData.riverId,
+      chartDiv: plotDiv,
+    });
+    // convert to an image url using Plotly.toImage,
+    Plotly
+      .toImage(plotDiv, {format: 'png', width: 1600, height: 900})
+      .then(url => {
+        imgTag.src = url;
+        plotDiv.remove();
+      })
+  })
+  // create a new iframe and copy the contents of the reportResultsDiv into it, then print the iframe
+  const iframe = document.createElement('iframe');
+  document.body.appendChild(iframe);
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  iframeDoc.open();
+  iframeDoc.write(`<html><head><title>Report</title></head><body>${reportResultsDiv.innerHTML}</body></html>`);
+  iframeDoc.close();
+  iframe.contentWindow.focus();
+  iframe.contentWindow.print();
+  document.body.removeChild(iframe);
 }

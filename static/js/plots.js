@@ -927,4 +927,7 @@ const plotAllForecast = ({forecast, rp, riverId, showStats}) => {
 //////////////////////////////////////////////////////////////////////// Event Listeners
 window.addEventListener('resize', () => [divChartForecast, divChartRetro, divChartYearlyVol, divYearlyPeaks, divChartStatus, divRasterHydrograph, divCumulativeVolume, divChartFdc].forEach(chart => Plotly.Plots.resize(chart)))
 
-export {plotAllRetro, plotAllForecast}
+export {
+  plotForecast, forecastProbabilityTable, plotAllForecast,
+  plotAllRetro,
+}

@@ -11,15 +11,14 @@ self.onmessage = async function (event) {
   // Notify that fetching has started
   self.postMessage({riverId, status: 'started'});
   let errors = []
+  let forecast = null;
+  let returnPeriods = null;
 
-  for (const dataset of datasetList) {
-    try {
-      if (dataset === 'forecast') await getAndCacheForecast({riverId: riverId, date: forecastDate, biasCorrected: false});
-      else if (dataset === 'returnPeriods') await getAndCacheReturnPeriods({riverId: riverId, biasCorrected: false});
-      else if (dataset === 'retro') await getAndCacheRetrospective({riverId: riverId, biasCorrected: false});
-    } catch (error) {
-      errors.push({dataset, error: error.message});
-    }
+  try {
+    forecast = await getAndCacheForecast({riverId: riverId, date: forecastDate, biasCorrected: false});
+    returnPeriods = await getAndCacheReturnPeriods({riverId: riverId, biasCorrected: false});
+  } catch (error) {
+    errors.push({riverId, error: error.message});
   }
 
   // Notify that fetching has finished
@@ -27,5 +26,5 @@ self.onmessage = async function (event) {
     self.postMessage({riverId, status: 'error', errors});
     return;
   }
-  self.postMessage({riverId, status: 'finished'})
+  self.postMessage({riverId, status: 'finished', forecast, returnPeriods});
 };
