@@ -11,6 +11,10 @@ html, body {
     position: absolute;
 }
 
+body {
+    overflow: hidden;
+}
+
 .body-wrapper {
     height: 100%;
     display: flex;
@@ -273,8 +277,6 @@ table.forecast-probability-table td, table.forecast-probability-table th {
 #report, #report * {
     z-index: -1;
     opacity: 0;
-    transform: none !important;
-    zoom: 1 !important;
 }
 
 #report {
@@ -322,7 +324,16 @@ table.forecast-probability-table td, table.forecast-probability-table th {
 }
 
 @media print {
-    /* hide everything except the report */
+    * {
+        transform: scale(1) !important;
+        zoom: 1 !important;
+    }
+
+    body {
+        width: 8in;
+        overflow: auto;
+    }
+
     body * {
         visibility: hidden;
     }
@@ -334,16 +345,13 @@ table.forecast-probability-table td, table.forecast-probability-table th {
     #report, #report * {
         opacity: 1;
         z-index: 1000;
-        /*    make the height unlimited so there is enough space for all report content */
         height: auto;
     }
 
     /* special styling for the forecast table on print screens */
     table.forecast-probability-table td, table.forecast-probability-table th {
-        font-size: 10pt;
-        padding: 4px;
+        padding: 3px;
     }
-
 
     * {
         -webkit-print-color-adjust: exact !important;

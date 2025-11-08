@@ -4,6 +4,9 @@ import {forecastProbabilityTable, plotForecast} from "./plots.js";
 const maxWorkers = 3;
 const workers = Array.from({length: maxWorkers}, () => new Worker('/static/js/workers/dataFetcher.js', {type: 'module'}));
 
+// now we're going to add a div to #report-results for each river, then plot the data in each.
+const reportDiv = document.getElementById('report');
+
 const newReportButton = document.getElementById('new-report-button');
 const reportTypeSelect = document.getElementById('report-type-select');
 const reportDatePicker = document.getElementById('report-date-calendar');
@@ -52,11 +55,10 @@ newReportButton.addEventListener('click', () => {
   togglePrintButton({disabled: true});
   toggleReportControls({disabled: false});
   resetProgressIndicators()
+  report
 })
 generateReportButton.addEventListener('click', async () => {
-  // disable the button until this is completed or error handled
   toggleReportControls({disabled: true});
-  // generateReportButton.innerText = 'Generating Report...';
   generateReportButton.innerHTML = `<img src="/static/img/loading.io.svg" alt="loading" style="height: 100%">Generating Report...`;
   resetProgressIndicators();
 
@@ -116,11 +118,7 @@ const fetchReportData = async ({riverList, datasetList}) => {
 
 const plotReportData = (data) => {
   // data should be an array of objects with keys riverId, forecast, returnPeriods, as fetched by the workers
-
-  // now we're going to add a div to #report-results for each river, then plot the data in each.
-  const reportResultsDiv = document.getElementById('report');
-  reportResultsDiv.innerHTML = '';
-
+  reportDiv.innerHTML = ''
   const nRivers = data.length;
   let nComplete = 0;
 
@@ -129,7 +127,7 @@ const plotReportData = (data) => {
 
     const pageDiv = document.createElement('div');
     pageDiv.className = 'report-page';
-    reportResultsDiv.appendChild(pageDiv);
+    reportDiv.appendChild(pageDiv);
 
     const title = document.createElement('div');
     title.innerText = `${bookmarks.list().find(r => r.id === riverData.riverId).name} (ID: ${riverData.riverId})`;
@@ -150,6 +148,7 @@ const plotReportData = (data) => {
     tableDiv.id = `report-river-forecast-table-${riverData.riverId}`;
     tableDiv.style.width = '100%';
     tableDiv.style.maxWidth = '100%';
+    tableDiv.style.fontSize = '11px';
     pageDiv.appendChild(tableDiv);
 
     plotForecast({
