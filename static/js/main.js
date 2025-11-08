@@ -25,7 +25,7 @@ const fetchData = ({riverId, display = true} = {}) => {
   clearCharts('retro')
   LoadStatus.update({forecast: "load", retro: "load"})
   Promise
-    .all([getAndCacheForecast({riverId, date, corrected}), getAndCacheReturnPeriods(riverId)])
+    .all([getAndCacheForecast({riverId, date, corrected}), getAndCacheReturnPeriods({riverId, corrected})])
     .then(responses => {
       plotAllForecast({forecast: responses[0], rp: responses[1], riverId, corrected, showStats: stats})
       LoadStatus.update({forecast: "ready"})

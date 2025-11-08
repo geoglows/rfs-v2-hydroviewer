@@ -41,7 +41,7 @@ const fetchCoordinateVariable = async ({zarrUrl, varName, zarrVersion = 2}) => {
 const getIndexOfCoordinateValue = ({zarrArray, value}) => {
   const idx = zarrArray.data.indexOf(value);
   if (idx === -1) {
-    throw new Error(`River ID ${riverId} not found.`)
+    throw new Error(`River ID ${value} not found.`)
   }
   return idx;
 }
