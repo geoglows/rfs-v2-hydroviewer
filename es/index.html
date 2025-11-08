@@ -114,6 +114,90 @@
   </div>
 </div>
 
+<!-- Reports -->
+<div id="report"></div>
+<div id="report-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header-bar">
+      <h4>Generate Reports</h4>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+    </div>
+    <h5>1. Select Report Type</h5>
+    <select id="report-type-select" aria-labelledby="report-type-select-label"></select>
+
+    <h5>2. Select Rivers for Report</h5>
+    <select id="report-river-list-select"></select>
+
+    <h5>3. Prepare River Data</h5>
+    <button id="generate-report" class="btn">Prepare Report</button>
+    <div>Download Data:</div>
+    <div class="progress-with-label">
+      <progress id="report-data-progress" value="0" max="100"></progress>
+      <div id="report-data-label">0%</div>
+    </div>
+    <div>Formatting Report:</div>
+    <div class="progress-with-label">
+      <progress id="report-format-progress" value="0" max="100"></progress>
+      <div id="report-format-label">0%</div>
+    </div>
+  </div>
+</div>
+<div id="bookmarks-modal" class="modal" data-category="river-bookmarks">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center;">
+    <div class="modal-header-bar">
+      <h4 style="margin: 0">Ríos Marcados</h4>
+      <div style="flex-grow: 1"></div>
+      <a data-tooltip="Añadir marcador" data-position="bottom" class="btn modal-trigger tooltipped" href="#add-river-bookmark" style="margin-inline: 8px"><i class="material-icons">add</i></a>
+      <button data-tooltip="Restaurar marcadores predeterminados" data-position="bottom" class="btn tooltipped" id="restore-bookmarks-button" style="margin-inline: 8px"><i class="material-icons">restore</i></button>
+      <button data-tooltip="Eliminar todos los marcadores" data-position="bottom" class="btn tooltipped delete-all-bookmarks" style="margin-inline: 8px"><i class="material-icons">delete_forever</i></button>
+      <button class="modal-close waves-effect waves-green btn-flat">X</button>
+    </div>
+    <div id="bookmarks-table" style="width: 100%">
+      <table class="striped responsive-table bordered">
+        <thead>
+        <tr>
+          <th data-field="riverId" style="width: 20%; min-width: 150px; max-width: 200px">ID del Río</th>
+          <th data-field="riverName" style="width: 60%; max-width: 450px">Nombre del Río</th>
+          <th data-field="actions" style="width: 20%; min-width: 150px; max-width: 200px">Acciones</th>
+        </tr>
+        </thead>
+        <tbody id="bookmarks-tbody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div id="add-river-bookmark" class="modal" data-category="river-bookmarks">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
+    <div class="modal-header-bar">
+      <h4 style="margin: 0">Añadir un nuevo marcador de río</h4>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+    </div>
+    <table>
+      <thead>
+      <tr>
+        <th data-field="riverId"><label for="save-river-id">ID del Río</label></th>
+        <th data-field="riverName"><label for="save-river-name">Nombre del Río</label></th>
+        <th data-field="actions">Acciones</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td data-field="riverId">
+          <input id="save-river-id" type="number" contenteditable="true" onchange="this.value = this.value.slice(0, 9)" placeholder="ID del Río (9 dígitos)">
+        </td>
+        <td data-field="riverName">
+          <input id="save-river-name" contenteditable="true" onchange="this.innerText = this.innerText.slice(0, 30)" placeholder="Nombre del Río">
+        </td>
+        <td data-field="actions">
+          <button class="btn green" id="submit-new-bookmark">Añadir marcador</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
 <!-- Data presentation -->
 <div id="charts-modal" class="modal always-large-modal">
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
@@ -211,63 +295,6 @@
     <button class="btn" onclick="updateLayerDefinitions()">Applicar Filtros</button>
     <button class="btn btn-secondary" onclick="resetDefinitionExpression()">Borrar Filtros</button>
     <a class="modal-close waves-effect waves-green btn-flat">Cerrar</a>
-  </div>
-</div>
-
-<!-- River Bookmarking -->
-<div id="bookmarks-modal" class="modal" data-category="river-bookmarks">
-  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center;">
-    <div class="modal-header-bar">
-      <h4 style="margin: 0">Ríos Marcados</h4>
-      <div style="flex-grow: 1"></div>
-      <a data-tooltip="Añadir marcador" data-position="bottom" class="btn modal-trigger tooltipped" href="#add-river-bookmark" style="margin-inline: 8px"><i class="material-icons">add</i></a>
-      <button data-tooltip="Restaurar marcadores predeterminados" data-position="bottom" class="btn tooltipped" id="restore-bookmarks-button" style="margin-inline: 8px"><i class="material-icons">restore</i></button>
-      <button data-tooltip="Eliminar todos los marcadores" data-position="bottom" class="btn tooltipped delete-all-bookmarks" style="margin-inline: 8px"><i class="material-icons">delete_forever</i></button>
-      <button class="modal-close waves-effect waves-green btn-flat">X</button>
-    </div>
-    <div id="bookmarks-table" style="width: 100%">
-      <table class="striped responsive-table bordered">
-        <thead>
-        <tr>
-          <th data-field="riverId" style="width: 20%; min-width: 150px; max-width: 200px">ID del Río</th>
-          <th data-field="riverName" style="width: 60%; max-width: 450px">Nombre del Río</th>
-          <th data-field="actions" style="width: 20%; min-width: 150px; max-width: 200px">Acciones</th>
-        </tr>
-        </thead>
-        <tbody id="bookmarks-tbody">
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-<div id="add-river-bookmark" class="modal" data-category="river-bookmarks">
-  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
-    <div class="modal-header-bar">
-      <h4 style="margin: 0">Añadir un nuevo marcador de río</h4>
-      <a class="modal-close waves-effect waves-green btn-flat">X</a>
-    </div>
-    <table>
-      <thead>
-      <tr>
-        <th data-field="riverId"><label for="save-river-id">ID del Río</label></th>
-        <th data-field="riverName"><label for="save-river-name">Nombre del Río</label></th>
-        <th data-field="actions">Acciones</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr>
-        <td data-field="riverId">
-          <input id="save-river-id" type="number" contenteditable="true" onchange="this.value = this.value.slice(0, 9)" placeholder="ID del Río (9 dígitos)">
-        </td>
-        <td data-field="riverName">
-          <input id="save-river-name" contenteditable="true" onchange="this.innerText = this.innerText.slice(0, 30)" placeholder="Nombre del Río">
-        </td>
-        <td data-field="actions">
-          <button class="btn green" id="submit-new-bookmark">Añadir marcador</button>
-        </td>
-      </tr>
-      </tbody>
-    </table>
   </div>
 </div>
 
