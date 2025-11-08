@@ -289,10 +289,11 @@ table.forecast-probability-table td, table.forecast-probability-table th {
 
 .report-page {
     page-break-after: always;
-    width: 7.5in;
-    height: 10in;
-    margin: 0.5in;
-    align-items: center;
+    width: 8.5in;
+    height: 11in;
+    padding: 0.5in;
+    display: flex;
+    justify-content: center;
     flex-direction: column;
 }
 
