@@ -5,9 +5,7 @@
 import {getAndCacheForecast, getAndCacheRetrospective, getAndCacheReturnPeriods} from '../data/data.js';
 
 self.onmessage = async function (event) {
-  const {riverId, forecastDate, datasetList} = event.data;
-  console.log(`Worker: Fetching data for river ID ${riverId} for datasets: ${datasetList.join(', ')}`);
-
+  const {riverId, forecastDate} = event.data;
   // Notify that fetching has started
   self.postMessage({riverId, status: 'started'});
   let errors = []

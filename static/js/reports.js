@@ -1,5 +1,8 @@
 import {bookmarks} from "./bookmarks.js";
-import {plotForecast, forecastProbabilityTable} from "./plots.js";
+import {forecastProbabilityTable, plotForecast} from "./plots.js";
+
+const maxWorkers = 3;
+const workers = Array.from({length: maxWorkers}, () => new Worker('/static/js/workers/dataFetcher.js', {type: 'module'}));
 
 const reportTypeSelect = document.getElementById('report-type-select');
 const reportRiverListSelect = document.getElementById('report-river-list-select');
@@ -25,28 +28,38 @@ const showReportRiverLists = (element) => {
   //todo get a list of the riverLists available and populate the select
 }
 
-document.getElementById('generate-report').addEventListener('click', async () => {
-  // reset progress bars
+const generateReportButton = document.getElementById('generate-report')
+const resetProgressIndicators = () => {
   reportDownloadProgress.value = 0
   reportFormatProgress.value = 0
   reportDownloadLabel.textContent = '0%';
   reportFormatLabel.textContent = '0%';
+}
+generateReportButton.addEventListener('click', async () => {
+  // disable the button until this is completed or error handled
+  generateReportButton.disabled = true;
+  generateReportButton.innerText = 'Generating Report...';
+  resetProgressIndicators();
 
-  const reportType = reportTypeSelect.value;
-  const riverListName = reportRiverListSelect.value;
-  // todo get the river IDs for the selected river list
-  const riverList = bookmarks.list().map(b => b.id);
-  const datasetList = reportTypes.find(r => r.type === reportType).datasets;
-  const data = await fetchReportData({riverList, datasetList});
-  plotReportData(data)
+  try {
+    const reportType = reportTypeSelect.value;
+    const riverListName = reportRiverListSelect.value;
+    // todo get the river IDs for the selected river list
+    const riverList = bookmarks.list().map(b => b.id);
+    const datasetList = reportTypes.find(r => r.type === reportType).datasets;
+    const data = await fetchReportData({riverList, datasetList});
+    plotReportData(data)
+  } catch (error) {
+    // todo error handle and message UI
+    console.error('Error generating report:', error);
+    alert('An error occurred while generating the report. Please try again.');
+  } finally {
+    generateReportButton.disabled = false;
+    generateReportButton.innerText = 'Generate Report';
+  }
 })
 
 const fetchReportData = async ({riverList, datasetList}) => {
-  const maxWorkers = 3;
-  // spawn workers, maximum of 3. number to use should be nRivers / 5 rounded up max 3
-  const numWorkers = Math.min(maxWorkers, Math.ceil(riverList.length / 5));
-  const workers = Array.from({length: numWorkers}, () => new Worker('/static/js/workers/dataFetcher.js', {type: 'module'}));
-
   const nRivers = riverList.length;
   let nFinished = 0;
 
@@ -79,11 +92,8 @@ const fetchReportData = async ({riverList, datasetList}) => {
     };
   });
 
-  riverList.forEach((riverId, i) => workers[i % numWorkers].postMessage({riverId, forecastDate, datasetList}))
-
-  const results = await Promise.all(perRiverPromises);
-  workers.forEach((w) => w.terminate());
-  return results
+  riverList.forEach((riverId, i) => workers[i % maxWorkers].postMessage({riverId, forecastDate, datasetList}))
+  return await Promise.all(perRiverPromises)
 }
 
 
