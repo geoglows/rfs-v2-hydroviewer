@@ -256,3 +256,77 @@ table.forecast-probability-table td, table.forecast-probability-table th {
         display: none;
     }
 }
+
+#report, #report * {
+    z-index: -1;
+    opacity: 0;
+}
+
+#report {
+    width: 8.5in; /* 8.5in - 1in margin on each side */
+    height: 11in; /* 11in - 1in margin on top and bottom */
+    box-sizing: border-box;
+    page-break-after: always; /* Ensure each report starts on a new page */
+    position: absolute;
+    overflow-y: auto;
+}
+
+.report-page {
+    page-break-after: always;
+    width: 7.5in;
+    height: 10in;
+    margin: 0.5in;
+    align-items: center;
+    flex-direction: column;
+}
+
+#report img {
+    width: 100%;
+}
+
+.progress-with-label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.progress-with-label progress {
+    width: 80%;
+}
+
+.progress-with-label div {
+    width: 15%;
+    text-align: right;
+    font-weight: bold;
+}
+
+@media print {
+    /* hide everything except the report */
+    body * {
+        visibility: hidden;
+    }
+
+    #report, #report * {
+        visibility: visible;
+    }
+
+    #report, #report * {
+        opacity: 1;
+        z-index: 1000;
+        /*    make the height unlimited so there is enough space for all report content */
+        height: auto;
+    }
+
+    /* special styling for the forecast table on print screens */
+    table.forecast-probability-table td, table.forecast-probability-table th {
+        font-size: 10pt;
+        padding: 4px;
+    }
+
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}

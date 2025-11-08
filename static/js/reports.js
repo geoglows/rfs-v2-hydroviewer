@@ -1,9 +1,12 @@
 import {bookmarks} from "./bookmarks.js";
-import {plotForecast} from "./plots.js";
+import {plotForecast, forecastProbabilityTable} from "./plots.js";
 
 const reportTypeSelect = document.getElementById('report-type-select');
 const reportRiverListSelect = document.getElementById('report-river-list-select');
 const reportDownloadProgress = document.getElementById('report-data-progress');
+const reportDownloadLabel = document.getElementById('report-data-label');
+const reportFormatProgress = document.getElementById('report-format-progress');
+const reportFormatLabel = document.getElementById('report-format-label');
 
 const reportTypes = [
   {type: 'riverSummary', label: 'River Summary', datasets: ['forecast', 'retro', 'returnPeriods']},
@@ -22,7 +25,13 @@ const showReportRiverLists = (element) => {
   //todo get a list of the riverLists available and populate the select
 }
 
-document.getElementById('start-report-data-download').addEventListener('click', async () => {
+document.getElementById('generate-report').addEventListener('click', async () => {
+  // reset progress bars
+  reportDownloadProgress.value = 0
+  reportFormatProgress.value = 0
+  reportDownloadLabel.textContent = '0%';
+  reportFormatLabel.textContent = '0%';
+
   const reportType = reportTypeSelect.value;
   const riverListName = reportRiverListSelect.value;
   // todo get the river IDs for the selected river list
@@ -51,6 +60,7 @@ const fetchReportData = async ({riverList, datasetList}) => {
   workers.forEach((w) => {
     w.onmessage = (e) => {
       const {status, riverId} = e.data;
+      if (status === 'started') return
       if (status === 'finished') {
         perRiverResolvers.get(riverId)?.resolve({
           riverId,
@@ -58,14 +68,14 @@ const fetchReportData = async ({riverList, datasetList}) => {
           returnPeriods: e.data.returnPeriods,
         });
         nFinished += 1;
-        reportDownloadProgress.value = (nFinished / nRivers) * 100;
       }
       if (status === 'error') {
         console.error(`Error fetching data for river ${riverId}:`, e.data.errors);
         perRiverResolvers.get(riverId)?.reject(new Error(`Worker error: ${riverId}`));
-        nFinished += 1;
-        reportDownloadProgress.value = (nFinished / nRivers) * 100;
       }
+      const progress = ((nFinished / nRivers) * 100).toFixed(0);
+      reportDownloadProgress.value = progress
+      reportDownloadLabel.innerText = `${progress}%`;
     };
   });
 
@@ -83,6 +93,10 @@ const plotReportData = (data) => {
   // now we're going to add a div to #report-results for each river, then plot the data in each.
   const reportResultsDiv = document.getElementById('report');
   reportResultsDiv.innerHTML = '';
+
+  const nRivers = data.length;
+  let nComplete = 0;
+
   data.forEach(riverData => {
     const plotDivId = `report-river-forecast-plot-${riverData.riverId}`;
     const plotImgId = `report-river-forecast-img-${riverData.riverId}`;
@@ -99,28 +113,36 @@ const plotReportData = (data) => {
     imgTag.id = plotImgId;
     pageDiv.appendChild(imgTag);
 
+    const tableDiv = document.createElement('div');
+    tableDiv.id = `report-river-forecast-table-${riverData.riverId}`;
+    tableDiv.style.width = '100%';
+    tableDiv.style.maxWidth = '100%';
+    pageDiv.appendChild(tableDiv);
+
     plotForecast({
       forecast: riverData.forecast,
       rp: riverData.returnPeriods,
       riverId: riverData.riverId,
       chartDiv: plotDiv,
     });
+    // remove all the controls from the plotDiv and make it static
+    plotDiv.querySelectorAll('.modebar, .legendtoggle, .zoomlayer').forEach(el => el.remove());
     // convert to an image url using Plotly.toImage,
     Plotly
-      .toImage(plotDiv, {format: 'png', width: 1600, height: 900})
+      .toImage(plotDiv, {format: 'png', width: 800, height: 600})
       .then(url => {
         imgTag.src = url;
         plotDiv.remove();
       })
+    tableDiv.innerHTML = forecastProbabilityTable({forecast: riverData.forecast, rp: riverData.returnPeriods})
+
+    nComplete += 1;
+    let progress = ((nComplete / nRivers) * 100).toFixed(0);
+    reportFormatProgress.value = progress
+    reportFormatLabel.innerText = `${progress}%`;
   })
-  // create a new iframe and copy the contents of the reportResultsDiv into it, then print the iframe
-  const iframe = document.createElement('iframe');
-  document.body.appendChild(iframe);
-  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-  iframeDoc.open();
-  iframeDoc.write(`<html><head><title>Report</title></head><body>${reportResultsDiv.innerHTML}</body></html>`);
-  iframeDoc.close();
-  iframe.contentWindow.focus();
-  iframe.contentWindow.print();
-  document.body.removeChild(iframe);
+  // print the #report div after short delay for all rendering to complete
+  setTimeout(() => {
+    window.print()
+  }, 1000);
 }

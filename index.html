@@ -115,7 +115,7 @@
 </div>
 
 <!-- Reports-->
-<div id="report" style="display: none"></div>
+<div id="report"></div>
 <div id="report-modal" class="modal">
   <div class="modal-content">
     <div class="modal-header-bar">
@@ -124,15 +124,22 @@
     </div>
     <h5>1. Select Report Type</h5>
     <select id="report-type-select" aria-labelledby="report-type-select-label"></select>
+
     <h5>2. Select Rivers for Report</h5>
     <select id="report-river-list-select"></select>
-    <h5>3. Download River Data</h5>
-    <button id="start-report-data-download" class="btn">Start Data Download</button>
-    <progress id="report-data-progress" value="0" max="100" style="width: 100%"></progress>
-    <h5>4. Format Report</h5>
-    <progress id="report-format-progress" value="0" max="100" style="width: 100%"></progress>
-    <h5>5. Download Report PDF</h5>
-    <progress id="report-pdf-progress" value="0" max="100" style="width: 100%"></progress>
+
+    <h5>3. Prepare River Data</h5>
+    <button id="generate-report" class="btn">Prepare Report</button>
+    <div>Download Data:</div>
+    <div class="progress-with-label">
+      <progress id="report-data-progress" value="0" max="100"></progress>
+      <div id="report-data-label">0%</div>
+    </div>
+    <div>Formatting Report:</div>
+    <div class="progress-with-label">
+      <progress id="report-format-progress" value="0" max="100"></progress>
+      <div id="report-format-label">0%</div>
+    </div>
   </div>
 </div>
 <div id="bookmarks-modal" class="modal" data-category="river-bookmarks">
