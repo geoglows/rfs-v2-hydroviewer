@@ -1,4 +1,4 @@
-const CACHE_SIZE = 125
+const CACHE_SIZE = 300
 const DB_NAME = 'RiverCacheDB'
 const STORE_NAME = 'cache'
 

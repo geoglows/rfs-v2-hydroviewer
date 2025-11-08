@@ -31,9 +31,12 @@ export const bookmarks = (() => {
     localStorage.setItem(key, JSON.stringify(bookmarks))
     table()
   }
-  const add = ({id, name, validate = true}) => {
-    if (bookmarks.find(r => r.id === id)) return
-    if (validate && !validateRiverNumber({riverId: id})) return false
+  const add = async ({id, name, validate = true}) => {
+    if (bookmarks.find(r => r.id === id)) return false
+    if (validate) {
+      const valid = await validateRiverNumber({riverId: id})
+      if (!valid) return false
+    }
     bookmarks.push({id, name})
     cache()
     setFavoriteIcon()
@@ -72,10 +75,10 @@ export const bookmarks = (() => {
       })
   }
   const restoreDefaults = () => {
-    namedDefaultRivers.forEach(r => add({...r, validate: false}))
+    namedDefaultRivers.forEach(async r => await add({...r, validate: false}))
     cache()
   }
-  const submitForm = () => {
+  const submitForm = async () => {
     const id = newRiverIdInput.value.trim()
     const name = newRiverNameInput.value.trim() || `River ${id}`
     // todo translate these error messages
@@ -83,7 +86,7 @@ export const bookmarks = (() => {
       M.toast({html: 'Please enter a 9-digit River ID.', classes: 'orange', displayLength: 6000})
       return
     }
-    if (bookmarks.find(r => r.id === id)) {
+    if (bookmarks.find(r => r.id === +id)) {
       M.toast({html: 'This River ID is already bookmarked.', classes: 'orange', displayLength: 6000})
       return
     }
@@ -91,7 +94,8 @@ export const bookmarks = (() => {
       M.toast({html: 'Please enter a name for the bookmark.', classes: 'orange', displayLength: 6000})
       return
     }
-    if (!add({id: parseInt(id), name: name, validate: true})){
+    const addedRiver = await add({id: +id, name: name, validate: false})
+    if (!addedRiver){
       M.toast({html: 'This River ID was not found in the RFS datasets. Verify the number and try again.', classes: 'red', displayLength: 6000})
       return
     }

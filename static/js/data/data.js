@@ -29,16 +29,8 @@ const getAndCacheReturnPeriods = async ({riverId, corrected}) => {
   return data
 }
 
-const validateRiverNumber = ({riverId}) => {
-  // a riverId should be a positive 9 digit integer greater than 110,000,000 and less than 999,999,999
-  // it should be of type number only
-  if (typeof riverId !== 'number' || !Number.isInteger(riverId)) {
-    return false;
-  }
-  if (riverId < 110000000 || riverId > 999999999) {
-    return false;
-  }
-  return checkRiverIdExists({riverId})
+const validateRiverNumber = async ({riverId}) => {
+  return await checkRiverIdExists({riverId}).then(exists => exists).catch(() => false);
 }
 
 ////////////////// Module Exports
