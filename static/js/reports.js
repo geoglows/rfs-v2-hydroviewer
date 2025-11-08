@@ -96,7 +96,6 @@ const fetchReportData = async ({riverList, datasetList}) => {
   return await Promise.all(perRiverPromises)
 }
 
-
 const plotReportData = (data) => {
   // data should be an array of objects with keys riverId, forecast, returnPeriods, as fetched by the workers
 
@@ -139,11 +138,10 @@ const plotReportData = (data) => {
     plotDiv.querySelectorAll('.modebar, .legendtoggle, .zoomlayer').forEach(el => el.remove());
     // convert to an image url using Plotly.toImage,
     Plotly
-      .toImage(plotDiv, {format: 'png', width: 800, height: 600})
-      .then(url => {
-        imgTag.src = url;
-        plotDiv.remove();
-      })
+      .toImage(plotDiv, {format: 'png', width: 800, height: 500})
+      .then(url => imgTag.src = url)
+
+    plotDiv.remove();
     tableDiv.innerHTML = forecastProbabilityTable({forecast: riverData.forecast, rp: riverData.returnPeriods})
 
     nComplete += 1;
