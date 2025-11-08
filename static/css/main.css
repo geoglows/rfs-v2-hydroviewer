@@ -202,10 +202,23 @@ button > a {
     padding: 5px;
 }
 
-.options-wrapper {
+.settings-options-wrapper {
     display: flex;
     flex-direction: column;
     gap: 10px;
+}
+
+.report-option-wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.report-option-wrapper * {
+    flex: 1 0 auto;
+    width: 50%;
 }
 
 .modal-footer {
@@ -279,6 +292,12 @@ table.forecast-probability-table td, table.forecast-probability-table th {
     margin: 0.5in;
     align-items: center;
     flex-direction: column;
+}
+
+.report-page-title {
+    font-weight: bold;
+    font-size: 20pt;
+    text-align: center;
 }
 
 #report img {

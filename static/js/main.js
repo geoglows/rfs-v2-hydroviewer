@@ -66,6 +66,7 @@ UseShowExtraRetroGraphs.addSubscriber(() => fetchData({display: false}))
 
 // event listeners
 const forecastDatePicker = document.getElementById('forecast-date-calendar')
+const reportDatePicker = document.getElementById('report-date-calendar')
 const previousDateArrow = document.getElementById('datepicker-previous')
 const nextDateArrow = document.getElementById('datepicker-next')
 const earliestDateObj = new Date(Date.UTC(2024, 6, 1))
@@ -75,6 +76,9 @@ const latestDate = latestDateObj.toISOString().slice(0, 10)
 forecastDatePicker.min = earliestDate
 forecastDatePicker.max = latestDate
 forecastDatePicker.value = latestDate
+reportDatePicker.min = earliestDate
+reportDatePicker.max = latestDate
+reportDatePicker.value = latestDate
 forecastDatePicker.onchange = () => {
   previousDateArrow.disabled = forecastDatePicker.value === earliestDate
   nextDateArrow.disabled = forecastDatePicker.value === latestDate

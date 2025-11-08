@@ -4,8 +4,11 @@ import {forecastProbabilityTable, plotForecast} from "./plots.js";
 const maxWorkers = 3;
 const workers = Array.from({length: maxWorkers}, () => new Worker('/static/js/workers/dataFetcher.js', {type: 'module'}));
 
+const newReportButton = document.getElementById('new-report-button');
 const reportTypeSelect = document.getElementById('report-type-select');
+const reportDatePicker = document.getElementById('report-date-calendar');
 const reportRiverListSelect = document.getElementById('report-river-list-select');
+const reportPrintButton = document.getElementById('download-report');
 const reportDownloadProgress = document.getElementById('report-data-progress');
 const reportDownloadLabel = document.getElementById('report-data-label');
 const reportFormatProgress = document.getElementById('report-format-progress');
@@ -35,10 +38,26 @@ const resetProgressIndicators = () => {
   reportDownloadLabel.textContent = '0%';
   reportFormatLabel.textContent = '0%';
 }
+const toggleReportControls = ({disabled = true}) => {
+  generateReportButton.disabled = disabled;
+  reportTypeSelect.disabled = disabled;
+  reportDatePicker.disabled = disabled;
+  reportRiverListSelect.disabled = disabled;
+}
+const togglePrintButton = ({disabled = true}) => {
+  reportPrintButton.disabled = disabled;
+  newReportButton.disabled = disabled;
+}
+newReportButton.addEventListener('click', () => {
+  togglePrintButton({disabled: true});
+  toggleReportControls({disabled: false});
+  resetProgressIndicators()
+})
 generateReportButton.addEventListener('click', async () => {
   // disable the button until this is completed or error handled
-  generateReportButton.disabled = true;
-  generateReportButton.innerText = 'Generating Report...';
+  toggleReportControls({disabled: true});
+  // generateReportButton.innerText = 'Generating Report...';
+  generateReportButton.innerHTML = `<img src="/static/img/loading.io.svg" alt="loading" style="height: 100%">Generating Report...`;
   resetProgressIndicators();
 
   try {
@@ -54,7 +73,6 @@ generateReportButton.addEventListener('click', async () => {
     console.error('Error generating report:', error);
     alert('An error occurred while generating the report. Please try again.');
   } finally {
-    generateReportButton.disabled = false;
     generateReportButton.innerText = 'Generate Report';
   }
 })
@@ -63,7 +81,7 @@ const fetchReportData = async ({riverList, datasetList}) => {
   const nRivers = riverList.length;
   let nFinished = 0;
 
-  const forecastDate = "20251015" // todo
+  const forecastDate = reportDatePicker.value.replace(/-/g, '');
 
   const perRiverResolvers = new Map(); // riverId -> resolve
   const perRiverPromises = riverList.map(riverId => {
@@ -108,18 +126,21 @@ const plotReportData = (data) => {
 
   data.forEach(riverData => {
     const plotDivId = `report-river-forecast-plot-${riverData.riverId}`;
-    const plotImgId = `report-river-forecast-img-${riverData.riverId}`;
 
     const pageDiv = document.createElement('div');
     pageDiv.className = 'report-page';
     reportResultsDiv.appendChild(pageDiv);
+
+    const title = document.createElement('div');
+    title.innerText = `${bookmarks.list().find(r => r.id === riverData.riverId).name} (ID: ${riverData.riverId})`;
+    title.className = 'report-page-title';
+    pageDiv.appendChild(title);
 
     const plotDiv = document.createElement('div');
     plotDiv.id = plotDivId;
     pageDiv.appendChild(plotDiv);
 
     const imgTag = document.createElement('img');
-    imgTag.id = plotImgId;
     imgTag.style.width = '100%';
     imgTag.style.maxWidth = '100%';
     imgTag.style.height = 'auto';
@@ -156,4 +177,7 @@ const plotReportData = (data) => {
   setTimeout(() => {
     window.print()
   }, 1000);
+
+  // enable the print report button
+  togglePrintButton({disabled: false});
 }
