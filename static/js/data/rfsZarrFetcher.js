@@ -13,6 +13,12 @@ import * as zarr from "https://cdn.jsdelivr.net/npm/zarrita@0.5.4/+esm"
 const baseRetroZarrUrl = "https://d2grb3c773p1iz.cloudfront.net" // "http://geoglows-v2.s3-us-west-2.amazonaws.com"
 const baseForecastZarrUrl = "https://d14ritg1bypdp7.cloudfront.net"  // "http://geoglows-v2-forecasts.s3-website-us-west-2.amazonaws.com"
 
+const checkRiverIdExists = async ({riverId}) => {
+  const zarrUrl = `${baseRetroZarrUrl}/retrospective/daily.zarr`;
+  const riverIds = await fetchCoordinateVariable({zarrUrl, varName: 'river_id'});
+  return riverIds.data.indexOf(riverId) !== -1
+}
+
 const fetchTimeCoordinate = async (zarrUrl) => {
   const tStore = new zarr.FetchStore(`${zarrUrl}/time`);
   const tNode = await zarr.open(tStore, {mode: "r", format: 2});
@@ -145,5 +151,6 @@ export {
   fetchForecast,
   fetchRetro,
   fetchReturnPeriods,
-  membersToStats
+  membersToStats,
+  checkRiverIdExists,
 }
