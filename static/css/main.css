@@ -260,15 +260,16 @@ table.forecast-probability-table td, table.forecast-probability-table th {
 #report, #report * {
     z-index: -1;
     opacity: 0;
+    transform: none !important;
+    zoom: 1 !important;
 }
 
 #report {
-    width: 8.5in; /* 8.5in - 1in margin on each side */
-    height: 11in; /* 11in - 1in margin on top and bottom */
     box-sizing: border-box;
     page-break-after: always; /* Ensure each report starts on a new page */
     position: absolute;
-    overflow-y: auto;
+    overflow-y: scroll;
+    height: 100%;
 }
 
 .report-page {

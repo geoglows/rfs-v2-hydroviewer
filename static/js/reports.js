@@ -120,6 +120,9 @@ const plotReportData = (data) => {
 
     const imgTag = document.createElement('img');
     imgTag.id = plotImgId;
+    imgTag.style.width = '100%';
+    imgTag.style.maxWidth = '100%';
+    imgTag.style.height = 'auto';
     pageDiv.appendChild(imgTag);
 
     const tableDiv = document.createElement('div');
