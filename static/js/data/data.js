@@ -50,6 +50,22 @@ const getRiverIdsWithCache = async () => {
 }
 
 const fetchForecast = async ({riverId, date}) => {
+  /*
+  Retrieves 51 member ensemble forecast discharge for a given riverId and initialization date (YYYYMMDD). The returns an object of structure:
+  {
+    datetime: [Date, Date, ...],
+    discharge: [
+      [Number, Number, ...],
+      [Number, Number, ...],
+      ...
+    ], // array of arrays, one per ensemble member (51 total)
+    stats: {
+      min: [Number, Number, ...],
+      p20: [Number, Number, ...],
+      ... // etc, see _membersToStats function
+    }
+  }
+  */
   if (!/^\d{8}$/.test(date)) return Promise.reject(new Error(`Date '${date}' is not in the correct format YYYYMMDD.`));
 
   // get data from zarr
@@ -71,6 +87,13 @@ const fetchForecast = async ({riverId, date}) => {
   return Promise.resolve({datetime, discharge, stats});
 }
 const fetchRetro = async ({riverId, resolution = "daily"}) => {
+  /*
+  Retrieve retrospective simulations for a given river Id and time step/resolution. Returns an object of structure:
+  {
+    datetime: [Date, Date, ...],
+    discharge: [Number, Number, ...],
+  }
+  */
   const recognizedResolutions = ['hourly', 'daily', 'monthly', 'yearly', 'maximums'];
   if (!recognizedResolutions.includes(resolution)) return Promise.reject(new Error(`Resolution '${resolution}' is not recognized.`));
 
@@ -84,6 +107,15 @@ const fetchRetro = async ({riverId, resolution = "daily"}) => {
   return Promise.resolve({datetime, discharge});
 }
 const fetchReturnPeriods = async ({riverId}) => {
+  /*
+  Returns an object with key values of return period estimates in years (type Number) to values of discharge in m3/s (type Number), e.g.:
+  {
+    2: discharge for 2-year return period,
+    5: discharge for 5-year return period,
+    10: discharge for 10-year return period,
+    ...
+  }
+  */
   const zarrUrl = `${baseRetroZarrUrl}/retrospective/return-periods.zarr`;
   const riverIds = await getRiverIdsWithCache();
   const idx = riverIds.indexOf(riverId);
