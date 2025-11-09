@@ -1,5 +1,5 @@
 /// URLs
-import {clearCache} from "./data/cache.js";
+import {clearStore} from "./data/cache.js";
 
 export const RFS_LAYER_URL = 'https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer'
 
@@ -40,7 +40,7 @@ const clearCacheButtons = Array.from(document.getElementsByClassName("clear-cach
 clearCacheButtons.forEach(btn => {
   btn.onclick = () => {
     if (confirm('Are you sure you want to clear downloaded data?')) {
-      clearCache().then(() => alert('Cache cleared!'))
+      clearStore().then(() => alert('Cache cleared!'))
     }
   }
 })

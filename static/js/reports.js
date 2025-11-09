@@ -4,9 +4,7 @@ import {forecastProbabilityTable, plotForecast} from "./plots.js";
 const maxWorkers = 3;
 const workers = Array.from({length: maxWorkers}, () => new Worker('/static/js/workers/dataFetcher.js', {type: 'module'}));
 
-// now we're going to add a div to #report-results for each river, then plot the data in each.
 const reportDiv = document.getElementById('report');
-
 const newReportButton = document.getElementById('new-report-button');
 const reportTypeSelect = document.getElementById('report-type-select');
 const reportDatePicker = document.getElementById('report-date-calendar');
@@ -18,20 +16,15 @@ const reportFormatProgress = document.getElementById('report-format-progress');
 const reportFormatLabel = document.getElementById('report-format-label');
 
 const reportTypes = [
+  {type: 'riverForecasts', label: 'Daily Forecast Report', datasets: ['forecast', 'returnPeriods']},
   {type: 'riverSummary', label: 'River Summary', datasets: ['forecast', 'retro', 'returnPeriods']},
-  {type: 'riverListForecasts', label: 'River List Forecasts', datasets: ['forecast', 'returnPeriods']},
 ]
 
-reportTypeSelect.innerHTML = reportTypes.map(report => `<option value="${report.type}">${report.label}</option>`).join('');
-reportTypeSelect.addEventListener('change', event => showReportRiverLists(event.target));
-const riverLists = ['Defaults', 'Custom1', 'Custom2'];
-reportRiverListSelect.innerHTML = riverLists.map((listName, idx) => `<option value="${listName}" ${idx === 0 ? 'selected' : ''}>${listName}</option>`).join('')
-
-// todo on select report type, the options for the report should include the forecast date range available for that report type
-
-const showReportRiverLists = (element) => {
-  const reportType = element.value;
-  //todo get a list of the riverLists available and populate the select
+const populateReportRiverLists = (element) => {
+  // const reportType = element.value;
+  // todo get a list of the riverLists available and populate the select
+  const riverLists = ['Defaults', 'Custom1', 'Custom2'];
+  reportRiverListSelect.innerHTML = riverLists.map((listName, idx) => `<option value="${listName}" ${idx === 0 ? 'selected' : ''}>${listName}</option>`).join('')
 }
 
 const generateReportButton = document.getElementById('generate-report')
@@ -55,7 +48,7 @@ newReportButton.addEventListener('click', () => {
   togglePrintButton({disabled: true});
   toggleReportControls({disabled: false});
   resetProgressIndicators()
-  report
+  reportDiv.innerHTML = ''
 })
 generateReportButton.addEventListener('click', async () => {
   toggleReportControls({disabled: true});
@@ -180,3 +173,7 @@ const plotReportData = (data) => {
   // enable the print report button
   togglePrintButton({disabled: false});
 }
+
+reportTypeSelect.innerHTML = reportTypes.map(report => `<option value="${report.type}">${report.label}</option>`).join('');
+reportTypeSelect.addEventListener('change', event => showReportRiverLists(event.target));
+populateReportRiverLists()
