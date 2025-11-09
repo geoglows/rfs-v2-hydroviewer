@@ -1,5 +1,5 @@
-import {_fetchDischarge, _fetchForecastDischarge, _fetchReturnPeriods, _getIndexOfCoordinateValue, fetchCoordinateVariable, fetchTimeCoordinate} from "./zarrUtilities.js";
-import {openDb, readStore, riversDbStoreName, saveStore} from "./cache.js";
+import {_fetchDischarge, _fetchForecastDischarge, _fetchReturnPeriods, fetchCoordinateVariable, fetchTimeCoordinate} from "./zarrUtilities.js";
+import {readStore, riversDbStoreName, saveStore} from "./cache.js";
 
 const baseRetroZarrUrl = "https://d2grb3c773p1iz.cloudfront.net" // "http://geoglows-v2.s3-us-west-2.amazonaws.com"
 const baseForecastZarrUrl = "https://d14ritg1bypdp7.cloudfront.net"  // "http://geoglows-v2-forecasts.s3-website-us-west-2.amazonaws.com"
@@ -154,13 +154,14 @@ const fetchRetroCorrected = async ({riverId}) => {
   })
 }
 
-
 export {
   fetchForecast,
   fetchRetro,
   fetchReturnPeriods,
   fetchForecastCorrected,
   fetchRetroCorrected,
+
+  getRiverIdsWithCache,
 
   retrospectiveZarrUrl
 }

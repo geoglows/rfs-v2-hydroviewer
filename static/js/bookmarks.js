@@ -94,7 +94,7 @@ export const bookmarks = (() => {
       M.toast({html: 'Please enter a name for the bookmark.', classes: 'orange', displayLength: 6000})
       return
     }
-    const addedRiver = await add({id: +id, name: name, validate: false})
+    const addedRiver = await add({id: +id, name: name, validate: true})
     if (!addedRiver){
       M.toast({html: 'This River ID was not found in the RFS datasets. Verify the number and try again.', classes: 'red', displayLength: 6000})
       return

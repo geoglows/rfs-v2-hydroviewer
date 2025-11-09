@@ -1,6 +1,5 @@
-import {fetchCoordinateVariable} from "./zarrUtilities.js";
-import {fetchForecast, fetchForecastCorrected, fetchRetro, fetchRetroCorrected, fetchReturnPeriods, retrospectiveZarrUrl} from "./data.js";
-import {saveStore, cacheKey, readStore, cacheDbStoreName} from "./cache.js";
+import {fetchForecast, fetchForecastCorrected, fetchRetro, fetchRetroCorrected, fetchReturnPeriods, getRiverIdsWithCache} from "./data.js";
+import {cacheDbStoreName, cacheKey, readStore, saveStore} from "./cache.js";
 
 const getAndCacheForecast = async ({riverId, date, corrected}) => {
   const key = cacheKey({riverId, type: 'forecast', corrected, date})
@@ -30,8 +29,8 @@ const getAndCacheReturnPeriods = async ({riverId, corrected}) => {
 }
 
 const validateRiverNumber = async ({riverId}) => {
-  const riverIds = await fetchCoordinateVariable({retrospectiveZarrUrl, varName: 'river_id'});
-  return riverIds.data.indexOf(riverId) !== -1
+  const riverIds = await getRiverIdsWithCache()
+  return riverIds.indexOf(riverId) !== -1
 }
 
 ////////////////// Module Exports

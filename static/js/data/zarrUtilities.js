@@ -1,12 +1,5 @@
 import * as zarr from "https://cdn.jsdelivr.net/npm/zarrita@0.5.4/+esm"
 
-const _getIndexOfCoordinateValue = ({zarrArray, value}) => {
-  const idx = zarrArray.data.indexOf(value);
-  if (idx === -1) {
-    throw new Error(`River ID ${value} not found.`)
-  }
-  return idx;
-}
 const _fetchDischarge = async ({zarrUrl, idx}) => {
   const qStore = new zarr.FetchStore(`${zarrUrl}/Q`);
   const qNode = await zarr.open(qStore, {mode: "r", format: 2});
@@ -53,7 +46,6 @@ const fetchCoordinateVariable = async ({zarrUrl, varName, zarrVersion = 2}) => {
 }
 
 export {
-  _getIndexOfCoordinateValue,
   _fetchDischarge,
   _fetchForecastDischarge,
   _fetchReturnPeriods,
