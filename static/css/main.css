@@ -256,6 +256,17 @@ table.forecast-probability-table td, table.forecast-probability-table th {
     justify-content: center;
 }
 
+.hidden-underneath {
+    position: absolute;
+    width: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    z-index: -1;
+    opacity: 0;
+}
+
 /* on mobile screens, change the download-buttons class */
 @media (max-width: 800px) {
     .download-buttons {

@@ -115,53 +115,53 @@
 </div>
 
 <!-- Reports -->
-<iframe id="report-pdf-frame" style="position: absolute; width: 100%; height: 100%; z-index: -1;"></iframe>
-<div id="report-render-space" style="position: absolute; width: 100%; height: 100%; z-index: -1;"></div>
+<iframe id="report-pdf-frame" class="hidden-underneath"></iframe>
+<div id="report-render-space" class="hidden-underneath"></div>
 <div id="report-modal" class="modal">
   <div class="modal-content">
     <div class="modal-header-bar">
       <div class="header-group">
-        <h4>Generate Reports (Beta)</h4>
+        <h4>Generador de Informes de Ríos</h4>
       </div>
       <div class="header-group">
         <button id="new-report-button" data-tooltip="Start new report" data-position="bottom" class="btn tooltipped" style="margin-inline: 8px" disabled><i class="material-icons">add</i></button>
         <a class="modal-close waves-effect waves-green btn-flat">X</a>
       </div>
     </div>
-    <h5>1. Select Report Type</h5>
+    <h5>1. Seleccionar Tipo de Informe</h5>
     <div class="report-option-wrapper">
-      <label for="report-type-select" id="report-type-select-label">Report Type:</label>
+      <label for="report-type-select" id="report-type-select-label">Tipo de Informe:</label>
       <select id="report-type-select" aria-labelledby="report-type-select-label">
-        <option value="riverForecasts">Daily Forecast Report</option>
+        <option value="riverForecasts">Pronósticos de Ríos</option>
       </select>
     </div>
     <div class="report-option-wrapper">
-      <label for="report-date-calendar">Date of Forecast Data:</label>
+      <label for="report-date-calendar">Fecha del pronóstico:</label>
       <input type="date" id="report-date-calendar" onkeydown="return false" style="max-width: 50%">
     </div>
     <div class="report-option-wrapper">
-      <label for="report-river-list-select">Select List of Rivers</label>
+      <label for="report-river-list-select">Lista de Ríos para el Informe:</label>
       <select id="report-river-list-select">
-        <option value="allBookmarks">All Bookmarks</option>
+        <option value="allBookmarks">Todos los Ríos Marcados</option>
       </select>
     </div>
     <div style="width: 100%; display: flex; justify-content: center">
-      <button id="generate-report" class="btn" style="display: flex; align-items: center">Prepare Report</button>
+      <button id="generate-report" class="btn" style="display: flex; align-items: center">Generar Informe</button>
     </div>
-    <h5>2. Prepare River Data</h5>
-    <div>Download Data:</div>
+    <h5>2. Creación del Informe</h5>
+    <div>Recopilando Datos:</div>
     <div class="progress-with-label">
       <progress id="report-data-progress" value="0" max="100"></progress>
       <div id="report-data-label">0%</div>
     </div>
-    <div>Formatting Report:</div>
+    <div>Formateando Informe:</div>
     <div class="progress-with-label">
       <progress id="report-format-progress" value="0" max="100"></progress>
       <div id="report-format-label">0%</div>
     </div>
-    <h5>3. Download Report</h5>
+    <h5>3. Descargar Informe</h5>
     <div style="width: 100%; display: flex; justify-content: center">
-      <button id="download-report" class="btn" disabled>Download Report (PDF)</button>
+      <button id="download-report" class="btn" disabled>Descargar Informe en PDF</button>
     </div>
   </div>
 </div>

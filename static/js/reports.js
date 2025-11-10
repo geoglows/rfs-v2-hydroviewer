@@ -1,6 +1,8 @@
 import {bookmarks} from "./bookmarks.js";
 import {forecastProbabilityTable, plotForecast} from "./plots.js";
 
+const loadingImageTag = '<img src="/static/img/loading.io.svg" alt="loading" style="height: 100%">'
+
 const maxWorkers = 3;
 const workers = Array.from({length: maxWorkers}, () => new Worker('/static/js/workers/dataFetcher.js', {type: 'module'}));
 
@@ -47,7 +49,7 @@ newReportButton.addEventListener('click', () => {
 })
 generateReportButton.addEventListener('click', async () => {
   toggleReportControls({disabled: true});
-  generateReportButton.innerHTML = `<img src="/static/img/loading.io.svg" alt="loading" style="height: 100%">Generating Report...`;
+  generateReportButton.innerHTML += loadingImageTag
   resetProgressIndicators();
 
   try {
@@ -60,7 +62,7 @@ generateReportButton.addEventListener('click', async () => {
     console.error('Error generating report:', error);
     alert('An error occurred while generating the report. Please try again.');
   } finally {
-    generateReportButton.innerText = 'Generate Report';
+    generateReportButton.innerText = generateReportButton.innerText.split(loadingImageTag).join('');
   }
 })
 reportPrintButton.addEventListener('click', () => printIframe());
