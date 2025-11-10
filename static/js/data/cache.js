@@ -9,7 +9,7 @@ const openDb = () => {
     const request = indexedDB.open(DB_NAME, 1)
     request.onupgradeneeded = event => {
       const db = event.target.result
-      for (const name of [cacheDbStoreName, bookmarkDbStoreName, riversDbStoreName]) {
+      for (const name of [cacheDbStoreName, riversDbStoreName]) {
         if (!db.objectStoreNames.contains(name)) {
           db.createObjectStore(name, {keyPath: 'key'})
         }
