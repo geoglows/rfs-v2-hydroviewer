@@ -17,7 +17,6 @@ const reportFormatLabel = document.getElementById('report-format-label');
 
 const reportTypes = [
   {type: 'riverForecasts', label: 'Daily Forecast Report', datasets: ['forecast', 'returnPeriods']},
-  {type: 'riverSummary', label: 'River Summary', datasets: ['forecast', 'retro', 'returnPeriods']},
 ]
 
 const populateReportRiverLists = (element) => {
