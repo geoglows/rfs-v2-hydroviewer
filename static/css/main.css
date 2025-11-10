@@ -274,39 +274,6 @@ table.forecast-probability-table td, table.forecast-probability-table th {
     }
 }
 
-#report, #report * {
-    z-index: -1;
-    opacity: 0;
-}
-
-#report {
-    box-sizing: border-box;
-    page-break-after: always; /* Ensure each report starts on a new page */
-    position: absolute;
-    overflow-y: scroll;
-    height: 100%;
-}
-
-.report-page {
-    page-break-after: always;
-    width: 8.5in;
-    height: 11in;
-    padding: 0.5in;
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
-}
-
-.report-page-title {
-    font-weight: bold;
-    font-size: 20pt;
-    text-align: center;
-}
-
-#report img {
-    width: 100%;
-}
-
 .progress-with-label {
     display: flex;
     flex-direction: row;
@@ -322,40 +289,4 @@ table.forecast-probability-table td, table.forecast-probability-table th {
     width: 15%;
     text-align: right;
     font-weight: bold;
-}
-
-@media print {
-    * {
-        transform: scale(1) !important;
-        zoom: 1 !important;
-    }
-
-    body {
-        width: 8in;
-        overflow: auto;
-    }
-
-    body * {
-        visibility: hidden;
-    }
-
-    #report, #report * {
-        visibility: visible;
-    }
-
-    #report, #report * {
-        opacity: 1;
-        z-index: 1000;
-        height: auto;
-    }
-
-    /* special styling for the forecast table on print screens */
-    table.forecast-probability-table td, table.forecast-probability-table th {
-        padding: 3px;
-    }
-
-    * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
 }

@@ -115,7 +115,8 @@
 </div>
 
 <!-- Reports-->
-<div id="report"></div>
+<iframe id="report-pdf-frame" style="position: absolute; width: 100%; height: 100%; z-index: -1;"></iframe>
+<div id="report-render-space" style="position: absolute; width: 100%; height: 100%; z-index: -1;"></div>
 <div id="report-modal" class="modal">
   <div class="modal-content">
     <div class="modal-header-bar">
@@ -130,7 +131,9 @@
     <h5>1. Select Report Type</h5>
     <div class="report-option-wrapper">
       <label for="report-type-select" id="report-type-select-label">Report Type:</label>
-      <select id="report-type-select" aria-labelledby="report-type-select-label"></select>
+      <select id="report-type-select" aria-labelledby="report-type-select-label">
+        <option value="riverForecasts">Daily Forecast Report</option>
+      </select>
     </div>
     <div class="report-option-wrapper">
       <label for="report-date-calendar">Date of Forecast Data:</label>
@@ -138,7 +141,9 @@
     </div>
     <div class="report-option-wrapper">
       <label for="report-river-list-select">Select List of Rivers</label>
-      <select id="report-river-list-select"></select>
+      <select id="report-river-list-select">
+        <option value="allBookmarks">All Bookmarks</option>
+      </select>
     </div>
     <div style="width: 100%; display: flex; justify-content: center">
       <button id="generate-report" class="btn" style="display: flex; align-items: center">Prepare Report</button>

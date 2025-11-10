@@ -1,0 +1,66 @@
+#report {
+    box-sizing: border-box;
+    page-break-after: always; /* Ensure each report starts on a new page */
+    position: absolute;
+    overflow-y: scroll;
+    width: 8.5in;
+    height: auto
+}
+
+.report-page {
+    page-break-after: always;
+    width: 8.5in;
+    height: 11in;
+    min-height: 11in;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.report-page-title {
+    font-weight: bold;
+    font-size: 20pt;
+    text-align: center;
+}
+
+.report-figure {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 90%;
+    max-height: 6in;
+}
+
+.report-table {
+    width: 100%;
+}
+
+.report-table * {
+    font-size: 15px;
+    text-align: center;
+}
+
+@media print {
+    @page {
+        size: letter;
+    }
+
+    * {
+        transform: scale(1) !important;
+        zoom: 1 !important;
+        scrollbar-width: none !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    #report, #report * {
+        opacity: 1;
+        height: auto;
+    }
+
+    /* special styling for the forecast table on print screens */
+    table.forecast-probability-table td, table.forecast-probability-table th {
+        padding: 3px;
+    }
+}

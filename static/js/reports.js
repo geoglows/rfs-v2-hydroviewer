@@ -4,7 +4,8 @@ import {forecastProbabilityTable, plotForecast} from "./plots.js";
 const maxWorkers = 3;
 const workers = Array.from({length: maxWorkers}, () => new Worker('/static/js/workers/dataFetcher.js', {type: 'module'}));
 
-const reportDiv = document.getElementById('report');
+const reportIframe = document.getElementById('report-pdf-frame');
+const reportRenderSpace = document.getElementById('report-render-space');
 const newReportButton = document.getElementById('new-report-button');
 const reportTypeSelect = document.getElementById('report-type-select');
 const reportDatePicker = document.getElementById('report-date-calendar');
@@ -19,12 +20,8 @@ const reportTypes = [
   {type: 'riverForecasts', label: 'Daily Forecast Report', datasets: ['forecast', 'returnPeriods']},
 ]
 
-const populateReportRiverLists = (element) => {
-  // const reportType = element.value;
-  // todo get a list of the riverLists available and populate the select
-  const riverLists = ['Defaults', 'Custom1', 'Custom2'];
-  reportRiverListSelect.innerHTML = riverLists.map((listName, idx) => `<option value="${listName}" ${idx === 0 ? 'selected' : ''}>${listName}</option>`).join('')
-}
+// todo get a list of available report types and populate the select
+// todo get a list of the riverLists available and populate the select
 
 const generateReportButton = document.getElementById('generate-report')
 const resetProgressIndicators = () => {
@@ -47,7 +44,6 @@ newReportButton.addEventListener('click', () => {
   togglePrintButton({disabled: true});
   toggleReportControls({disabled: false});
   resetProgressIndicators()
-  reportDiv.innerHTML = ''
 })
 generateReportButton.addEventListener('click', async () => {
   toggleReportControls({disabled: true});
@@ -56,20 +52,18 @@ generateReportButton.addEventListener('click', async () => {
 
   try {
     const reportType = reportTypeSelect.value;
-    const riverListName = reportRiverListSelect.value;
-    // todo get the river IDs for the selected river list
     const riverList = bookmarks.list().map(b => b.id);
     const datasetList = reportTypes.find(r => r.type === reportType).datasets;
     const data = await fetchReportData({riverList, datasetList});
-    plotReportData(data)
+    await plotReportData(data)
   } catch (error) {
-    // todo error handle and message UI
     console.error('Error generating report:', error);
     alert('An error occurred while generating the report. Please try again.');
   } finally {
     generateReportButton.innerText = 'Generate Report';
   }
 })
+reportPrintButton.addEventListener('click', () => printIframe());
 
 const fetchReportData = async ({riverList, datasetList}) => {
   const nRivers = riverList.length;
@@ -108,71 +102,67 @@ const fetchReportData = async ({riverList, datasetList}) => {
   return await Promise.all(perRiverPromises)
 }
 
-const plotReportData = (data) => {
-  // data should be an array of objects with keys riverId, forecast, returnPeriods, as fetched by the workers
-  reportDiv.innerHTML = ''
+const plotReportData = async (data) => {
+  let nFormatted = 0;
   const nRivers = data.length;
-  let nComplete = 0;
 
-  data.forEach(riverData => {
-    const plotDivId = `report-river-forecast-plot-${riverData.riverId}`;
+  // we have a div.report in the main document so we can render plotly graphs, get their image url, then in an iframe build the report
+  let reportPages = data.map(async riverData => {
+    const pageTitle = `${bookmarks.list().find(r => r.id === riverData.riverId).name} (ID: ${riverData.riverId})`;
 
-    const pageDiv = document.createElement('div');
-    pageDiv.className = 'report-page';
-    reportDiv.appendChild(pageDiv);
-
-    const title = document.createElement('div');
-    title.innerText = `${bookmarks.list().find(r => r.id === riverData.riverId).name} (ID: ${riverData.riverId})`;
-    title.className = 'report-page-title';
-    pageDiv.appendChild(title);
-
-    const plotDiv = document.createElement('div');
-    plotDiv.id = plotDivId;
-    pageDiv.appendChild(plotDiv);
-
-    const imgTag = document.createElement('img');
-    imgTag.style.width = '100%';
-    imgTag.style.maxWidth = '100%';
-    imgTag.style.height = 'auto';
-    pageDiv.appendChild(imgTag);
-
-    const tableDiv = document.createElement('div');
-    tableDiv.id = `report-river-forecast-table-${riverData.riverId}`;
-    tableDiv.style.width = '100%';
-    tableDiv.style.maxWidth = '100%';
-    tableDiv.style.fontSize = '11px';
-    pageDiv.appendChild(tableDiv);
-
+    // render a plotly graph and get its image url
     plotForecast({
       forecast: riverData.forecast,
       rp: riverData.returnPeriods,
       riverId: riverData.riverId,
-      chartDiv: plotDiv,
+      chartDiv: reportRenderSpace,
     });
     // remove all the controls from the plotDiv and make it static
-    plotDiv.querySelectorAll('.modebar, .legendtoggle, .zoomlayer').forEach(el => el.remove());
-    // convert to an image url using Plotly.toImage,
-    Plotly
-      .toImage(plotDiv, {format: 'png', width: 800, height: 500})
-      .then(url => imgTag.src = url)
+    reportRenderSpace.querySelectorAll('.modebar, .legendtoggle, .zoomlayer').forEach(el => el.remove());
+    const url = await Plotly.toImage(reportRenderSpace, {format: 'png', width: 800, height: 500})
+    reportRenderSpace.innerHTML = '';
 
-    plotDiv.remove();
-    tableDiv.innerHTML = forecastProbabilityTable({forecast: riverData.forecast, rp: riverData.returnPeriods})
-
-    nComplete += 1;
-    let progress = ((nComplete / nRivers) * 100).toFixed(0);
+    nFormatted += 1;
+    let progress = ((nFormatted / nRivers) * 100).toFixed(0);
     reportFormatProgress.value = progress
     reportFormatLabel.innerText = `${progress}%`;
-  })
-  // print the #report div after short delay for all rendering to complete
-  setTimeout(() => {
-    window.print()
-  }, 1000);
 
-  // enable the print report button
-  togglePrintButton({disabled: false});
+    return `
+<div class="report-page">
+<div class="report-page-title">${pageTitle}</div>
+<img class="report-figure" src="${url}" alt="Forecast Plot for River ID ${riverData.riverId}">
+<div class="report-table">
+${forecastProbabilityTable({forecast: riverData.forecast, rp: riverData.returnPeriods})}
+</div>
+</div>
+`;
+  })
+
+  reportPages = await Promise.all(reportPages);
+  const printDocument = reportIframe.contentDocument || reportIframe.contentWindow.document;
+  printDocument.open();
+  printDocument.write(`
+<html lang="en">
+<head>
+  <title>River Forecast Report</title>
+  <link rel="stylesheet" type="text/css" href="/static/css/report.print.css">
+</head>
+<body>
+  <div id="report">
+    ${reportPages.join('')}
+  </div>
+</body>
+</html>
+`);
+  printDocument.close();
+  // wait for the iframe to render everything
+  reportIframe.onload = () => {
+    togglePrintButton({disabled: false});
+    printIframe()
+  }
 }
 
-reportTypeSelect.innerHTML = reportTypes.map(report => `<option value="${report.type}">${report.label}</option>`).join('');
-reportTypeSelect.addEventListener('change', event => showReportRiverLists(event.target));
-populateReportRiverLists()
+const printIframe = () => {
+  reportIframe.focus();
+  reportIframe.contentWindow.print();
+}
