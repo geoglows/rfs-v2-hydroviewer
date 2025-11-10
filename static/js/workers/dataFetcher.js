@@ -6,9 +6,7 @@ import {getAndCacheForecast, getAndCacheReturnPeriods} from '../data/main.js';
 
 self.onmessage = async function (event) {
   const {riverId, forecastDate} = event.data;
-  // Notify that fetching has started
-  self.postMessage({riverId, status: 'started'});
-  let errors = []
+  let errors = [];
   let forecast = null;
   let returnPeriods = null;
 

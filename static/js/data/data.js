@@ -6,7 +6,7 @@ const baseForecastZarrUrl = "https://d14ritg1bypdp7.cloudfront.net"  // "http://
 const retrospectiveZarrUrl = `${baseRetroZarrUrl}/retrospective/daily.zarr`;
 
 const endpoint = 'https://geoglows.ecmwf.int/api/v2'
-const forecastCorrectedUrl = riverId => `${endpoint}/forecastensemble/${riverId}?format=json&bias_corrected=true`
+const forecastCorrectedUrl = ({riverId, date}) => `${endpoint}/forecastensemble/${riverId}?format=json&date=${date}&bias_corrected=true`
 const retroCorrectedUrl = riverId => `${endpoint}/retrospectivedaily/${riverId}?format=json&bias_corrected=true`
 
 const _membersToStats = membersArray => {
@@ -131,7 +131,7 @@ const fetchReturnPeriods = async ({riverId}) => {
   return Promise.resolve(rpData);
 }
 
-const fetchForecastCorrected = async ({riverId}) => {
+const fetchForecastCorrected = async ({riverId, date}) => {
   /* api returns object of structure:
   {
     river_id: riverId,
@@ -147,7 +147,7 @@ const fetchForecastCorrected = async ({riverId}) => {
     discharge_original: [[ensemble_01_original array], [ensemble_02_original array], ...]
   }
   */
-  const response = await fetch(forecastCorrectedUrl(riverId))
+  const response = await fetch(forecastCorrectedUrl({riverId, date}))
   if (!response.ok) throw new Error(`Error fetching bias-corrected forecast data: ${response.statusText}`)
   const data = await response.json()
 

@@ -80,7 +80,7 @@ export const bookmarks = (() => {
   }
   const submitForm = async () => {
     const id = newRiverIdInput.value.trim()
-    const name = newRiverNameInput.value.trim() || `River ${id}`
+    const name = newRiverNameInput.value.trim()
     // todo translate these error messages
     if (!/^\d{9}$/.test(id)) {
       M.toast({html: 'Please enter a 9-digit River ID.', classes: 'orange', displayLength: 6000})

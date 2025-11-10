@@ -5,7 +5,7 @@ const getAndCacheForecast = async ({riverId, date, corrected}) => {
   const key = cacheKey({riverId, type: 'forecast', corrected, date})
   const cachedData = await readStore({storeName: cacheDbStoreName, key})
   if (cachedData) return Promise.resolve(cachedData)
-  const data = corrected ? await fetchForecastCorrected({riverId}) : await fetchForecast({riverId, date})
+  const data = corrected ? await fetchForecastCorrected({riverId, date}) : await fetchForecast({riverId, date})
   await saveStore({storeName: cacheDbStoreName, key, data})
   return Promise.resolve(data)
 }

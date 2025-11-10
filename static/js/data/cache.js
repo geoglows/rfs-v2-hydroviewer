@@ -2,7 +2,6 @@ const CACHE_SIZE = 300
 const DB_NAME = 'hydroviewerDB'
 
 const cacheDbStoreName = 'discharge'
-const bookmarkDbStoreName = 'bookmarks'
 const riversDbStoreName = 'rivers'
 
 const openDb = () => {
@@ -72,8 +71,8 @@ const saveStore = async ({storeName, key, data}) => {
 }
 const clearStore = async () => {
   const db = await openDb()
-  const tx = db.transaction([cacheDbStoreName, bookmarkDbStoreName, riversDbStoreName], 'readwrite')
-  for (const name of [cacheDbStoreName, bookmarkDbStoreName, riversDbStoreName]) {
+  const tx = db.transaction([cacheDbStoreName, riversDbStoreName], 'readwrite')
+  for (const name of [cacheDbStoreName, riversDbStoreName]) {
     const store = tx.objectStore(name)
     store.clear()
   }
@@ -87,6 +86,5 @@ export {
   cacheKey,
 
   cacheDbStoreName,
-  bookmarkDbStoreName,
   riversDbStoreName,
 }
