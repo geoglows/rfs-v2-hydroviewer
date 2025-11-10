@@ -7,6 +7,18 @@
     padding: 10px;
 }
 
+.modal {
+    min-width: 65%;
+}
+
 .modal .modal-content {
     padding: 20px;
+}
+
+/*on narrow phone screens, modal width is 100% */
+@media only screen and (max-width: 800px) {
+    .modal {
+        width: 100%;
+        margin: 0;
+    }
 }

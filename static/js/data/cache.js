@@ -1,24 +1,29 @@
-const CACHE_SIZE = 125
-const DB_NAME = 'RiverCacheDB'
-const STORE_NAME = 'cache'
+const CACHE_SIZE = 300
+const DB_NAME = 'hydroviewerDB'
 
-const _openCacheDB = () => {
+const cacheDbStoreName = 'discharge'
+const riversDbStoreName = 'rivers'
+
+const openDb = () => {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, 1)
     request.onupgradeneeded = event => {
       const db = event.target.result
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, {keyPath: 'key'})
+      for (const name of [cacheDbStoreName, bookmarkDbStoreName, riversDbStoreName]) {
+        if (!db.objectStoreNames.contains(name)) {
+          db.createObjectStore(name, {keyPath: 'key'})
+        }
       }
     }
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })
 }
-const _pruneCache = async db => {
+const pruneCache = async ({storeName}) => {
+  const db = await openDb()
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readwrite")
-    const store = tx.objectStore(STORE_NAME)
+    const tx = db.transaction(storeName, "readwrite")
+    const store = tx.objectStore(storeName)
     const req = store.getAll()
 
     req.onsuccess = function () {
@@ -45,27 +50,41 @@ const cacheKey = ({riverId, type, corrected, date}) => {
   }
   return `${riverId}_${type}_${corrected}_${date}`
 }
-const readCache = async key => {
-  const db = await _openCacheDB()
+const readStore = async ({storeName, key}) => {
+  const db = await openDb()
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readonly')
-    const store = tx.objectStore(STORE_NAME)
+    const tx = db.transaction(storeName, 'readonly')
+    const store = tx.objectStore(storeName)
     const req = store.get(key)
     req.onsuccess = () => resolve(req.result ? req.result.data : undefined)
     req.onerror = () => reject(req.error)
   })
 }
-const cacheData = async (data, key) => {
-  const db = await _openCacheDB()
-  const tx = db.transaction(STORE_NAME, 'readwrite')
-  const store = tx.objectStore(STORE_NAME)
-  tx.oncomplete = () => _pruneCache(db)
+const saveStore = async ({storeName, key, data}) => {
+  const db = await openDb()
+  const tx = db.transaction(storeName, 'readwrite')
+  const store = tx.objectStore(storeName)
+  if (storeName === cacheDbStoreName) {
+    tx.oncomplete = () => pruneCache({storeName})
+  }
   store.put({key, data, timestamp: Date.now()})
 }
-const clearCache = async () => {
-  const db = await _openCacheDB()
-  const tx = db.transaction(STORE_NAME, 'readwrite')
-  tx.objectStore(STORE_NAME).clear()
+const clearStore = async () => {
+  const db = await openDb()
+  const tx = db.transaction([cacheDbStoreName, riversDbStoreName], 'readwrite')
+  for (const name of [cacheDbStoreName, riversDbStoreName]) {
+    const store = tx.objectStore(name)
+    store.clear()
+  }
 }
 
-export {readCache, cacheData, clearCache, cacheKey}
+export {
+  openDb,
+  readStore,
+  saveStore,
+  clearStore,
+  cacheKey,
+
+  cacheDbStoreName,
+  riversDbStoreName,
+}

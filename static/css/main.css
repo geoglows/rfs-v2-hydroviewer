@@ -11,6 +11,10 @@ html, body {
     position: absolute;
 }
 
+body {
+    overflow: hidden;
+}
+
 .body-wrapper {
     height: 100%;
     display: flex;
@@ -202,10 +206,23 @@ button > a {
     padding: 5px;
 }
 
-.options-wrapper {
+.settings-options-wrapper {
     display: flex;
     flex-direction: column;
     gap: 10px;
+}
+
+.report-option-wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.report-option-wrapper * {
+    flex: 1 0 auto;
+    width: 50%;
 }
 
 .modal-footer {
@@ -239,6 +256,17 @@ table.forecast-probability-table td, table.forecast-probability-table th {
     justify-content: center;
 }
 
+.hidden-underneath {
+    position: absolute;
+    width: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    z-index: -1;
+    opacity: 0;
+}
+
 /* on mobile screens, change the download-buttons class */
 @media (max-width: 800px) {
     .download-buttons {
@@ -255,4 +283,21 @@ table.forecast-probability-table td, table.forecast-probability-table th {
     .hide-on-small-only {
         display: none;
     }
+}
+
+.progress-with-label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.progress-with-label progress {
+    width: 80%;
+}
+
+.progress-with-label div {
+    width: 15%;
+    text-align: right;
+    font-weight: bold;
 }

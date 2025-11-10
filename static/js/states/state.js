@@ -1,4 +1,4 @@
-import {pubSubState} from "./stores.js";
+import {pubSubState} from "./pubSubState.js";
 
 const RiverId = pubSubState({
   initialValue: null,

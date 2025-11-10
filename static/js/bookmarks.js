@@ -1,5 +1,6 @@
 import namedDefaultRivers from "../json/namedDefaultRivers.json" with {type: "json"}
 import {RiverId} from "./states/state.js";
+import {validateRiverNumber} from "./data/main.js";
 
 const key = 'riverBookmarks'
 
@@ -30,11 +31,16 @@ export const bookmarks = (() => {
     localStorage.setItem(key, JSON.stringify(bookmarks))
     table()
   }
-  const add = ({id, name}) => {
-    if (bookmarks.find(r => r.id === id)) return
+  const add = async ({id, name, validate = true}) => {
+    if (bookmarks.find(r => r.id === id)) return false
+    if (validate) {
+      const valid = await validateRiverNumber({riverId: id})
+      if (!valid) return false
+    }
     bookmarks.push({id, name})
     cache()
     setFavoriteIcon()
+    return true
   }
   const remove = id => {
     bookmarks = bookmarks.filter(r => r.id !== id)
@@ -69,17 +75,18 @@ export const bookmarks = (() => {
       })
   }
   const restoreDefaults = () => {
-    namedDefaultRivers.forEach(r => add(r))
+    namedDefaultRivers.forEach(async r => await add({...r, validate: false}))
     cache()
   }
-  const submitForm = () => {
+  const submitForm = async () => {
     const id = newRiverIdInput.value.trim()
-    const name = newRiverNameInput.value.trim() || `River ${id}`
+    const name = newRiverNameInput.value.trim()
+    // todo translate these error messages
     if (!/^\d{9}$/.test(id)) {
-      M.toast({html: 'Please enter a valid 9-digit River ID.', classes: 'orange', displayLength: 6000})
+      M.toast({html: 'Please enter a 9-digit River ID.', classes: 'orange', displayLength: 6000})
       return
     }
-    if (bookmarks.find(r => r.id === id)) {
+    if (bookmarks.find(r => r.id === +id)) {
       M.toast({html: 'This River ID is already bookmarked.', classes: 'orange', displayLength: 6000})
       return
     }
@@ -87,7 +94,11 @@ export const bookmarks = (() => {
       M.toast({html: 'Please enter a name for the bookmark.', classes: 'orange', displayLength: 6000})
       return
     }
-    add({id: parseInt(id), name: name})
+    const addedRiver = await add({id: +id, name: name, validate: true})
+    if (!addedRiver){
+      M.toast({html: 'This River ID was not found in the RFS datasets. Verify the number and try again.', classes: 'red', displayLength: 6000})
+      return
+    }
     cache()
     newRiverIdInput.value = ''
     newRiverNameInput.value = ''
