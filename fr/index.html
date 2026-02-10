@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>River Forecast System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="GEOGLOWS Hydroviewer">
+  <meta name="author" content="Riley Hales PhD">
+  <meta name="keywords" content="RFS, River Forecast System, Hydrology, Streamflow, Global, GEOGLOWS, Hydroviewer, Streamflow, Forecast, Retrospective">
+  <meta name="robots" content="index, follow">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
+
+  <!-- CSS Framework -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <!-- Vite entry point -->
+  <script type="module" src="/src/main.js" defer></script>
+</head>
+
+<body>
+<!-- Settings-->
+<div id="about-modal" class="modal">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
+    <div class="modal-header-bar">
+      <h4>À propos de GEOGLOWS</h4>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+    </div>
+    <div style="width: 100%; max-width: 800px">
+      <p>
+        Pour plus d’informations sur le projet GEOGLOWS, visitez <a href="https://www.geoglows.org" target="_blank">geoglows.org</a>.
+        Pour plus d’informations sur le Système de Prévision des Rivières (River Forecast System), visitez <a href="https://training.geoglows.org" target="_blank">training.geoglows.org</a>.
+        Pour obtenir des instructions sur la documentation et le téléchargement de données, consultez <a href="https://data.geoglows.org" target="_blank">data.geoglows.org</a>.
+      </p>
+      <p>Plus d’informations sur les couches cartographiques de la NOAA sont disponibles :</p>
+      <ol>
+        <li>NOAA-20 VIIRS True Color : <a href="https://www.arcgis.com/home/item.html?id=c873f4c13aa54b25b01270df9358dc64" target="_blank">arcgis.com</a></li>
+        <li>NOAA-20 VIIRS Water States : <a href="https://www.arcgis.com/home/item.html?id=3695712d28354952923d2a26a176b767" target="_blank">arcgis.com</a></li>
+        <li>NOAA-20 VIIRS Thermal Anomalies : <a href="https://www.arcgis.com/home/item.html?id=dece90af1a0242dcbf0ca36d30276aa3" target="_blank">arcgis.com</a></li>
+        <li>NOAA GOES InfraRouge Colorisé (mise à jour toutes les 10 minutes) : <a href="https://www.arcgis.com/home/item.html?id=37a875ff3611496883b7ccca97f0f5f4" target="_blank">arcgis.com</a></li>
+        <li>NOAA-20 VIIRS Composite d’Inondation : <a href="https://floods.ssec.wisc.edu/products/RIVER-FLDglobal-composite" target="_blank">Université du Wisconsin Madison SSEC</a></li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<div id="biascorrectionwarning-modal" class="modal">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
+    <div class="modal-header-bar">
+      <h4>Utiliser des données corrigées du biais ?</h4>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+    </div>
+    <div style="width: 100%; max-width: 800px">
+      <p>
+        La correction globale du biais est un processus expérimental basé sur une recherche active et des efforts de collecte de données.
+        Vous pouvez rencontrer des comportements inattendus ou des données incorrectes.
+        Ces données ne sont pas recommandées pour des applications opérationnelles. Êtes-vous sûr de vouloir utiliser les données corrigées du biais ?
+      </p>
+      <div style="display: flex; flex-direction: row; justify-content: center; gap: 10px; margin-top: 15px">
+        <button class="btn red modal-close waves-effect waves-green btn-flat">Non</button>
+        <button class="btn green modal-close waves-effect waves-green btn-flat" id="confirm-use-bias-correction">Oui, utiliser les données corrigées</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="settings-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header-bar">
+      <h4>Paramètres</h4>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+    </div>
+    <h5>Options d’affichage</h5>
+    <div class="settings-options-wrapper">
+      <label>
+        <input type="checkbox" class="filled-in" id="settingsShowSimpleForecast" checked/>
+        <span>Afficher les prévisions simples</span>
+      </label>
+    </div>
+    <div class="settings-options-wrapper">
+      <label>
+        <input type="checkbox" class="filled-in" id="settingsShowExtraRetroGraphs" checked/>
+        <span>Afficher des graphiques supplémentaires analysant les données rétrospectives</span>
+      </label>
+    </div>
+    <h5>Options de données</h5>
+    <div class="settings-options-wrapper">
+      <label>
+        <input type="checkbox" class="filled-in" id="settingsUseBiasCorrected"/>
+        <span>Utiliser les prévisions expérimentales corrigées du biais</span>
+      </label>
+    </div>
+    <h5>Options du cache</h5>
+    <button class="btn red clear-cache">Effacer le cache</button>
+    <button class="btn red delete-all-bookmarks">Supprimer tous les favoris de rivières</button>
+  </div>
+</div>
+
+<!-- Reports -->
+<iframe id="report-pdf-frame" class="hidden-underneath"></iframe>
+<div id="report-render-space" class="hidden-underneath"></div>
+
+<div id="report-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header-bar">
+      <div class="header-group">
+        <h4>Générateur de rapports de rivières</h4>
+      </div>
+      <div class="header-group">
+        <button id="new-report-button" data-tooltip="Nouveau rapport" data-position="bottom" class="btn tooltipped" style="margin-inline: 8px" disabled><i class="material-icons">add</i></button>
+        <a class="modal-close waves-effect waves-green btn-flat">X</a>
+      </div>
+    </div>
+    <h5>1. Sélectionner le type de rapport</h5>
+    <div class="report-option-wrapper">
+      <label for="report-type-select" id="report-type-select-label">Type de rapport :</label>
+      <select id="report-type-select" aria-labelledby="report-type-select-label">
+        <option value="riverForecasts">Prévisions des rivières</option>
+      </select>
+    </div>
+    <div class="report-option-wrapper">
+      <label for="report-date-calendar">Date de la prévision :</label>
+      <input type="date" id="report-date-calendar" onkeydown="return false" style="max-width: 50%">
+    </div>
+    <div class="report-option-wrapper">
+      <label for="report-river-list-select">Liste des rivières pour le rapport :</label>
+      <select id="report-river-list-select">
+        <option value="allBookmarks">Toutes les rivières enregistrées</option>
+      </select>
+    </div>
+    <div style="width: 100%; display: flex; justify-content: center">
+      <button id="generate-report" class="btn" style="display: flex; align-items: center">Générer le rapport</button>
+    </div>
+
+    <h5>2. Création du rapport</h5>
+    <div>Collecte des données :</div>
+    <div class="progress-with-label">
+      <progress id="report-data-progress" value="0" max="100"></progress>
+      <div id="report-data-label">0%</div>
+    </div>
+    <div>Formatage du rapport :</div>
+    <div class="progress-with-label">
+      <progress id="report-format-progress" value="0" max="100"></progress>
+      <div id="report-format-label">0%</div>
+    </div>
+
+    <h5>3. Télécharger le rapport</h5>
+    <div style="width: 100%; display: flex; justify-content: center">
+      <button id="download-report" class="btn" disabled>Télécharger le rapport en PDF</button>
+    </div>
+  </div>
+</div>
+
+<div id="bookmarks-modal" class="modal" data-category="river-bookmarks">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center;">
+    <div class="modal-header-bar">
+      <h4 style="margin: 0">Rivières enregistrées</h4>
+      <div style="flex-grow: 1"></div>
+      <a data-tooltip="Ajouter un favori" data-position="bottom" class="btn modal-trigger tooltipped" href="#add-river-bookmark" style="margin-inline: 8px"><i class="material-icons">add</i></a>
+      <button data-tooltip="Restaurer les favoris par défaut" data-position="bottom" class="btn tooltipped" id="restore-bookmarks-button" style="margin-inline: 8px"><i class="material-icons">restore</i></button>
+      <button data-tooltip="Supprimer tous les favoris" data-position="bottom" class="btn tooltipped delete-all-bookmarks" style="margin-inline: 8px"><i class="material-icons">delete_forever</i></button>
+      <button class="modal-close waves-effect waves-green btn-flat">X</button>
+    </div>
+    <div id="bookmarks-table" style="width: 100%">
+      <table class="striped responsive-table bordered">
+        <thead>
+        <tr>
+          <th style="width: 20%; min-width: 150px; max-width: 200px">ID de la rivière</th>
+          <th style="width: 60%; max-width: 450px">Nom de la rivière</th>
+          <th style="width: 20%; min-width: 150px; max-width: 200px">Actions</th>
+        </tr>
+        </thead>
+        <tbody id="bookmarks-tbody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="add-river-bookmark" class="modal" data-category="river-bookmarks">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
+    <div class="modal-header-bar">
+      <h4 style="margin: 0">Ajouter un nouveau favori de rivière</h4>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+    </div>
+    <table>
+      <thead>
+      <tr>
+        <th><label for="save-river-id">ID de la rivière</label></th>
+        <th><label for="save-river-name">Nom de la rivière</label></th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td>
+          <input id="save-river-id" type="number" onchange="this.value = this.value.slice(0, 9)" placeholder="ID de la rivière (9 chiffres)">
+        </td>
+        <td>
+          <input id="save-river-name" onchange="this.innerText = this.innerText.slice(0, 30)" placeholder="Nom de la rivière">
+        </td>
+        <td>
+          <button class="btn green" id="submit-new-bookmark">Ajouter</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Data presentation -->
+<div id="charts-modal" class="modal always-large-modal">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
+    <div class="modal-header-bar">
+      <div class="header-group">
+        <a class="btn btn-flat modal-trigger waves-effect waves-teal tooltipped" data-tooltip="Chercher une rivière" href="#enter-river-id-modal"><i class="material-icons" style="color: black">search</i></a>
+        <h4 id="selected-river-id" style="margin: 0">Sélectionnez une rivière</h4>
+        <button class="btn-flat" id="save-current-river"></button>
+      </div>
+      <div class="header-group">
+        <button id="showForecastCharts" class="btn status-btn active" onclick="showChartView('forecast')">Prévision<span id="forecast-load-icon"></span></button>
+        <button id="showRetroCharts" class="btn status-btn" onclick="showChartView('retro')">Historique<span id="retro-load-icon"></span></button>
+        <a class="btn btn-flat waves-effect waves-teal tooltipped dropdown-trigger" data-target="download-select" data-tooltip="Télécharger CSVs"><i class="material-icons">download</i></a>
+        <ul id="download-select" class="dropdown-content">
+          <li style="display: flex; justify-content: center">
+            <button class="btn waves-effect waves-light" id="download-forecast-link" disabled>Enregistrer les données de prévision (CSV)</button>
+          </li>
+          <li style="display: flex; justify-content: center">
+            <button class="btn waves-effect waves-light" id="download-retrospective-link" disabled>Enregistrer les données rétrospectives (CSV)</button>
+          </li>
+        </ul>
+        <button class="btn modal-close waves-effect waves-red btn-flat">X</button>
+      </div>
+    </div>
+
+    <div class="chart-spaces chart-category-container" style="position: relative; height: 100%">
+      <div id="forecastChartSpace" class="chart-category-container">
+        <div id="forecast-date-controls">
+          <button id="datepicker-previous" class="btn btn-flat"><i class="material-icons">arrow_back</i></button>
+          <label for="forecast-date-calendar">Date de prévision :</label>
+          <input type="date" id="forecast-date-calendar" onkeydown="return false">
+          <button id="datepicker-next" class="btn btn-flat" disabled><i class="material-icons">arrow_forward</i></button>
+        </div>
+        <div id="forecastPlot" class="chart">
+          <h4>Entrez un ID de rivière ou utilisez la carte pour cliquer sur une rivière et voir les données</h4>
+        </div>
+        <div id="forecastTable" class="chart"></div>
+      </div>
+
+      <div id="retroChartSpace" class="chart-category-container dissolve-backwards">
+        <div id="retroPlot" class="chart">
+          <h4>Entrez un ID de rivière ou utilisez la carte pour cliquer sur une rivière et voir les données</h4>
+        </div>
+        <div id="yearlyVolPlot" class="chart"></div>
+        <div id="cumVolume" class="chart"></div>
+        <div id="yearlyStatusPlot" class="chart"></div>
+        <div id="yearlyPeaksPlot" class="chart"></div>
+        <div id="rasterHydrographPlot" class="chart"></div>
+        <div id="fdcPlot" class="chart"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="enter-river-id-modal" class="modal" data-category="river-bookmarks">
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
+    <div class="modal-header-bar">
+      <h4 style="margin: 0">Chercher une rivière par ID</h4>
+      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+    </div>
+    <div style="display: flex; flex-direction: row; align-items: center; gap: 5px; justify-content: center; width: 100%">
+      <label for="river-id">ID de la rivière :</label>
+      <input type="number" id="river-id" placeholder="ID de la rivière (9 chiffres)" onchange="this.value = this.value.slice(0, 9)" style="width: 200px"/>
+      <button class="waves-effect waves-light btn" onclick="setRiverIdFromInput()">Valider</button>
+    </div>
+  </div>
+</div>
+
+<!-- For the Map -->
+<div id="filter-modal" data-category="map" class="modal">
+  <div class="modal-content">
+    <h4>Filtrer les rivières</h4>
+    <div><a href="https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer/0">Visitez ArcGIS Living Atlas</a> pour voir les métadonnées.</div>
+    <div style="width: 100%">
+      <div>
+        <label for="outletCountry">Pays de sortie de la rivière</label>
+        <select id="outletCountry" class="browser default" multiple></select>
+      </div>
+      <div>
+        <label for="riverCountry">Pays de la rivière</label>
+        <select id="riverCountry" class="browser default" multiple></select>
+      </div>
+      <div>
+        <label for="vpuSelect">Numéro VPU</label>
+        <select id="vpuSelect" class="browser default" multiple></select>
+      </div>
+      <div>
+        <label for="definitionString">Entrer des filtres SQL personnalisés</label>
+        <input type="text" id="definitionString" placeholder=""/>
+      </div>
+      <div>
+        <label for="definition-expression">Définition actuelle</label>
+        <input type="text" id="definition-expression" disabled/>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" onclick="updateLayerDefinitions()">Appliquer les filtres</button>
+    <button class="btn btn-secondary" onclick="resetDefinitionExpression()">Effacer les filtres</button>
+    <a class="modal-close waves-effect waves-green btn-flat">Fermer</a>
+  </div>
+</div>
+
+<div class="body-wrapper">
+  <div class="nav-bar-wrapper">
+    <h4 style="font-size: 2rem; font-weight: bolder">
+      <span class="hide-on-small-only">GEOGLOWS </span>R<span class="hide-on-small-only">iver </span>F<span class="hide-on-small-only">orecast </span>S<span class="hide-on-small-only">ystem</span>
+    </h4>
+    <div>
+      <a data-tooltip="Afficher les données" data-position="bottom" class="btn modal-trigger tooltipped" href="#charts-modal"><i class="material-icons">timeline</i></a>
+      <a data-tooltip="Générer des rapports" data-position="bottom" class="btn modal-trigger tooltipped" href="#report-modal"><i class="material-icons">assignment</i></a>
+      <a data-tooltip="Rivières enregistrées" data-category="river-bookmarks" data-position="bottom" class="btn modal-trigger tooltipped" href="#bookmarks-modal"><i class="material-icons">bookmark</i></a>
+      <a data-tooltip="À propos des données" data-position="bottom" class="btn modal-trigger tooltipped" href="#about-modal"><i class="material-icons">help</i></a>
+      <a data-tooltip="Paramètres" data-position="bottom" class="btn modal-trigger tooltipped" href="#settings-modal"><i class="material-icons">settings</i></a>
+      <a data-tooltip="Langue" data-position="bottom" class="btn dropdown-trigger tooltipped" href="#" data-target="language-select"><i class="material-icons">translate</i></a>
+      <ul id="language-select" class="dropdown-content">
+        <li><a href="/index.html" data-lang="en-US">English</a></li>
+        <li><a href="/es/index.html" data-lang="es-ES">Español</a></li>
+        <li><a href="#" data-lang="fr">Français</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <arcgis-map item-id="a69f14ea2e784e019f4a4b6835ffd376">
+    <arcgis-zoom slot="top-left"></arcgis-zoom>
+    <arcgis-locate slot="top-left" scale="5000"></arcgis-locate>
+    <calcite-action id="filter-button" scale="s" icon="filter" appearance="solid" slot="top-left" title="Filtrer les rivières"></calcite-action>
+    <calcite-action id="forecast-time-slider" scale="s" icon="clock" appearance="solid" slot="top-left" title="Pas de temps des prévisions"></calcite-action>
+    <calcite-action id="hydrosos-time-slider" scale="s" appearance="solid" slot="top-left" title="HydroSOS Indicateurs mensuels de statut"><span>SOS</span></calcite-action>
+
+    <arcgis-expand slot="top-right" title="Liste des couches">
+      <arcgis-layer-list class="large-icon"></arcgis-layer-list>
+    </arcgis-expand>
+    <arcgis-expand slot="top-right" title="Galerie des fonds de carte">
+      <arcgis-basemap-gallery></arcgis-basemap-gallery>
+    </arcgis-expand>
+
+    <arcgis-expand slot="bottom-left" title="Légende">
+      <arcgis-legend legend-style="classic"></arcgis-legend>
+    </arcgis-expand>
+
+    <arcgis-scale-bar slot="bottom-right" bar-style="line" unit="dual"></arcgis-scale-bar>
+  </arcgis-map>
+
+  <div id="timeSliderForecastWrapper" data-category="map" class="time-sliders">
+    <div class="time-slider-title">Pas de temps des prévisions</div>
+    <div id="timeSliderForecast"></div>
+  </div>
+  <div id="timeSliderHydroSOSWrapper" data-category="map" class="time-sliders">
+    <div class="time-slider-title">HydroSOS Indicateurs mensuels de statut</div>
+    <div id="timeSliderHydroSOS"></div>
+  </div>
+</div>
+</body>
+</html>
