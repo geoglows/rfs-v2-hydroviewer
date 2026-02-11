@@ -14,14 +14,12 @@ const loadLocale = async (locale) => {
   document.documentElement.lang = locale
 }
 
-await loadLocale(Lang.get())
-
 const resolve = (obj, path) => path.split('.').reduce((o, k) => o?.[k], obj)
 
 const hydrateLanguageTags = () => {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const val = resolve(translationDictionary, el.dataset.i18n)
-    if (val != null) el.textContent = val
+    if (val != null) el.innerText = val
   })
   document.querySelectorAll('[data-i18n-html]').forEach(el => {
     const val = resolve(translationDictionary, el.dataset.i18nHtml)
@@ -40,5 +38,8 @@ const hydrateLanguageTags = () => {
     if (val != null) el.title = val
   })
 }
+
+await loadLocale(Lang.get())
+hydrateLanguageTags()
 
 export {translationDictionary, hydrateLanguageTags, loadLocale}

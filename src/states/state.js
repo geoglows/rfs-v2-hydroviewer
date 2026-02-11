@@ -13,7 +13,7 @@ const LoadStatus = pubSubState({
 
 // user controlled settings
 const UseSimpleForecast = pubSubState({
-  initialValue: localStorage.getItem('simpleForecast') === 'true' || true,
+  initialValue: true,
   localStorageKey: 'simpleForecast'
 })
 const UseBiasCorrected = pubSubState({
@@ -24,8 +24,7 @@ const UseShowExtraRetroGraphs = pubSubState({
   localStorageKey: 'showExtraRetroGraphs',
 })
 const Lang = pubSubState({
-  initialValue: localStorage.getItem('lang') || (window.navigator.language || 'en').split('-')[0] || 'en',
-  localStorageKey: 'lang',
+  initialValue: (window.navigator.language || 'en').split('-')[0] || 'en',
 })
 
 // set event listeners and sync state with localStorage values on first load

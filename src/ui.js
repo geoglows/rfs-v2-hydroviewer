@@ -45,13 +45,16 @@ clearCacheButtons.forEach(btn => {
   }
 })
 
+const emptyChartHtml = () => `<h4 data-i18n="ui.emptyChartPrompt">${translationDictionary.ui.emptyChartPrompt}</h4>`
+
 const clearCharts = chartTypes => {
   if (chartTypes === "forecast" || chartTypes === null || chartTypes === undefined) {
-    [divChartForecast, divTableForecast]
-      .forEach(el => el.innerHTML = '')
+    divChartForecast.innerHTML = emptyChartHtml()
+    divTableForecast.innerHTML = ''
   }
   if (chartTypes === "retro" || chartTypes === null || chartTypes === undefined) {
-    [divChartRetro, divChartYearlyVol, divChartStatus, divChartFdc, divYearlyPeaks, divRasterHydrograph, divCumulativeVolume]
+    divChartRetro.innerHTML = emptyChartHtml();
+    [divChartYearlyVol, divChartStatus, divChartFdc, divYearlyPeaks, divRasterHydrograph, divCumulativeVolume]
       .forEach(el => el.innerHTML = '')
   }
 }
@@ -107,7 +110,7 @@ const updateHash = ({lon, lat, zoom, definition}) => {
 }
 
 const displayRiverNumber = riverId => {
-  divSelectedRiverId.innerText = riverId ? riverId : ""
+  divSelectedRiverId.innerText = riverId ? riverId : translationDictionary.ui.selectRiver
   clearCharts()
 }
 const displayLoadingStatus = statusChanges => {

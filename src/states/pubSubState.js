@@ -8,10 +8,10 @@ Redistribution and use in source and binary forms, with or without modification,
 NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
 */
 
-const loggingEnabled = false
-
-export const pubSubState = ({initialValue, localStorageKey}) => {
-  let state = (initialValue !== undefined) ? initialValue : (localStorageKey ? JSON.parse(localStorage.getItem(localStorageKey)) : null)
+export const pubSubState = ({initialValue, localStorageKey, useLogging = false}) => {
+  const loggingEnabled = useLogging
+  const stored = localStorageKey ? localStorage.getItem(localStorageKey) : null
+  let state = stored !== null ? JSON.parse(stored) : (initialValue !== undefined ? initialValue : null)
   const originalState = JSON.parse(JSON.stringify(state)) // deep clone for reset
   let subscribers = new Set()
 
