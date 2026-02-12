@@ -39,7 +39,17 @@ const hydrateLanguageTags = () => {
   })
 }
 
-await loadLocale(Lang.get())
+try {
+  await loadLocale(Lang.get())
+} catch (error) {
+  console.error('Failed to load locale:', error)
+  if (!translationDictionary) {
+    translationDictionary = {}
+  }
+  if (!document.documentElement.lang) {
+    document.documentElement.lang = 'en'
+  }
+}
 hydrateLanguageTags()
 
 export {translationDictionary, hydrateLanguageTags, loadLocale}
