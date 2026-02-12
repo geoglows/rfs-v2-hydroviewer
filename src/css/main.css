@@ -272,6 +272,47 @@ table.forecast-probability-table td, table.forecast-probability-table th {
     opacity: 0;
 }
 
+/* Report preview overlay */
+#report-preview-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1100;
+    background-color: rgba(0, 0, 0, 0.7);
+    flex-direction: column;
+    align-items: center;
+}
+
+#report-preview-container.active {
+    display: flex;
+}
+
+.report-preview-toolbar {
+    width: 100%;
+    max-width: 8.5in;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    gap: 8px;
+}
+
+.report-preview-toolbar button {
+    color: white;
+}
+
+#report-preview-container iframe {
+    width: 100%;
+    max-width: 9.5in;
+    flex: 1;
+    border: none;
+    background-color: #525659;
+}
+
 /* on mobile screens, change the download-buttons class */
 @media (max-width: 800px) {
     .download-buttons {

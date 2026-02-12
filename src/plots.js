@@ -68,10 +68,10 @@ const returnPeriodShapes = ({rp, x0, x1, maxFlow}) => {
       mode: 'lines',
       opacity: 0.5,
       legendgroup: 'returnperiods',
-      legendgrouptitle: {text: `${translationDictionary.words.returnPeriods}`},
+      legendgrouptitle: {text: `${translationDictionary.words.returnPeriods} (m³/s)`},
       showlegend: true,
       visible: visible,
-      name: `${name}: ${rp[name].toFixed(2)} m³/s`,
+      name: `${name}: ${rp[name].toFixed(2)}`,
     }
   }
   return Object
@@ -81,7 +81,7 @@ const returnPeriodShapes = ({rp, x0, x1, maxFlow}) => {
       const y1 = index === array.length - 1 ? Math.max(rp[key] * 1.15, maxFlow * 1.15) : rp[array[index + 1]]
       return box(y0, y1, key)
     })
-    .concat([{legendgroup: 'returnperiods', legendgrouptitle: {text: `${translationDictionary.words.returnPeriods} m³/s`}}])
+    .concat([{legendgroup: 'returnperiods', legendgrouptitle: {text: `${translationDictionary.words.returnPeriods} (m³/s)`}}])
 }
 const plotForecast = ({forecast, rp, riverId, chartDiv}) => {
   chartDiv.innerHTML = ""
@@ -262,7 +262,7 @@ const forecastProbabilityTable = ({forecast, rp}) => {
       timeZone: 'UTC'
     }))
 
-  const headerRow = `<tr><th>${translationDictionary.words.returnPeriods}</th>${dailyDateStrings.map(date => `<th>${date}</th>`).join('')}</tr>`
+  const headerRow = `<tr><th>${translationDictionary.words.returnPeriods} (m³/s)</th>${dailyDateStrings.map(date => `<th>${date}</th>`).join('')}</tr>`
 
   const returnPeriods = ['2', '5', '10', '25', '50', '100']
   const bodyRows = returnPeriods.map(rpKey => {
@@ -271,7 +271,7 @@ const forecastProbabilityTable = ({forecast, rp}) => {
         .reduce((count, dailyArray) => count + (dailyArray[index] > rp[rpKey] ? 1 : 0), 0)
       return (numMembers ? (countAboveThreshold / numMembers * 100) : 0).toFixed(0)
     })
-    return `<tr><td>${rpKey} (${rp[rpKey].toFixed(0)} m³/s)</td>${percentages.map(p => `<td style="background-color: ${returnPeriodColors[rpKey].replace('rgb', 'rgba').replace(')', `, ${p === "0" ? 0 : 0.25 + 0.75 * (p / 100)})`)}">${p}%</td>`).join('')}</tr>`
+    return `<tr><td>${rpKey} (${rp[rpKey].toFixed(0)})</td>${percentages.map(p => `<td style="background-color: ${returnPeriodColors[rpKey].replace('rgb', 'rgba').replace(')', `, ${p === "0" ? 0 : 0.25 + 0.75 * (p / 100)})`)}">${p}%</td>`).join('')}</tr>`
   })
 
   return `<table class="forecast-probability-table"><thead>${headerRow}</thead><tbody>${bodyRows.join('')}</tbody></table>`

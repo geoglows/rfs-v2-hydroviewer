@@ -96,7 +96,13 @@
 </div>
 
 <!-- Reports-->
-<iframe id="report-pdf-frame" class="hidden-underneath"></iframe>
+<div id="report-preview-container">
+  <div class="report-preview-toolbar">
+    <button id="close-preview" class="btn btn-flat"><i class="material-icons">close</i> <span data-i18n="ui.closePreview">Close Preview</span></button>
+    <button id="download-report-preview" class="btn"><i class="material-icons">print</i> <span data-i18n="ui.downloadReportPdf">Download Report (PDF)</span></button>
+  </div>
+  <iframe id="report-pdf-frame"></iframe>
+</div>
 <div id="report-render-space" class="hidden-underneath"></div>
 <div id="report-modal" class="modal">
   <div class="modal-content">
@@ -109,7 +115,7 @@
         <a class="modal-close waves-effect waves-green btn-flat">X</a>
       </div>
     </div>
-    <h5 data-i18n="ui.reportsStep1">1. Select Report Type</h5>
+    <h5 data-i18n="ui.reportsStep1">Select Report Type</h5>
     <div class="report-option-wrapper">
       <label for="report-type-select" id="report-type-select-label" data-i18n="ui.reportTypeLabel">Report Type:</label>
       <select id="report-type-select" aria-labelledby="report-type-select-label">
@@ -126,10 +132,13 @@
         <option value="allBookmarks" data-i18n="ui.allBookmarks">All Bookmarks</option>
       </select>
     </div>
-    <div style="width: 100%; display: flex; justify-content: center">
+    <div style="width: 100%; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap">
       <button id="generate-report" class="btn" style="display: flex; align-items: center" data-i18n="ui.prepareReport">Prepare Report</button>
+      <button id="cancel-report" class="btn red" disabled data-i18n="ui.cancelReport">Cancel</button>
+      <button id="preview-report" class="btn" disabled data-i18n="ui.previewReport">Preview Report</button>
+      <button id="download-report" class="btn" disabled data-i18n="ui.downloadReportPdf">Download Report (PDF)</button>
     </div>
-    <h5 data-i18n="ui.reportsStep2">2. Prepare River Data</h5>
+    <h5 data-i18n="ui.reportsStep2">Report Generating Progress</h5>
     <div data-i18n="ui.downloadData">Download Data:</div>
     <div class="progress-with-label">
       <progress id="report-data-progress" value="0" max="100"></progress>
@@ -139,10 +148,6 @@
     <div class="progress-with-label">
       <progress id="report-format-progress" value="0" max="100"></progress>
       <div id="report-format-label">0%</div>
-    </div>
-    <h5 data-i18n="ui.reportsStep3">3. Download Report</h5>
-    <div style="width: 100%; display: flex; justify-content: center">
-      <button id="download-report" class="btn" disabled data-i18n="ui.downloadReportPdf">Download Report (PDF)</button>
     </div>
   </div>
 </div>
