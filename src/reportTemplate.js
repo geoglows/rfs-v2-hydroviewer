@@ -30,7 +30,7 @@ export const reportCSS = `
 
     /* REPORT CONTENT STYLES */
     .report-page-title { font-size: 18pt; font-weight: bold; color: #003366; border-bottom: 2px solid #003366; margin-bottom: 1em; }
-    .figure-container { text-align: center; margin-bottom: 1em; }
+    .figure-container { text-align: center; margin-bottom: 0.5em; }
     .report-figure { width: 100%; max-height: 500px; object-fit: contain; }
     .figure-caption { font-size: 10pt; font-style: italic; color: #555; margin-top: 5px; }
     p { margin: 0; }
@@ -42,7 +42,7 @@ export const reportCSS = `
     th { background-color: #f0f0f0; }
 
     /* COMMENTS SECTION */
-    .comments-section { margin-top: 2em; page-break-inside: avoid; }
+    .comments-section { margin-top: 0.5em; page-break-inside: avoid; }
     .comments-section h3 { font-size: 12pt; color: #003366; margin-bottom: 5px; }
     .comment-field { width: 100%; border: 1px solid #999; padding: 6px; font-family: 'Arial', sans-serif; font-size: 10pt; resize: vertical; box-sizing: border-box; }
     .comment-field:focus { outline: none; border-color: #003366; }

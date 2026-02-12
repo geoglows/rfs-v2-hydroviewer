@@ -285,13 +285,13 @@ const plotRetrospective = ({daily, monthly, riverId, chartDiv, biasCorrected}) =
       {
         x: daily.datetime,
         y: daily.discharge,
-        type: 'lines',
+        type: 'scatter',
         name: `${translationDictionary.words.dailyAverage}`,
       },
       {
         x: Object.keys(monthly),
         y: Object.values(monthly),
-        type: 'lines',
+        type: 'scatter',
         name: `${translationDictionary.words.monthlyAverage}`,
         line: {color: 'rgb(0, 166, 255)'},
         visible: 'legendonly'
@@ -299,7 +299,7 @@ const plotRetrospective = ({daily, monthly, riverId, chartDiv, biasCorrected}) =
       ...(biasCorrected ? [{
         x: daily.datetime,
         y: daily.discharge_original,
-        type: 'lines',
+        type: 'scatter',
         name: `${translationDictionary.words.dailyAverageOriginal}`,
         line: {color: 'rgb(255, 0, 0)'},
         visible: 'legendonly'
@@ -365,7 +365,7 @@ const plotYearlyVolumes = ({yearly, averages, riverId, chartDiv, biasCorrected})
       {
         x: yearly.map(x => x.year),
         y: yearly.map(y => y.value),
-        type: 'line',
+        type: 'scatter',
         name: `${translationDictionary.words.annualVolume}`,
         marker: {color: 'rgb(0, 166, 255)'}
       },
@@ -469,7 +469,7 @@ const plotFdc = ({fdc, monthlyFdc, riverId, chartDiv, biasCorrected}) => {
       {
         x: percentiles,
         y: fdc,
-        type: 'lines',
+        type: 'scatter',
         name: `${translationDictionary.words.flowDurationCurve}`,
       },
       ...Object
@@ -479,7 +479,7 @@ const plotFdc = ({fdc, monthlyFdc, riverId, chartDiv, biasCorrected}) => {
           return {
             x: percentiles,
             y: monthlyFdc[m],
-            type: 'line',
+            type: 'scatter',
             name: `${translationDictionary.words.fdc} ${monthNames[idx]}`,
             visible: 'legendonly',
           }
@@ -734,8 +734,7 @@ const plotRasterHydrograph = ({retro, riverId, chartDiv}) => {
       title: {text: `${translationDictionary.words.discharge} (m³/s)`, side: "top"},
       tickvals: binMid,
       ticktext: binMid.map((v, i) => `${formatVal(binEdges[i])}–${formatVal(binEdges[i + 1])}`)
-    },
-    hoverinfo: "skip"
+    }
   }], {
     title: {text: `${translationDictionary.plots.heatMapTitle}${riverId}`, x: 0.5},
     xaxis: {title: translationDictionary.plots.heatMapXaxis, side: "bottom", fixedrange: true, tickvals: [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335], ticktext: monthNames},

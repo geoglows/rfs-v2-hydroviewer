@@ -142,7 +142,7 @@ const fetchReportData = async ({riverList, datasetList}) => {
       }
       const progress = ((nFinished / nRivers) * 100).toFixed(0);
       reportDownloadProgress.value = progress;
-      reportDownloadLabel.innerText = `${progress}%`;
+      reportDownloadLabel.textContent = `${progress}%`;
     };
   });
 
@@ -189,7 +189,7 @@ const plotReportData = async (data) => {
     nFormatted += 1;
     const progress = ((nFormatted / nRivers) * 100).toFixed(0);
     reportFormatProgress.value = progress;
-    reportFormatLabel.innerText = `${progress}%`;
+    reportFormatLabel.textContent = `${progress}%`;
   }
 
   if (cancelled) return;
@@ -203,15 +203,12 @@ const plotReportData = async (data) => {
     translations,
   });
 
-  // Set onload handler BEFORE writing to avoid missing the load event
   const printDocument = reportIframe.contentDocument || reportIframe.contentWindow.document;
-  reportIframe.onload = () => {
-    togglePrintButton({disabled: false});
-    showPreview();
-  };
   printDocument.open();
   printDocument.write(documentHTML);
   printDocument.close();
+  togglePrintButton({disabled: false});
+  showPreview();
 }
 
 const printIframe = () => {
