@@ -25,6 +25,7 @@ import {Lang, LoadStatus, RiverId} from "./states/state.js";
 import riverCountries from "./json/riverCountries.json" with {type: "json"};
 import outletCountries from "./json/outletCountries.json" with {type: "json"};
 import vpuList from "./json/vpuList.json" with {type: "json"};
+import {translationDictionary} from "./intl.js";
 
 const MIN_QUERY_ZOOM = 11
 export const mapElement = document.querySelector('arcgis-map')
