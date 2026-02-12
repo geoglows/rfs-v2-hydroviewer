@@ -764,7 +764,10 @@ const plotCumulativeVolumes = ({retro, riverId, chartDiv}) => {
     total: arr.y[arr.y.length - 1]
   }));
 
-  const sortedTotals = [...totals].sort((a, b) => a.total - b.total);
+  const currentYear = new Date().getUTCFullYear();
+  const workingTotals = totals.filter(t => t.year < currentYear)
+
+  const sortedTotals = [...workingTotals].sort((a, b) => a.total - b.total);
   const driestYear = sortedTotals[0].year;
   const wettestYear = sortedTotals[sortedTotals.length - 1].year;
   const medianYear = sortedTotals[Math.floor(sortedTotals.length / 2)].year;
@@ -773,25 +776,33 @@ const plotCumulativeVolumes = ({retro, riverId, chartDiv}) => {
     .entries(cumulative)
     .map(([year, arr]) => {
       let lineStyle = {color: "lightgray", width: 0.8}
-      let hovertemplate = null
+      let hovertemplate = `${translationDictionary.words.year}: ${year}<br>` +
+                      `Date: %{x|%b %d}<br>` +
+                      `Volume: %{y:.5s} Mm³<extra></extra>`
       let name = year
       let showlegend = false
       let zorder = 0
       if (+year === wettestYear) {
         lineStyle = {color: "blue", width: 2}
-        hovertemplate = `${translationDictionary.words.year}: ${year} (${translationDictionary.words.wettestYear})`
+        hovertemplate = `${year} (${translationDictionary.words.wettestYear})<br>` +
+            `Date: %{x|%b %d}<br>` +
+                    `Volume: %{y:.5s} Mm³<extra></extra>`
         name = `${translationDictionary.words.wettestYear}: ${year}`
         showlegend = true
         zorder = 2
       } else if (+year === driestYear) {
         lineStyle = {color: "red", width: 2}
-        hovertemplate = `${translationDictionary.words.year}: ${year} (${translationDictionary.words.driestYear})`
+        hovertemplate = `${year} (${translationDictionary.words.driestYear})<br>` +
+            `Date: %{x|%b %d}<br>` +
+                    `Volume: %{y:.5s} Mm³<extra></extra>`
         name = `${translationDictionary.words.driestYear}: ${year}`
         showlegend = true
         zorder = 2
       } else if (+year === medianYear) {
         lineStyle = {color: "green", width: 2}
-        hovertemplate = `${translationDictionary.words.year}: ${year} (${translationDictionary.words.medianYear})`
+        hovertemplate = `${year} (${translationDictionary.words.medianYear})<br>` +
+            `Date: %{x|%b %d}<br>` +
+                    `Volume: %{y:.5s} Mm³<extra></extra>`
         name = `${translationDictionary.words.medianYear}: ${year}`
         showlegend = true
         zorder = 2
@@ -815,6 +826,7 @@ const plotCumulativeVolumes = ({retro, riverId, chartDiv}) => {
       type: "date",
       title: {text: translationDictionary.words.months},
       tickformat: "%b %d",
+      dtick: "M1"
     },
     yaxis: {
       title: {text: translationDictionary.plots.cumVolumeYaxis},
@@ -832,7 +844,6 @@ const plotCumulativeVolumes = ({retro, riverId, chartDiv}) => {
   };
   Plotly.newPlot(chartDiv, traces, layout, config);
 };
-
 //////////////////////////////////////////////////////////////////////// Plotting Managers
 const plotAllRetro = ({retro, riverId}) => {
   /*
