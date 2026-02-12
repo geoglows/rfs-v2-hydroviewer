@@ -24,10 +24,9 @@ export const reportCSS = `
     .cover-page { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding-top: 0.5in; }
     .cover-title { font-size: 36pt; font-weight: bold; color: #003366; margin-top: 1em; margin-bottom: 0.2em; }
     .cover-subtitle { font-size: 14pt; font-style: italic; color: #666; margin-bottom: 3in; }
-    .references-section { width: 100%; text-align: left; margin-top: auto; }
-    .references-section h2 { border-bottom: 2px solid #ddd; padding-bottom: 5px; color: #003366; }
+    .references-section { width: 100%; text-align: center; margin-top: auto; }
     .references-section p { font-size: 10pt; margin: 6px 0; }
-    .disclaimer { font-size: 8pt; color: #999; margin-top: 1em; text-align: center; }
+    .references-section a { color: #003366; }
 
     /* REPORT CONTENT STYLES */
     .report-page-title { font-size: 18pt; font-weight: bold; color: #003366; border-bottom: 2px solid #003366; margin-bottom: 1em; }
@@ -64,11 +63,10 @@ export const buildCoverPage = ({logoURL, todayDate, translations}) => `
       <div class="cover-subtitle">${translations.coverSubtitle}<br>${translations.generated}: ${todayDate}</div>
 
       <div class="references-section">
-          <h2>${translations.dataSourcesTitle}</h2>
-          <p>${translations.sourceReport}</p>
-          <p>${translations.sourceData}</p>
-          <p>${translations.sourceLearnMore}</p>
-          <p class="disclaimer">${translations.disclaimer}</p>
+          <p>${translations.sourceReport} <a href="https://apps.geoglows.org/hydroviewer" target="_blank">apps.geoglows.org/hydroviewer</a></p>
+          <p>${translations.sourceData} <a href="https://aws.amazon.com/marketplace/pp/prodview-gne36pxf5jbqk" target="_blank">s3://geoglows-v2</a></p>
+          <p>${translations.sourceLearnMore} <a href="https://training.geoglows.org" target="_blank">training.geoglows.org</a></p>
+          <p>${translations.disclaimer}</p>
       </div>
   </div>
 `;
