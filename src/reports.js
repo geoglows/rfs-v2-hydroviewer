@@ -30,6 +30,7 @@ const cancelReportButton = document.getElementById('cancel-report');
 
 const reportTypes = [
   {type: 'riverForecasts', label: 'Daily Forecast Report', datasets: ['forecast', 'returnPeriods']},
+  {type: 'highFlows', label: 'High Flow Alerts Only', datasets: ['forecast', 'returnPeriods']},
 ]
 
 // Worker pool and cancellation state
@@ -97,7 +98,7 @@ generateReportButton.addEventListener('click', async () => {
     const datasetList = reportTypes.find(r => r.type === reportType).datasets;
     const data = await fetchReportData({riverList, datasetList});
     if (cancelled) return;
-    await plotReportData(data)
+    await plotReportData(data, reportType)
   } catch (error) {
     if (cancelled) return;
     console.error('Error generating report:', error);
@@ -150,7 +151,7 @@ const fetchReportData = async ({riverList, datasetList}) => {
   return await Promise.all(perRiverPromises)
 }
 
-const plotReportData = async (data) => {
+const plotReportData = async (data, reportType) => {
   let nFormatted = 0;
   const nRivers = data.length;
   const todayDate = new Date().toLocaleDateString(Lang.get(), {year: 'numeric', month: 'long', day: 'numeric'});
@@ -160,6 +161,18 @@ const plotReportData = async (data) => {
   const reportPages = [];
   for (const [index, riverData] of data.entries()) {
     if (cancelled) return;
+
+    if (reportType === "highFlows") {
+          const rp2 = riverData.returnPeriods?.['2'];
+          const maxForecast = Math.max(...riverData.forecast.stats.max);
+          if (!rp2 || maxForecast < rp2) {
+              nFormatted += 1;
+              const progress = ((nFormatted / nRivers) * 100).toFixed(0);
+              reportFormatProgress.value = progress;
+              reportFormatLabel.textContent = `${progress}%`;
+              continue;
+          }
+      }
 
     const bookmark = bookmarks.list().find(r => r.id === riverData.riverId);
     const riverName = bookmark ? bookmark.name : `River ${riverData.riverId}`;
