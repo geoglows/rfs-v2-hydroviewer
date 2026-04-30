@@ -82,6 +82,32 @@ function renderSlot() {
 const signInModal = mountSignInModal({authAdapter})
 window.addEventListener(SIGN_IN_REQUESTED_EVENT, () => signInModal.open())
 
+// Recovery URL detection — runs synchronously BEFORE Supabase JS consumes
+// the hash. If the URL signals expired-token or PKCE (unsupported in v1),
+// open the modal in the recoveryError view so the user sees a clean error
+// instead of silent failure. See apps.geoglows/docs/plans/
+// 2026-04-30-002-feat-forgot-password-flow-plan.md (Q1 + PKCE detector).
+{
+  const hash = window.location.hash
+  const search = window.location.search
+  const hasOtpExpired =
+    /(?:^|[#&?])error_code=otp_expired/.test(hash) ||
+    /(?:^|[?&])error_code=otp_expired/.test(search)
+  const hasCode =
+    /(?:^|[#&?])code=/.test(hash) || /(?:^|[?&])code=/.test(search)
+  const hasRecovery =
+    /(?:^|[#&?])type=recovery/.test(hash) ||
+    /(?:^|[?&])type=recovery/.test(search)
+  if (hasOtpExpired) {
+    signInModal.open({view: "recoveryError"})
+  } else if (hasCode && hasRecovery) {
+    console.error(
+      "PKCE recovery flow is not supported in @aquaveo/geoglows-auth 1.2.x.",
+    )
+    signInModal.open({view: "recoveryError"})
+  }
+}
+
 let initialBootstrapDone = false
 
 function bootstrapSafe(reason) {
@@ -155,6 +181,12 @@ supabase.auth.onAuthStateChange((event, session) => {
     const currentSub = authState.user?.sub
     if (newId && currentSub && newId === currentSub) return
     bootstrapSafe("SIGNED_IN")
+  }
+  if (event === "PASSWORD_RECOVERY") {
+    // Open the modal in setNewPassword view so the user can set a new
+    // password. The modal handles updateUserPassword + signOutOtherSessions
+    // and fires SIGNED_IN on success (caught by the dedup above).
+    signInModal.open({view: "setNewPassword"})
   }
 })
 
