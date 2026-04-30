@@ -1,3 +1,9 @@
+// Loaded FIRST so Supabase Auth's onAuthStateChange listener is registered
+// before any future top-level awaits. rfs's main.js has none today, but
+// the convention matches grace's auth-bootstrap and protects against
+// silent SSO breakage if top-level awaits get added later.
+import "./auth-bootstrap.js"
+
 import "./css/main.css"
 import "./css/materialize.overrides.css"
 import "./css/report.print.css"

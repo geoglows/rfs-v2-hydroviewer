@@ -23,7 +23,6 @@ body {
 
 .nav-bar-wrapper {
     display: flex;
-    justify-content: space-between;
     flex-direction: row;
     align-items: center;
     padding: 0 25px;
@@ -31,6 +30,17 @@ body {
     height: 75px;
     flex-grow: 1;
     background-color: #81d4fa
+}
+
+.nav-bar-wrapper .nav-buttons {
+    /* margin-left: auto pushes nav-buttons + nav-auth as a right cluster. */
+    margin-left: auto;
+}
+
+.nav-bar-wrapper .nav-auth {
+    margin-left: 12px;
+    display: flex;
+    align-items: center;
 }
 
 arcgis-map {
