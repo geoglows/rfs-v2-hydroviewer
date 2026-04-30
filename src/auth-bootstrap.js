@@ -88,6 +88,19 @@ function bootstrapSafe(reason) {
   bootstrapSession({
     auth: authAdapter,
     supabase,
+    // initialState carries the previous user/account through the
+    // transient bootstrapping/loading_profile/loading_account phases on
+    // rebootstrap (e.g. tab-focus revalidation), avoiding the avatar →
+    // "Signing in…" flicker. null on first bootstrap is the desired
+    // default (lib treats it as a fresh start).
+    initialState: authState.user
+      ? {
+          status: authState.status,
+          user: authState.user,
+          account: authState.account ?? null,
+          error: null,
+        }
+      : null,
     onStateChange: (state) => {
       // bootstrapSession emits { status, user, account, error }. Preserve
       // any locally-tracked action (e.g. "signing_out") across the merge.
@@ -106,7 +119,7 @@ function bootstrapSafe(reason) {
 // this is the only safe moment to call getSession() and have it reflect
 // any OAuth tokens that arrived in the URL hash. SIGNED_IN / SIGNED_OUT
 // fire on later changes (modal sign-in, sign-out from any tab).
-supabase.auth.onAuthStateChange((event) => {
+supabase.auth.onAuthStateChange((event, session) => {
   if (event === "INITIAL_SESSION" && !initialBootstrapDone) {
     initialBootstrapDone = true
     bootstrapSafe("INITIAL_SESSION")
@@ -129,8 +142,19 @@ supabase.auth.onAuthStateChange((event) => {
     }
     return
   }
-  if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
-    bootstrapSafe(event)
+  if (event === "SIGNED_OUT") {
+    bootstrapSafe("SIGNED_OUT")
+    return
+  }
+  if (event === "SIGNED_IN") {
+    // Supabase JS fires SIGNED_IN on every visibility-change session
+    // revalidation (GoTrueClient.js _recoverAndRefresh). If it's the
+    // same user we already have, skip the rebootstrap — saves a
+    // network round trip (and defensively avoids any avatar flicker).
+    const newId = session?.user?.id
+    const currentSub = authState.user?.sub
+    if (newId && currentSub && newId === currentSub) return
+    bootstrapSafe("SIGNED_IN")
   }
 })
 
