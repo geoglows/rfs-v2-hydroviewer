@@ -31,7 +31,13 @@ const supabase = createGeoglowsSupabaseClient({
 
 const authAdapter = createSupabaseAuthAdapter({
   supabase,
-  defaultRedirectTo: window.location.origin,
+  // Preserve pathname so password-recovery / magic-link emails return
+  // users to the same surface they started from. RFS runs at
+  // `https://portal-dev.geoglows.org/hydroviewer/` via the portal proxy;
+  // window.location.origin alone strips the path and would land recovery
+  // users on the portal root. window.location.origin +
+  // window.location.pathname keeps them inside the proxy path.
+  defaultRedirectTo: window.location.origin + window.location.pathname,
   logoutRedirectTo: window.location.origin,
 })
 
