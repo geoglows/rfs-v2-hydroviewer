@@ -92,7 +92,14 @@ window.addEventListener(SIGN_IN_REQUESTED_EVENT, () => signInModal.open())
 // open the modal in the recoveryError view so the user sees a clean error
 // instead of silent failure. See apps.geoglows/docs/plans/
 // 2026-04-30-002-feat-forgot-password-flow-plan.md (Q1 + PKCE detector).
-{
+//
+// `tabHasRecoveryUrl` is the load-bearing snapshot used to gate the
+// PASSWORD_RECOVERY handler below — only the tab that actually received
+// the recovery URL should open the setNewPassword modal. Without this
+// gate, Supabase's cross-tab session revalidation fires PASSWORD_RECOVERY
+// in every open tab of every GEOGloWS app for the same Supabase project
+// when the user uses the recovery link elsewhere — misleading UX.
+const tabHasRecoveryUrl = (() => {
   const hash = window.location.hash
   const search = window.location.search
   const hasOtpExpired =
@@ -103,15 +110,21 @@ window.addEventListener(SIGN_IN_REQUESTED_EVENT, () => signInModal.open())
   const hasRecovery =
     /(?:^|[#&?])type=recovery/.test(hash) ||
     /(?:^|[?&])type=recovery/.test(search)
+  const hasImplicitRecoveryHash =
+    /(?:^|[#&?])access_token=/.test(hash) && hasRecovery
   if (hasOtpExpired) {
     signInModal.open({view: "recoveryError"})
-  } else if (hasCode && hasRecovery) {
+    return true
+  }
+  if (hasCode && hasRecovery) {
     console.error(
       "PKCE recovery flow is not supported in @aquaveo/geoglows-auth 1.2.x.",
     )
     signInModal.open({view: "recoveryError"})
+    return true
   }
-}
+  return hasImplicitRecoveryHash
+})()
 
 let initialBootstrapDone = false
 
@@ -188,9 +201,11 @@ supabase.auth.onAuthStateChange((event, session) => {
     bootstrapSafe("SIGNED_IN")
   }
   if (event === "PASSWORD_RECOVERY") {
-    // Open the modal in setNewPassword view so the user can set a new
-    // password. The modal handles updateUserPassword + signOutOtherSessions
-    // and fires SIGNED_IN on success (caught by the dedup above).
+    // Only open if THIS tab actually loaded with a recovery URL. Supabase
+    // fires PASSWORD_RECOVERY on every tab that revalidates a recovery-type
+    // session via getSession() — including tabs that didn't receive the
+    // recovery email link. See `tabHasRecoveryUrl` snapshot above.
+    if (!tabHasRecoveryUrl) return
     signInModal.open({view: "setNewPassword"})
   }
 })
