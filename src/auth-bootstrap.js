@@ -106,8 +106,20 @@ window.addEventListener(SIGN_IN_REQUESTED_EVENT, () => signInModal.open())
 // in every open tab of every GEOGloWS app for the same Supabase project
 // when the user uses the recovery link elsewhere — misleading UX.
 const tabHasRecoveryUrl = (() => {
-  const hash = window.location.hash
-  const search = window.location.search
+  // Prefer the inline-script-captured snapshot from index.html. Reading
+  // window.location directly here can race against Supabase JS's
+  // _initialize() — by the time this IIFE runs, the hash may already be
+  // cleared. The inline script in index.html runs before any module is
+  // fetched, guaranteeing the recovery hash is preserved here.
+  const initial = window.__GEOGLOWS_INITIAL_URL__
+  const hash =
+    initial && typeof initial.hash === "string"
+      ? initial.hash
+      : window.location.hash
+  const search =
+    initial && typeof initial.search === "string"
+      ? initial.search
+      : window.location.search
   const hasOtpExpired =
     /(?:^|[#&?])error_code=otp_expired/.test(hash) ||
     /(?:^|[?&])error_code=otp_expired/.test(search)
