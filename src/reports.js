@@ -1,10 +1,11 @@
 import {bookmarks} from "./bookmarks.js";
-import {forecastProbabilityTable, plotForecast} from "./plots.js";
+import {forecastProbabilityTable, plotForecast, plotExceedanceProbabilities, plotFlowAnomaly} from "./plots.js";
 import DataFetcherWorker from './workers/dataFetcher.js?worker';
 import Plotly from "plotly.js/lib/core";
 import {translationDictionary} from "./intl.js";
 import {Lang} from "./states/state.js";
-import {reportCSS, buildCoverPage, buildReportPage, buildReportDocument} from "./reportTemplate.js";
+import {reportCSS, buildCoverPage, buildReportPage, buildReportDocument, buildBulletinPage} from "./reportTemplate.js";
+import {buildBulletinData} from "./data/bulletinAnalytics.js";
 
 const logoURL = '/img/geoglowslogo.png';
 
@@ -29,7 +30,9 @@ const generateReportButton = document.getElementById('generate-report');
 const cancelReportButton = document.getElementById('cancel-report');
 
 const reportTypes = [
-  {type: 'riverForecasts', label: 'Daily Forecast Report', datasets: ['forecast', 'returnPeriods']},
+  {type: 'riverForecasts',    label: 'Daily Forecast Report',        datasets: ['forecast', 'returnPeriods']},
+  {type: 'highFlows',         label: 'High Flow Alerts Only',         datasets: ['forecast', 'returnPeriods']},
+  {type: 'streamflowBulletin',label: 'Streamflow Flood Bulletin',     datasets: ['forecast', 'returnPeriods', 'retrospective']},
 ]
 
 // Worker pool and cancellation state
@@ -97,7 +100,7 @@ generateReportButton.addEventListener('click', async () => {
     const datasetList = reportTypes.find(r => r.type === reportType).datasets;
     const data = await fetchReportData({riverList, datasetList});
     if (cancelled) return;
-    await plotReportData(data)
+    await plotReportData(data, reportType)
   } catch (error) {
     if (cancelled) return;
     console.error('Error generating report:', error);
@@ -107,11 +110,13 @@ generateReportButton.addEventListener('click', async () => {
     terminateWorkers();
   }
 })
+
 reportPrintButton.addEventListener('click', () => printIframe());
 closePreviewButton.addEventListener('click', () => hidePreview());
 downloadPreviewButton.addEventListener('click', () => printIframe());
 previewReportButton.addEventListener('click', () => showPreview());
 
+// ─── Data fetching ───────────────────────────────────────────────────────────
 const fetchReportData = async ({riverList, datasetList}) => {
   createWorkers();
   const nRivers = riverList.length;
@@ -133,6 +138,7 @@ const fetchReportData = async ({riverList, datasetList}) => {
           riverId,
           forecast: e.data.forecast,
           returnPeriods: e.data.returnPeriods,
+          retrospective: e.data.retrospective ?? null,  // null for non-bulletin report types
         });
         nFinished += 1;
       }
@@ -150,35 +156,61 @@ const fetchReportData = async ({riverList, datasetList}) => {
   return await Promise.all(perRiverPromises)
 }
 
-const plotReportData = async (data) => {
+// ─── Plot rendering ──────────────────────────────────────────────────────────
+
+const renderChartToPng = async (plotFn, args) => {
+  reportRenderSpace.style.width = '800px';
+  reportRenderSpace.style.height = '800px';
+  await plotFn({...args, chartDiv: reportRenderSpace});
+  reportRenderSpace.querySelectorAll('.modebar, .legendtoggle, .zoomlayer').forEach(el => el.remove());
+  const url = await Plotly.toImage(reportRenderSpace, {format: 'png', width: 800, height: 400});
+  reportRenderSpace.innerHTML = '';
+  return url;
+}
+
+const plotReportData = async (data, reportType) => {
   let nFormatted = 0;
   const nRivers = data.length;
   const todayDate = new Date().toLocaleDateString(Lang.get(), {year: 'numeric', month: 'long', day: 'numeric'});
   const translations = translationDictionary.report;
 
-  // Render each river page sequentially to avoid shared-div race conditions
   const reportPages = [];
+
   for (const [index, riverData] of data.entries()) {
     if (cancelled) return;
 
+    // ── Filter: highFlows only includes rivers exceeding 2-yr RP ────────────
+    if (reportType === 'highFlows') {
+      const rp2 = riverData.returnPeriods?.['2'];
+      const maxForecast = Math.max(...riverData.forecast.stats.max);
+      if (!rp2 || maxForecast < rp2) {
+        nFormatted += 1;
+        updateFormatProgress(nFormatted, nRivers);
+        continue;
+      }
+    }
+
+    // ── Filter: bulletin only includes rivers with any flood alert ───────────
+    if (reportType === 'streamflowBulletin') {
+      const rp2 = riverData.returnPeriods?.[2];
+      const maxForecast = Math.max(...riverData.forecast.stats.max);
+      if (!rp2 || maxForecast < rp2) {
+        nFormatted += 1;
+        updateFormatProgress(nFormatted, nRivers);
+        continue;
+      }
+    }
+
     const bookmark = bookmarks.list().find(r => r.id === riverData.riverId);
     const riverName = bookmark ? bookmark.name : `River ${riverData.riverId}`;
-    const pageTitle = `${riverName} (ID: ${riverData.riverId})`;
 
     let pageHTML = '';
     try {
-      plotForecast({
-        forecast: riverData.forecast,
-        rp: riverData.returnPeriods,
-        riverId: riverData.riverId,
-        chartDiv: reportRenderSpace,
-      });
-      reportRenderSpace.querySelectorAll('.modebar, .legendtoggle, .zoomlayer').forEach(el => el.remove());
-      const url = await Plotly.toImage(reportRenderSpace, {format: 'png', width: 800, height: 500});
-      reportRenderSpace.innerHTML = '';
-
-      const tableHTML = forecastProbabilityTable({forecast: riverData.forecast, rp: riverData.returnPeriods});
-      pageHTML = buildReportPage({pageTitle, imageUrl: url, riverId: riverData.riverId, index, tableHTML, translations});
+      if (reportType === 'streamflowBulletin') {
+        pageHTML = await renderBulletinPage({riverData, riverName, index, translations, todayDate});
+      } else {
+        pageHTML = await renderStandardPage({riverData, riverName, index, translations});
+      }
     } catch (error) {
       console.error(`Error rendering report page for river ${riverData.riverId}:`, error);
       reportRenderSpace.innerHTML = '';
@@ -187,9 +219,7 @@ const plotReportData = async (data) => {
     if (pageHTML) reportPages.push(pageHTML);
 
     nFormatted += 1;
-    const progress = ((nFormatted / nRivers) * 100).toFixed(0);
-    reportFormatProgress.value = progress;
-    reportFormatLabel.textContent = `${progress}%`;
+    updateFormatProgress(nFormatted, nRivers);
   }
 
   if (cancelled) return;
@@ -209,6 +239,71 @@ const plotReportData = async (data) => {
   printDocument.close();
   togglePrintButton({disabled: false});
   showPreview();
+}
+
+// ─── Standard forecast page (existing reports) ───────────────────────────────
+
+const renderStandardPage = async ({riverData, riverName, index, translations}) => {
+  const pageTitle = `${riverName} (ID: ${riverData.riverId})`;
+  const forecastImageUrl = await renderChartToPng(plotForecast, {
+    forecast: riverData.forecast,
+    rp: riverData.returnPeriods,
+    riverId: riverData.riverId,
+  });
+  const tableHTML = forecastProbabilityTable({forecast: riverData.forecast, rp: riverData.returnPeriods});
+  return buildReportPage({pageTitle, imageUrl: forecastImageUrl, riverId: riverData.riverId, index, tableHTML, translations});
+}
+
+// ─── Bulletin page (new) ──────────────────────────────────────────────────────
+
+const renderBulletinPage = async ({riverData, riverName, index, translations, todayDate}) => {
+  // Run all analytics computations
+  const bulletin = buildBulletinData({riverData});
+  console.log('flowAnomaly:', bulletin.flowAnomaly);
+  console.log('retrospective:', riverData.retrospective);
+  // Render chart 1: statistical forecast (existing plot function)
+  const forecastImageUrl = await renderChartToPng(plotForecast, {
+    forecast: riverData.forecast,
+    rp: riverData.returnPeriods,
+    riverId: riverData.riverId,
+  });
+
+  // Render chart 2: exceedance probabilities (new plot function needed in plots.js)
+  const exceedanceImageUrl = await renderChartToPng(plotExceedanceProbabilities, {
+    exceedance: bulletin.exceedance,
+    overallAlert: bulletin.overallAlert,
+  });
+
+  // Render chart 3: flow anomaly vs climatology (new plot function needed in plots.js)
+  // Only render if retrospective data was available
+  let anomalyImageUrl = null;
+  if (bulletin.flowAnomaly) {
+    anomalyImageUrl = await renderChartToPng(plotFlowAnomaly, {
+      flowAnomaly: bulletin.flowAnomaly,
+      riverName,
+    });
+  }
+
+  return buildBulletinPage({
+    riverName,
+    riverId: riverData.riverId,
+    index,
+    todayDate,
+    translations,
+    bulletin,
+    returnPeriods: riverData.returnPeriods,
+    forecastImageUrl,
+    exceedanceImageUrl,
+    anomalyImageUrl,
+  });
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const updateFormatProgress = (nFormatted, nRivers) => {
+  const progress = ((nFormatted / nRivers) * 100).toFixed(0);
+  reportFormatProgress.value = progress;
+  reportFormatLabel.textContent = `${progress}%`;
 }
 
 const printIframe = () => {

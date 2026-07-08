@@ -1,12 +1,13 @@
 import Plotly from 'plotly.js/lib/core';
 import scatter from 'plotly.js/lib/scatter';
 import heatmap from 'plotly.js/lib/heatmap';
+import bar from 'plotly.js/lib/bar'
 
 import {divChartFdc, divChartForecast, divChartRetro, divChartStatus, divChartYearlyVol, divCumulativeVolume, divRasterHydrograph, divTableForecast, divYearlyPeaks} from './ui.js'
 import {Lang, UseShowExtraRetroGraphs} from "./states/state.js";
 import {translationDictionary} from "./intl.js";
 
-Plotly.register([scatter, heatmap]);
+Plotly.register([scatter, heatmap, bar]);
 Plotly.setPlotConfig({'locale': Lang.get()})
 
 //////////////////////////////////////////////////////////////////////// Constants and configs
@@ -87,7 +88,7 @@ const plotForecast = ({forecast, rp, riverId, chartDiv}) => {
   chartDiv.innerHTML = ""
   const maxForecast = Math.max(...forecast.stats.median)
   const returnPeriods = returnPeriodShapes({rp, x0: forecast.datetime[0], x1: forecast.datetime[forecast.datetime.length - 1], maxFlow: maxForecast})
-  Plotly.newPlot(
+  return Plotly.newPlot(
     chartDiv,
     [
       {
@@ -842,6 +843,81 @@ const plotCumulativeVolumes = ({retro, riverId, chartDiv}) => {
     responsive: true,
   };
   Plotly.newPlot(chartDiv, traces, layout, config);
+};
+
+export const plotExceedanceProbabilities = ({exceedance, overallAlert, chartDiv}) => {
+  const {datetime, byRP} = exceedance;
+
+  const RP_COLORS = {
+    2:   '#FFD700',
+    5:   '#FFA500',
+    10:  '#FF8C00',
+    25:  '#FF4500',
+    50:  '#FF0000',
+    100: '#8B0000',
+  };
+
+  const traces = Object.entries(byRP).map(([rp, probs]) => ({
+    x: datetime,
+    y: probs,
+    name: `${rp}-yr`,
+    type: 'scatter',
+    mode: 'lines',
+    line: {color: RP_COLORS[Number(rp)] ?? '#888888', width: 2},
+  }));
+
+  // 30% action threshold line
+  const actionLine = {
+    x: [datetime[0], datetime[datetime.length - 1]],
+    y: [30, 30],
+    name: 'Threshold',
+    type: 'scatter',
+    mode: 'lines',
+    line: {color: 'red', width: 1.5, dash: 'dash'},
+  };
+
+  const layout = {
+    title: 'Flood Exceedance Probabilities',
+    xaxis: {title: 'Forecast Date'},
+    yaxis: {title: 'Ensemble Exceedance Probability (%)', range: [0, 105]},
+    legend: {
+        x: 1.0,
+        xanchor: 'right',
+        y: 1.0,
+        yanchor: 'top',
+        bgcolor: 'rgba(255,255,255,0.8)',
+        bordercolor: '#ccc',
+        borderwidth: 1,
+    },
+    height: 400,
+    margin: {t: 40, r: 20, b: 60, l: 60},
+  };
+
+  return Plotly.newPlot(chartDiv, [...traces, actionLine], layout);
+};
+
+export const plotFlowAnomaly = ({flowAnomaly, riverName, chartDiv}) => {
+  const {datetime, anomaly} = flowAnomaly;
+
+  const trace = {
+    x: datetime,
+    y: anomaly,
+    type: 'bar',
+    name: 'Flow Anomaly',
+    marker: {
+      color: anomaly.map(v => v > 0 ? '#FF4444' : '#4488FF'),
+    },
+  };
+
+  const layout = {
+    title: `Forecast Flow Anomaly vs. Climatology`,
+    xaxis: {title: 'Date'},
+    yaxis: {title: 'Anomaly (m³/s above/below normal)'},
+    height: 400,
+    margin: {t: 40, r: 20, b: 60, l: 60},
+  };
+
+  return Plotly.newPlot(chartDiv, [trace], layout);
 };
 //////////////////////////////////////////////////////////////////////// Plotting Managers
 const plotAllRetro = ({retro, riverId}) => {
