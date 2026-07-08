@@ -1,0 +1,244 @@
+// src/auth-bootstrap.js
+//
+// Owns rfs's Supabase Auth integration: a single Supabase client + auth
+// adapter, the `<dialog>` sign-in modal, and the auth-action navbar slot.
+// Cross-app SSO with apps.geoglows / aquiferx / grace happens automatically
+// because they share the same Supabase project and (when proxied through the
+// portal) the same origin — Supabase JS persists tokens to localStorage
+// keyed by URL.
+//
+// Imported FIRST in src/main.js. rfs's main.js has no top-level awaits today,
+// so the strict ordering of grace's auth-bootstrap (must register the listener
+// before zarr awaits start) does not apply here. Keeping the FIRST-import
+// convention anyway so future additions of top-level awaits don't silently
+// break SSO. The 2-second safety-net timeout backstops the listener.
+
+import {
+  bootstrapSession,
+  createGeoglowsSupabaseClient,
+  createSupabaseAuthAdapter,
+  mountSignInModal,
+  renderAuthAction,
+} from "@aquaveo/geoglows-auth/core"
+import "@aquaveo/geoglows-auth/core/sign-in.css"
+
+const SIGN_IN_REQUESTED_EVENT = "geoglows:sign-in-requested"
+
+const supabase = createGeoglowsSupabaseClient({
+  url: import.meta.env.VITE_SUPABASE_URL,
+  publishableKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+})
+
+const authAdapter = createSupabaseAuthAdapter({
+  supabase,
+  // Preserve pathname so password-recovery / magic-link emails return
+  // users to the same surface they started from. RFS runs at
+  // `https://portal-dev.geoglows.org/hydroviewer/` via the portal proxy;
+  // window.location.origin alone strips the path and would land recovery
+  // users on the portal root. window.location.origin +
+  // window.location.pathname keeps them inside the proxy path.
+  defaultRedirectTo: window.location.origin + window.location.pathname,
+  logoutRedirectTo: window.location.origin,
+})
+
+let authState = {
+  user: null,
+  account: null,
+  status: "bootstrapping",
+  action: null,
+}
+
+function slot() {
+  return document.getElementById("auth-action")
+}
+
+function renderSlot() {
+  const el = slot()
+  if (!el) return
+  // Surgical: only the slot's innerHTML is replaced. The surrounding
+  // .nav-bar-wrapper and <arcgis-map> are left alone — ArcGIS map components
+  // and Materialize's dropdown initializations must not be torn down.
+  // Profile link points at the portal's #profile route. Root-relative
+  // "/#profile" works because rfs is reached via the portal proxy in
+  // production (same origin as apps.geoglows). The hash-only "#profile"
+  // default would be a same-document hash change here — it would NOT
+  // navigate to apps.geoglows.
+  el.innerHTML = renderAuthAction(authState, {profileHref: "/#profile"})
+
+  // Re-bind handlers on the freshly-rendered children every time. The
+  // renderAuthAction output owns three stable IDs:
+  // #geoglowsSignIn / #geoglowsSignOut / #geoglowsAuthActionAvatar.
+  document.getElementById("geoglowsSignIn")?.addEventListener("click", () => {
+    window.dispatchEvent(new CustomEvent(SIGN_IN_REQUESTED_EVENT))
+  })
+
+  document
+    .getElementById("geoglowsSignOut")
+    ?.addEventListener("click", async () => {
+      authState = {...authState, action: "signing_out"}
+      renderSlot()
+      try {
+        await authAdapter.signOutRedirect()
+        // signOutRedirect navigates to logoutRedirectTo (window.location.origin)
+        // — the page reloads and module state is reset.
+      } catch (error) {
+        console.error("Sign out failed:", error)
+        authState = {...authState, action: null}
+        renderSlot()
+      }
+    })
+}
+
+// Mount the sign-in modal once at module load and bridge the navbar event.
+const signInModal = mountSignInModal({authAdapter})
+window.addEventListener(SIGN_IN_REQUESTED_EVENT, () => signInModal.open())
+
+// Recovery URL detection — runs synchronously BEFORE Supabase JS consumes
+// the hash. If the URL signals expired-token or PKCE (unsupported in v1),
+// open the modal in the recoveryError view so the user sees a clean error
+// instead of silent failure. See apps.geoglows/docs/plans/
+// 2026-04-30-002-feat-forgot-password-flow-plan.md (Q1 + PKCE detector).
+//
+// `tabHasRecoveryUrl` is the load-bearing snapshot used to gate the
+// PASSWORD_RECOVERY handler below — only the tab that actually received
+// the recovery URL should open the setNewPassword modal. Without this
+// gate, Supabase's cross-tab session revalidation fires PASSWORD_RECOVERY
+// in every open tab of every GEOGloWS app for the same Supabase project
+// when the user uses the recovery link elsewhere — misleading UX.
+const tabHasRecoveryUrl = (() => {
+  // Prefer the inline-script-captured snapshot from index.html. Reading
+  // window.location directly here can race against Supabase JS's
+  // _initialize() — by the time this IIFE runs, the hash may already be
+  // cleared. The inline script in index.html runs before any module is
+  // fetched, guaranteeing the recovery hash is preserved here.
+  const initial = window.__GEOGLOWS_INITIAL_URL__
+  const hash =
+    initial && typeof initial.hash === "string"
+      ? initial.hash
+      : window.location.hash
+  const search =
+    initial && typeof initial.search === "string"
+      ? initial.search
+      : window.location.search
+  const hasOtpExpired =
+    /(?:^|[#&?])error_code=otp_expired/.test(hash) ||
+    /(?:^|[?&])error_code=otp_expired/.test(search)
+  const hasCode =
+    /(?:^|[#&?])code=/.test(hash) || /(?:^|[?&])code=/.test(search)
+  const hasRecovery =
+    /(?:^|[#&?])type=recovery/.test(hash) ||
+    /(?:^|[?&])type=recovery/.test(search)
+  const hasImplicitRecoveryHash =
+    /(?:^|[#&?])access_token=/.test(hash) && hasRecovery
+  if (hasOtpExpired) {
+    signInModal.open({view: "recoveryError"})
+    return true
+  }
+  if (hasCode && hasRecovery) {
+    console.error(
+      "PKCE recovery flow is not supported in @aquaveo/geoglows-auth 1.2.x.",
+    )
+    signInModal.open({view: "recoveryError"})
+    return true
+  }
+  return hasImplicitRecoveryHash
+})()
+
+let initialBootstrapDone = false
+
+function bootstrapSafe(reason) {
+  bootstrapSession({
+    auth: authAdapter,
+    supabase,
+    // initialState carries the previous user/account through the
+    // transient bootstrapping/loading_profile/loading_account phases on
+    // rebootstrap (e.g. tab-focus revalidation), avoiding the avatar →
+    // "Signing in…" flicker. null on first bootstrap is the desired
+    // default (lib treats it as a fresh start).
+    initialState: authState.user
+      ? {
+          status: authState.status,
+          user: authState.user,
+          account: authState.account ?? null,
+          error: null,
+        }
+      : null,
+    onStateChange: (state) => {
+      // bootstrapSession emits { status, user, account, error }. Preserve
+      // any locally-tracked action (e.g. "signing_out") across the merge.
+      authState = {...state, action: authState.action}
+      renderSlot()
+    },
+  }).catch((error) => {
+    console.error(
+      `Bootstrap after ${reason} failed:`,
+      error instanceof Error ? error.message : error,
+    )
+  })
+}
+
+// INITIAL_SESSION fires after Supabase JS finishes detectSessionInUrl —
+// this is the only safe moment to call getSession() and have it reflect
+// any OAuth tokens that arrived in the URL hash. SIGNED_IN / SIGNED_OUT
+// fire on later changes (modal sign-in, sign-out from any tab).
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === "INITIAL_SESSION" && !initialBootstrapDone) {
+    initialBootstrapDone = true
+    bootstrapSafe("INITIAL_SESSION")
+
+    // Strip OAuth callback artifacts so a reload doesn't replay the flow.
+    // Supabase's implicit OAuth callback returns tokens in the hash;
+    // PKCE returns ?code=&state= in the query. Clean both.
+    const hashHasAuth = /(?:^|[#&])access_token=/.test(window.location.hash)
+    const search = new URLSearchParams(window.location.search)
+    const queryHasAuth = search.has("code") && search.has("state")
+    if (hashHasAuth || queryHasAuth) {
+      if (queryHasAuth) {
+        search.delete("code")
+        search.delete("state")
+      }
+      const cleanedSearch = search.toString()
+      const newUrl =
+        window.location.pathname + (cleanedSearch ? `?${cleanedSearch}` : "")
+      history.replaceState({}, document.title, newUrl)
+    }
+    return
+  }
+  if (event === "SIGNED_OUT") {
+    bootstrapSafe("SIGNED_OUT")
+    return
+  }
+  if (event === "SIGNED_IN") {
+    // Supabase JS fires SIGNED_IN on every visibility-change session
+    // revalidation (GoTrueClient.js _recoverAndRefresh). If it's the
+    // same user we already have, skip the rebootstrap — saves a
+    // network round trip (and defensively avoids any avatar flicker).
+    const newId = session?.user?.id
+    const currentSub = authState.user?.sub
+    if (newId && currentSub && newId === currentSub) return
+    bootstrapSafe("SIGNED_IN")
+  }
+  if (event === "PASSWORD_RECOVERY") {
+    // Only open if THIS tab actually loaded with a recovery URL. Supabase
+    // fires PASSWORD_RECOVERY on every tab that revalidates a recovery-type
+    // session via getSession() — including tabs that didn't receive the
+    // recovery email link. See `tabHasRecoveryUrl` snapshot above.
+    if (!tabHasRecoveryUrl) return
+    signInModal.open({view: "setNewPassword"})
+  }
+})
+
+// Safety net: if INITIAL_SESSION never fires within 2s (unlikely with
+// detectSessionInUrl: true on by default), bootstrap anyway so the slot
+// never gets stuck on the "Signing in…" placeholder.
+setTimeout(() => {
+  if (!initialBootstrapDone) {
+    initialBootstrapDone = true
+    bootstrapSafe("timeout-fallback")
+  }
+}, 2000)
+
+// Initial render so the slot shows the loading pill immediately. The DOM
+// is parsed before this script runs (the entry script is `type="module"`
+// which is implicitly deferred), so #auth-action exists.
+renderSlot()
