@@ -1,3 +1,7 @@
+:root {
+    --nav-height: 70px;
+}
+
 html, body {
     height: 100vh;
     width: 100vw;
@@ -27,44 +31,48 @@ body {
     align-items: center;
     padding: 0 25px;
     border-bottom: 1px solid #e9ecef;
-    height: 75px;
+    height: var(--nav-height);
     flex-grow: 1;
-    background-color: #81d4fa
+    background-color: #81d4fa;
 }
 
 .nav-bar-wrapper .back-to-portal {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    margin-right: 16px;
-    color: #003a4d;
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.45);
+    padding: 6px 10px;
+    border-radius: 6px;
     transition: background 0.15s ease;
 }
 
 .nav-bar-wrapper .back-to-portal:hover,
 .nav-bar-wrapper .back-to-portal:focus-visible {
-    background: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.6);
     outline: none;
 }
 
-.nav-bar-wrapper .back-to-portal-icon {
-    width: 18px;
-    height: 18px;
-    color: #1d4ed8;
-    flex-shrink: 0;
+.nav-bar-wrapper .back-to-portal-logo {
+    /* Cap the width and let height follow the intrinsic 473x80 aspect ratio.
+       The width/height attributes on the <img> reserve the box, so this
+       doesn't shift layout while the image loads. */
+    max-width: 175px;
+    width: auto;
+    height: auto;
+    display: block;
+}
+
+.nav-bar-wrapper .app-title {
+    margin-left: 8px;
+    padding-left: 8px;
+    font-size: 2rem;
+    font-weight: bolder;
 }
 
 .nav-bar-wrapper .nav-buttons {
     /* margin-left: auto pushes nav-buttons + nav-auth as a right cluster. */
     margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .nav-bar-wrapper .nav-auth {
@@ -78,36 +86,11 @@ arcgis-map {
     width: 100%;
     flex-grow: 1;
     min-height: 80%;
-    height: calc(100% - 75px);
+    height: calc(100% - var(--nav-height));
 }
 
 arcgis-map calcite-action {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-
-.controls-wrapper {
-    height: auto;
-    margin: auto;
-    width: 100%;
-    max-width: 500px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    flex-grow: 1;
-}
-
-.time-slider-wrapper {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.map-overlay-element {
-    background-color: rgba(255, 255, 255, 0.40);
-    padding: 5px 10px;
 }
 
 .legend {
@@ -124,42 +107,26 @@ arcgis-map calcite-action {
     background: rgba(255, 255, 255, 0.9);
 }
 
-.header-group {
-    text-align: center;
-    font-weight: bold;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-}
-
-.modal-header-bar {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    border-bottom: 1px solid lightgrey;
-    padding-bottom: 10px;
-    margin-bottom: 10px;
-}
-
-.modal-header-bar h4 {
-    margin: 0;
-}
-
+/* Forecast/Retrospective toggle. Unlayered so it overrides the layered
+   .btn utility background/text without needing extra specificity. */
 .status-btn {
-    border: 1px solid black;
-    text-transform: unset;
-    font-weight: bold;
-    width: 150px;
-    color: black;
+    min-width: 130px;
+    border: 1px solid #94a3b8;
     background-color: white;
+    color: #1e293b;
+    font-weight: 600;
+    text-transform: none;
 }
 
-.status-btn.active {
+.status-btn:hover {
+    background-color: #f1f5f9;
+}
+
+.status-btn.active,
+.status-btn.active:hover {
     color: white;
-    background-color: green;
+    background-color: #16a34a;
+    border-color: #16a34a;
 }
 
 .chart {
@@ -171,38 +138,7 @@ arcgis-map calcite-action {
     max-height: max(4in, 575px);
 }
 
-.controls-box {
-    width: 100%;
-    max-width: 500px;
-    display: flex;
-    flex-direction: column;
-    margin: 10px 0;
-}
-
-.button-group {
-    display: flex;
-    flex-direction: column;
-}
-
-/* Override materialize css styles */
-label {
-    font-size: 1.2rem !important;
-}
-
-ul.dropdown-content {
-    max-height: 400px;
-}
-
-.custom-toast-placement {
-    position: fixed;
-    top: 30% !important;
-    text-align: center;
-}
-
-button {
-    margin: 5px;
-}
-
+/* Sliding forecast/retrospective chart panels inside the charts modal */
 .chart-category-container {
     width: 100%;
     visibility: visible;
@@ -213,19 +149,17 @@ button {
     display: flex;
     flex-direction: column;
     align-items: center;
-    position: absolute
+    position: absolute;
 }
 
 .chart-category-container.dissolve-backwards {
     transform: translateX(-100%);
 }
 
-.modal.bottom-sheet {
-    max-height: 80%;
-}
-
-button > a {
-    color: unset;
+/* The outer wrapper is the positioning context for the two absolutely
+   positioned panels it holds, so it must override the rule above. */
+.chart-spaces {
+    position: relative;
 }
 
 .time-sliders {
@@ -245,60 +179,6 @@ button > a {
     font-size: 1.2rem;
     font-weight: bold;
     background-color: #f8f9fa;
-}
-
-#charts-modal > .modal-content {
-    padding: 5px;
-}
-
-.settings-options-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.report-option-wrapper {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-}
-
-.report-option-wrapper * {
-    flex: 1 0 auto;
-    width: 50%;
-}
-
-.modal-footer {
-    margin: 0;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 10px;
-}
-
-input.river-id {
-    width: 200px;
-    margin: 10px
-}
-
-table.forecast-probability-table td, table.forecast-probability-table th {
-    text-align: center;
-}
-
-#forecast-date-calendar {
-    width: 150px;
-    margin: 0;
-}
-
-#enter-river-id-container {
-    width: 350px;
-    background-color: lightgoldenrodyellow;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .hidden-underneath {
@@ -341,34 +221,12 @@ table.forecast-probability-table td, table.forecast-probability-table th {
     gap: 8px;
 }
 
-.report-preview-toolbar button {
-    color: white;
-}
-
 #report-preview-container iframe {
     width: 100%;
     max-width: 9.5in;
     flex: 1;
     border: none;
     background-color: #525659;
-}
-
-/* on mobile screens, change the download-buttons class */
-@media (max-width: 800px) {
-    .download-buttons {
-        display: flex;
-        align-items: center;
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    .nav-bar-wrapper {
-        padding: 0 13px;
-    }
-
-    .hide-on-small-only {
-        display: none;
-    }
 }
 
 .progress-with-label {
@@ -380,10 +238,43 @@ table.forecast-probability-table td, table.forecast-probability-table th {
 
 .progress-with-label progress {
     width: 80%;
+    height: 10px;
+    border-radius: 9999px;
+    overflow: hidden;
 }
 
 .progress-with-label div {
     width: 15%;
     text-align: right;
     font-weight: bold;
+}
+
+/* Responsive visibility helpers. `.hide-on-small-only` shows by default and is
+   hidden below the breakpoint; `.show-on-small-only` is its inverse. Using
+   `revert` restores each element's own default display (inline for a span,
+   block for a div) instead of forcing one value. */
+.show-on-small-only {
+    display: none;
+}
+
+@media (max-width: 800px) {
+    .nav-bar-wrapper {
+        padding: 0 13px;
+    }
+
+    .nav-bar-wrapper .back-to-portal {
+        padding: 6px;
+    }
+
+    .nav-bar-wrapper .back-to-portal-logo {
+        height: 28px;
+    }
+
+    .hide-on-small-only {
+        display: none;
+    }
+
+    .show-on-small-only {
+        display: revert;
+    }
 }

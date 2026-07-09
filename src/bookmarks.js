@@ -2,6 +2,8 @@ import namedDefaultRivers from "./json/namedDefaultRivers.json" with {type: "jso
 import {RiverId} from "./states/state.js";
 import {validateRiverNumber} from "./data/main.js";
 import {translationDictionary} from "./intl.js";
+import {openModal, closeModal, showToast} from "./components.js";
+import {chartLine, heartOutline, heartSolid, trash} from "./icons.js";
 
 const key = 'riverBookmarks'
 
@@ -14,8 +16,8 @@ export const bookmarks = (() => {
 
   // the button indicating if the currently displayed river is bookmarked or not
   const bookmarkRiverButton = document.getElementById('save-current-river')
-  const isBookmarkedIcon = '<i class="material-icons" style="color: red">favorite</i>'
-  const unBookmarkIcon = '<i class="material-icons" style="color: red">favorite_border</i>'
+  const isBookmarkedIcon = `<span class="text-red-600">${heartSolid}</span>`
+  const unBookmarkIcon = `<span class="text-red-600">${heartOutline}</span>`
 
   // bookmarks view modal
   const restoreBookmarksButton = document.getElementById('restore-bookmarks-button')
@@ -60,18 +62,20 @@ export const bookmarks = (() => {
         <td>${b.id}</td>
         <td>${b.name}</td>
         <td>
-          <a data-position="bottom" class="btn modal-trigger" onclick="M.Modal.getInstance(document.getElementById('bookmarks-modal')).close(); setRiverIdFromInput(${b.id})"><i class="material-icons">timeline</i></a>
-          <a data-position="bottom" class="btn red" data-bookmarkId="${b.id}"><i class="material-icons">delete</i></a>
+          <div class="flex gap-1">
+            <button class="icon-btn" onclick="closeModal('bookmarks-modal'); setRiverIdFromInput(${b.id})">${chartLine}</button>
+            <button class="icon-btn text-red-600 delete-bookmark" data-bookmarkId="${b.id}">${trash}</button>
+          </div>
         </td>
       </tr>`
       })
       .join('')
     tableBody
-      .querySelectorAll('.red')
+      .querySelectorAll('.delete-bookmark')
       .forEach(btn => {
         btn.onclick = () => {
           remove(parseInt(btn.getAttribute('data-bookmarkId')))
-          btn.parentElement.parentElement.remove()
+          btn.closest('tr').remove()
         }
       })
   }
@@ -83,27 +87,27 @@ export const bookmarks = (() => {
     const id = newRiverIdInput.value.trim()
     const name = newRiverNameInput.value.trim()
     if (!/^\d{9}$/.test(id)) {
-      M.toast({html: translationDictionary.ui.bookmarkInvalidId, classes: 'orange', displayLength: 6000})
+      showToast(translationDictionary.ui.bookmarkInvalidId, {type: 'warning', duration: 6000})
       return
     }
     if (bookmarks.find(r => r.id === +id)) {
-      M.toast({html: translationDictionary.ui.bookmarkDuplicate, classes: 'orange', displayLength: 6000})
+      showToast(translationDictionary.ui.bookmarkDuplicate, {type: 'warning', duration: 6000})
       return
     }
     if (name.length === 0) {
-      M.toast({html: translationDictionary.ui.bookmarkEnterName, classes: 'orange', displayLength: 6000})
+      showToast(translationDictionary.ui.bookmarkEnterName, {type: 'warning', duration: 6000})
       return
     }
     const addedRiver = await add({id: +id, name: name, validate: true})
     if (!addedRiver){
-      M.toast({html: translationDictionary.ui.bookmarkNotFound, classes: 'red', displayLength: 6000})
+      showToast(translationDictionary.ui.bookmarkNotFound, {type: 'error', duration: 6000})
       return
     }
     cache()
     newRiverIdInput.value = ''
     newRiverNameInput.value = ''
-    M.Modal.getInstance(addModalDiv).close()
-    M.toast({html: translationDictionary.ui.bookmarkAdded, classes: 'green', displayLength: 2000})
+    closeModal(addModalDiv)
+    showToast(translationDictionary.ui.bookmarkAdded, {type: 'success', duration: 2000})
   }
   const isBookmarked = riverid => bookmarks.some(r => r.id === riverid)
 
@@ -115,7 +119,7 @@ export const bookmarks = (() => {
     }
     newRiverIdInput.value = riverid || ''
     newRiverNameInput.value = ''
-    M.Modal.getInstance(addModalDiv).open()
+    openModal(addModalDiv)
   }
 
   restoreBookmarksButton.onclick = restoreDefaults

@@ -31,12 +31,6 @@ const supabase = createGeoglowsSupabaseClient({
 
 const authAdapter = createSupabaseAuthAdapter({
   supabase,
-  // Preserve pathname so password-recovery / magic-link emails return
-  // users to the same surface they started from. RFS runs at
-  // `https://portal-dev.geoglows.org/hydroviewer/` via the portal proxy;
-  // window.location.origin alone strips the path and would land recovery
-  // users on the portal root. window.location.origin +
-  // window.location.pathname keeps them inside the proxy path.
   defaultRedirectTo: window.location.origin + window.location.pathname,
   logoutRedirectTo: window.location.origin,
 })
@@ -55,19 +49,8 @@ function slot() {
 function renderSlot() {
   const el = slot()
   if (!el) return
-  // Surgical: only the slot's innerHTML is replaced. The surrounding
-  // .nav-bar-wrapper and <arcgis-map> are left alone — ArcGIS map components
-  // and Materialize's dropdown initializations must not be torn down.
-  // Profile link points at the portal's #profile route. Root-relative
-  // "/#profile" works because rfs is reached via the portal proxy in
-  // production (same origin as apps.geoglows). The hash-only "#profile"
-  // default would be a same-document hash change here — it would NOT
-  // navigate to apps.geoglows.
-  el.innerHTML = renderAuthAction(authState, {profileHref: "/#profile"})
+  el.innerHTML = renderAuthAction(authState, {profileHref: "https://apps.geoglows/#profile"})
 
-  // Re-bind handlers on the freshly-rendered children every time. The
-  // renderAuthAction output owns three stable IDs:
-  // #geoglowsSignIn / #geoglowsSignOut / #geoglowsAuthActionAvatar.
   document.getElementById("geoglowsSignIn")?.addEventListener("click", () => {
     window.dispatchEvent(new CustomEvent(SIGN_IN_REQUESTED_EVENT))
   })

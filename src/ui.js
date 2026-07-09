@@ -1,6 +1,10 @@
 /// URLs
 import {clearStore} from "./data/cache.js";
 import {translationDictionary} from "./intl.js";
+import {openModal, closeModal} from "./components.js";
+
+const selectedValues = select => [...select.selectedOptions].map(o => o.value)
+const clearSelect = select => [...select.options].forEach(o => (o.selected = false))
 
 export const RFS_LAYER_URL = 'https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer'
 
@@ -60,7 +64,7 @@ const clearCharts = chartTypes => {
 }
 
 const showChartView = (modal) => {
-  M.Modal.getInstance(divModalCharts).open()
+  openModal(divModalCharts)
   if (modal === 'forecast') {
     document.getElementById("forecastChartSpace").classList.remove('dissolve-backwards')
     document.getElementById("retroChartSpace").classList.add('dissolve-backwards')
@@ -74,21 +78,18 @@ const showChartView = (modal) => {
   }
 }
 const resetFilterForm = () => {
-  selectRiverCountry.value = ""
-  selectOutletCountry.value = ""
-  selectVPU.value = ""
+  clearSelect(selectRiverCountry)
+  clearSelect(selectOutletCountry)
+  clearSelect(selectVPU)
   definitionString.value = ""
   definitionDiv.value = ""
-  M.FormSelect.init(selectRiverCountry)
-  M.FormSelect.init(selectOutletCountry)
-  M.FormSelect.init(selectVPU)
 }
 const buildFilterExpression = () => {
-  const riverCountry = M.FormSelect.getInstance(selectRiverCountry).getSelectedValues()
-  const outletCountry = M.FormSelect.getInstance(selectOutletCountry).getSelectedValues()
-  const vpu = M.FormSelect.getInstance(selectVPU).getSelectedValues()
+  const riverCountry = selectedValues(selectRiverCountry)
+  const outletCountry = selectedValues(selectOutletCountry)
+  const vpu = selectedValues(selectVPU)
   const customString = definitionString.value
-  if (!riverCountry.length && !outletCountry.length && !vpu.length && customString === "") return M.Modal.getInstance(modalFilter).close()
+  if (!riverCountry.length && !outletCountry.length && !vpu.length && customString === "") return closeModal(modalFilter)
 
   let definitions = []
   if (riverCountry.length) riverCountry.forEach(c => definitions.push(`rivercountry='${c}'`))

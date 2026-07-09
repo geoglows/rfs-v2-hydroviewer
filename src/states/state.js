@@ -1,4 +1,5 @@
 import {pubSubState} from "./pubSubState.js";
+import {openModal} from "../components.js";
 
 const RiverId = pubSubState({
   initialValue: null,
@@ -45,7 +46,7 @@ checkUseBiasCorrected.addEventListener('click', event => {
   // if unchecked, instead of checking the box, open a model with warnings and confirmation dialog
   const modal = document.getElementById('biascorrectionwarning-modal')
   checkUseBiasCorrected.checked = false
-  M.Modal.getInstance(modal).open()
+  openModal(modal)
 })
 document.getElementById('confirm-use-bias-correction').addEventListener('click', () => {
   UseBiasCorrected.set(true)

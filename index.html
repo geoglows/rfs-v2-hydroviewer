@@ -4,18 +4,13 @@
   <meta charset="UTF-8">
   <title>River Forecast System</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="GEOGLOWS Hydroviewer">
+  <meta name="description" content="River Forecast System">
   <meta name="author" content="Riley Hales PhD">
   <meta name="keywords" content="RFS, River Forecast System, Hydrology, Streamflow, Global, GEOGLOWS, Hydroviewer, Streamflow, Forecast, Retrospective">
   <meta name="robots" content="index, follow">
   <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
-
-  <!-- CSS Framework -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <script>
     // Capture window.location synchronously BEFORE the module bundle is
     // fetched so the password-recovery snapshot in src/auth-bootstrap.js
@@ -31,22 +26,22 @@
   <script type="module" src="/src/main.js"></script>
 </head>
 
-<body>
+<body class="text-slate-800">
 <!-- Settings-->
-<div id="about-modal" class="modal">
-  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
-    <div class="modal-header-bar">
-      <h4 data-i18n="ui.aboutTitle">About</h4>
-      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+<div id="about-modal" data-modal class="hidden fixed inset-0 z-[1000] items-center justify-center bg-black/50 p-4">
+  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
+    <div class="mb-3 flex w-full items-center justify-between border-b border-slate-200 pb-3">
+      <h4 class="text-xl font-semibold" data-i18n="ui.aboutTitle">About</h4>
+      <button data-modal-close class="icon-btn" aria-label="Close"><i data-heroicon="x-mark"></i></button>
     </div>
-    <div style="width: 100%; max-width: 800px">
+    <div class="prose-sm w-full max-w-3xl [&_a]:text-sky-600 [&_a]:underline">
       <p data-i18n-html="ui.aboutParagraph">
         To learn more about the GEOGLOWS project, visit <a href="https://www.geoglows.org" target="_blank">geoglows.org</a>.
         For more information about the River Forecast System please visit <a href="https://training.geoglows.org" target="_blank">training.geoglows.org</a>.
         For documentation and data download instructions, please consult <a href="https://data.geoglows.org" target="_blank">data.geoglows.org</a>.
       </p>
-      <p data-i18n="ui.aboutNoaaIntro">More information about the NOAA map layers can be found at:</p>
-      <ol data-i18n-html="ui.aboutNoaaList">
+      <p class="mt-3" data-i18n="ui.aboutNoaaIntro">More information about the NOAA map layers can be found at:</p>
+      <ol class="mt-2 list-decimal space-y-1 pl-6" data-i18n-html="ui.aboutNoaaList">
         <li>NOAA-20 VIIRS True Color: <a href="https://www.arcgis.com/home/item.html?id=c873f4c13aa54b25b01270df9358dc64" target="_blank">arcgis.com</a></li>
         <li>NOAA-20 VIIRS Water States: <a href="https://www.arcgis.com/home/item.html?id=3695712d28354952923d2a26a176b767" target="_blank">arcgis.com</a></li>
         <li>NOAA-20 VIIRS Thermal Anomalies: <a href="https://www.arcgis.com/home/item.html?id=dece90af1a0242dcbf0ca36d30276aa3" target="_blank">arcgis.com</a></li>
@@ -56,54 +51,50 @@
     </div>
   </div>
 </div>
-<div id="biascorrectionwarning-modal" class="modal">
-  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center">
-    <div class="modal-header-bar">
-      <h4 data-i18n="ui.biasTitle">Enable Bias Corrected Data?</h4>
-      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+<div id="biascorrectionwarning-modal" data-modal class="hidden fixed inset-0 z-[1000] items-center justify-center bg-black/50 p-4">
+  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
+    <div class="mb-3 flex w-full items-center justify-between border-b border-slate-200 pb-3">
+      <h4 class="text-xl font-semibold" data-i18n="ui.biasTitle">Enable Bias Corrected Data?</h4>
+      <button data-modal-close class="icon-btn" aria-label="Close"><i data-heroicon="x-mark"></i></button>
     </div>
-    <div style="width: 100%; max-width: 800px">
+    <div class="w-full max-w-3xl">
       <p data-i18n="ui.biasParagraph">
         Global bias correction is an experimental feature based on active research and data collection efforts. You might discover unexpected behaviors
         and incorrect data. These data are not recommended for operational guidance applications. Are you sure you want to use bias corrected data?
       </p>
-      <div style="display: flex; flex-direction: row; justify-content: center; gap: 10px; margin-top: 15px">
-        <button class="btn red modal-close waves-effect waves-green btn-flat" data-i18n="ui.biasNo">No, go back</button>
-        <button class="btn green modal-close waves-effect waves-green btn-flat" id="confirm-use-bias-correction" data-i18n="ui.biasYes">Yes, use bias corrected data</button>
+      <div class="mt-4 flex flex-row justify-center gap-3">
+        <button class="btn btn-danger" data-modal-close data-i18n="ui.biasNo">No, go back</button>
+        <button class="btn btn-success" data-modal-close id="confirm-use-bias-correction" data-i18n="ui.biasYes">Yes, use bias corrected data</button>
       </div>
     </div>
   </div>
 </div>
-<div id="settings-modal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header-bar">
-      <h4 data-i18n="ui.settingsTitle">Settings</h4>
-      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+<div id="settings-modal" data-modal class="hidden fixed inset-0 z-[1000] items-center justify-center bg-black/50 p-4">
+  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
+    <div class="mb-3 flex w-full items-center justify-between border-b border-slate-200 pb-3">
+      <h4 class="text-xl font-semibold" data-i18n="ui.settingsTitle">Settings</h4>
+      <button data-modal-close class="icon-btn" aria-label="Close"><i data-heroicon="x-mark"></i></button>
     </div>
-    <h5 data-i18n="ui.chartOptions">Chart Options</h5>
-    <div class="settings-options-wrapper">
-      <label>
-        <input type="checkbox" class="filled-in" id="settingsShowSimpleForecast" checked/>
-        <span data-i18n="ui.showSimpleForecast">Display simplified forecast stats</span>
-      </label>
+    <h5 class="mt-2 mb-2 text-lg font-semibold" data-i18n="ui.chartOptions">Chart Options</h5>
+    <label class="mb-2 flex items-center gap-2">
+      <input type="checkbox" class="h-4 w-4 accent-sky-600" id="settingsShowSimpleForecast" checked/>
+      <span data-i18n="ui.showSimpleForecast">Display simplified forecast stats</span>
+    </label>
+    <label class="mb-2 flex items-center gap-2">
+      <input type="checkbox" class="h-4 w-4 accent-sky-600" id="settingsShowExtraRetroGraphs" checked/>
+      <span data-i18n="ui.showExtraRetroGraphs">Show additional plots analyzing retrospective data</span>
+    </label>
+    <h5 class="mt-4 mb-2 text-lg font-semibold" data-i18n="ui.dataOptions">Data Options</h5>
+    <label class="mb-2 flex items-center gap-2">
+      <input type="checkbox" class="h-4 w-4 accent-sky-600" id="settingsUseBiasCorrected"/>
+      <span data-i18n="ui.useBiasCorrection">Use experimental bias correction</span>
+    </label>
+    <h5 class="mt-4 mb-2 text-lg font-semibold" data-i18n="ui.cacheOptions">Browser Cache Options</h5>
+    <div class="flex flex-wrap gap-2">
+      <button class="btn btn-danger clear-cache" data-i18n="ui.clearCache">Clear local cache of downloaded data</button>
+      <button class="btn btn-danger delete-all-bookmarks" data-i18n="ui.deleteAllBookmarks">Remove all bookmarked rivers</button>
     </div>
-    <div class="settings-options-wrapper">
-      <label>
-        <input type="checkbox" class="filled-in" id="settingsShowExtraRetroGraphs" checked/>
-        <span data-i18n="ui.showExtraRetroGraphs">Show additional plots analyzing retrospective data</span>
-      </label>
-    </div>
-    <h5 data-i18n="ui.dataOptions">Data Options</h5>
-    <div class="settings-options-wrapper">
-      <label>
-        <input type="checkbox" class="filled-in" id="settingsUseBiasCorrected"/>
-        <span data-i18n="ui.useBiasCorrection">Use experimental bias correction</span>
-      </label>
-    </div>
-    <h5 data-i18n="ui.cacheOptions">Browser Cache Options</h5>
-    <button class="btn red clear-cache" data-i18n="ui.clearCache">Clear local cache of downloaded data</button>
-    <button class="btn red delete-all-bookmarks" data-i18n="ui.deleteAllBookmarks">Remove all bookmarked rivers</button>
-    <p style="margin-top: 1rem; font-size: 0.95rem; opacity: 0.8">
+    <p class="mt-4 text-sm text-slate-500">
       <span data-i18n="ui.appVersionLabel">App Version</span>: <span id="about-app-version-date">%APP_VERSION_DATE%</span>
     </p>
   </div>
@@ -112,71 +103,69 @@
 <!-- Reports-->
 <div id="report-preview-container">
   <div class="report-preview-toolbar">
-    <button id="close-preview" class="btn btn-flat"><i class="material-icons">close</i> <span data-i18n="ui.closePreview">Close Preview</span></button>
-    <button id="download-report-preview" class="btn"><i class="material-icons">print</i> <span data-i18n="ui.downloadReportPdf">Download Report (PDF)</span></button>
+    <button id="close-preview" class="btn btn-ghost text-white"><i data-heroicon="x-mark" data-heroicon-class="size-5 shrink-0"></i> <span data-i18n="ui.closePreview">Close Preview</span></button>
+    <button id="download-report-preview" class="btn"><i data-heroicon="printer" data-heroicon-class="size-5 shrink-0"></i> <span data-i18n="ui.downloadReportPdf">Download Report (PDF)</span></button>
   </div>
   <iframe id="report-pdf-frame"></iframe>
 </div>
 <div id="report-render-space" class="hidden-underneath"></div>
-<div id="report-modal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header-bar">
-      <div class="header-group">
-        <h4 data-i18n="ui.reportsTitle">Generate Reports (Beta)</h4>
-      </div>
-      <div class="header-group">
-        <button id="new-report-button" data-i18n-tooltip="ui.newReportTooltip" data-tooltip="Start new report" data-position="bottom" class="btn tooltipped" style="margin-inline: 8px" disabled><i class="material-icons">add</i></button>
-        <a class="modal-close waves-effect waves-green btn-flat">X</a>
+<div id="report-modal" data-modal class="hidden fixed inset-0 z-[1000] items-center justify-center bg-black/50 p-4">
+  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
+    <div class="mb-3 flex w-full items-center justify-between border-b border-slate-200 pb-3">
+      <h4 class="text-xl font-semibold" data-i18n="ui.reportsTitle">Generate Reports (Beta)</h4>
+      <div class="flex items-center gap-2">
+        <button id="new-report-button" data-i18n-tooltip="ui.newReportTooltip" data-tooltip="Start new report" class="icon-btn tooltip" disabled><i data-heroicon="plus"></i></button>
+        <button data-modal-close class="icon-btn" aria-label="Close"><i data-heroicon="x-mark"></i></button>
       </div>
     </div>
-    <h5 data-i18n="ui.reportsStep1">Select Report Type</h5>
-    <div class="report-option-wrapper">
+    <h5 class="mb-2 text-lg font-semibold" data-i18n="ui.reportsStep1">Select Report Type</h5>
+    <div class="mb-3 flex items-center justify-between gap-3">
       <label for="report-type-select" id="report-type-select-label" data-i18n="ui.reportTypeLabel">Report Type:</label>
-      <select id="report-type-select" aria-labelledby="report-type-select-label">
+      <select id="report-type-select" class="field-select max-w-[50%]" aria-labelledby="report-type-select-label">
         <option value="riverForecasts" data-i18n="ui.reportTypeDaily">Daily Forecast Report</option>
       </select>
     </div>
-    <div class="report-option-wrapper">
+    <div class="mb-3 flex items-center justify-between gap-3">
       <label for="report-date-calendar" data-i18n="ui.forecastDateLabel">Date of Forecast Data:</label>
-      <input type="date" id="report-date-calendar" onkeydown="if (!['Tab','Escape'].includes(event.key)) return false" style="max-width: 50%">
+      <input type="date" id="report-date-calendar" class="field-input max-w-[50%]" onkeydown="if (!['Tab','Escape'].includes(event.key)) return false">
     </div>
-    <div class="report-option-wrapper">
+    <div class="mb-3 flex items-center justify-between gap-3">
       <label for="report-river-list-select" data-i18n="ui.selectRiverList">Select List of Rivers</label>
-      <select id="report-river-list-select">
+      <select id="report-river-list-select" class="field-select max-w-[50%]">
         <option value="allBookmarks" data-i18n="ui.allBookmarks">All Bookmarks</option>
       </select>
     </div>
-    <div style="width: 100%; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap">
-      <button id="generate-report" class="btn" style="display: flex; align-items: center" data-i18n="ui.prepareReport">Prepare Report</button>
-      <button id="cancel-report" class="btn red" disabled data-i18n="ui.cancelReport">Cancel</button>
+    <div class="flex w-full flex-wrap justify-center gap-2">
+      <button id="generate-report" class="btn" data-i18n="ui.prepareReport">Prepare Report</button>
+      <button id="cancel-report" class="btn btn-danger" disabled data-i18n="ui.cancelReport">Cancel</button>
       <button id="preview-report" class="btn" disabled data-i18n="ui.previewReport">Preview Report</button>
       <button id="download-report" class="btn" disabled data-i18n="ui.downloadReportPdf">Download Report (PDF)</button>
     </div>
-    <h5 data-i18n="ui.reportsStep2">Report Generating Progress</h5>
+    <h5 class="mt-4 mb-2 text-lg font-semibold" data-i18n="ui.reportsStep2">Report Generating Progress</h5>
     <div data-i18n="ui.downloadData">Download Data:</div>
     <div class="progress-with-label">
-      <progress id="report-data-progress" value="0" max="100"></progress>
+      <progress id="report-data-progress" class="accent-sky-600" value="0" max="100"></progress>
       <div id="report-data-label">0%</div>
     </div>
     <div data-i18n="ui.formattingReport">Formatting Report:</div>
     <div class="progress-with-label">
-      <progress id="report-format-progress" value="0" max="100"></progress>
+      <progress id="report-format-progress" class="accent-sky-600" value="0" max="100"></progress>
       <div id="report-format-label">0%</div>
     </div>
   </div>
 </div>
-<div id="bookmarks-modal" class="modal" data-category="river-bookmarks">
-  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center;">
-    <div class="modal-header-bar">
-      <h4 style="margin: 0" data-i18n="ui.savedRivers">Saved Rivers</h4>
-      <div style="flex-grow: 1"></div>
-      <a data-i18n-tooltip="ui.saveRiverTooltip" data-tooltip="Save River" data-position="bottom" class="btn modal-trigger tooltipped" href="#add-river-bookmark" style="margin-inline: 8px"><i class="material-icons">add</i></a>
-      <button data-i18n-tooltip="ui.restoreBookmarksTooltip" data-tooltip="Restore Default Bookmarks" data-position="bottom" class="btn tooltipped" id="restore-bookmarks-button" style="margin-inline: 8px"><i class="material-icons">restore</i></button>
-      <button data-i18n-tooltip="ui.deleteAllBookmarksTooltip" data-tooltip="Delete All Bookmarks" data-position="bottom" class="btn tooltipped delete-all-bookmarks" style="margin-inline: 8px"><i class="material-icons">delete_forever</i></button>
-      <button class="modal-close waves-effect waves-green btn-flat">X</button>
+<div id="bookmarks-modal" data-modal data-category="river-bookmarks" class="hidden fixed inset-0 z-[1000] items-center justify-center bg-black/50 p-4">
+  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
+    <div class="mb-3 flex w-full items-center gap-2 border-b border-slate-200 pb-3">
+      <h4 class="text-xl font-semibold" data-i18n="ui.savedRivers">Saved Rivers</h4>
+      <div class="flex-grow"></div>
+      <button data-i18n-tooltip="ui.saveRiverTooltip" data-tooltip="Save River" class="icon-btn tooltip" data-modal-open="add-river-bookmark"><i data-heroicon="plus"></i></button>
+      <button data-i18n-tooltip="ui.restoreBookmarksTooltip" data-tooltip="Restore Default Bookmarks" class="icon-btn tooltip" id="restore-bookmarks-button"><i data-heroicon="arrow-path"></i></button>
+      <button data-i18n-tooltip="ui.deleteAllBookmarksTooltip" data-tooltip="Delete All Bookmarks" class="icon-btn tooltip delete-all-bookmarks"><i data-heroicon="trash"></i></button>
+      <button data-modal-close class="icon-btn" aria-label="Close"><i data-heroicon="x-mark"></i></button>
     </div>
-    <div id="bookmarks-table" style="width: 100%">
-      <table class="striped responsive-table bordered">
+    <div id="bookmarks-table" class="w-full">
+      <table class="data-table striped">
         <thead>
         <tr>
           <th data-field="riverId" style="width: 20%; min-width: 150px; max-width: 200px" data-i18n="ui.riverIdHeader">River ID</th>
@@ -190,13 +179,13 @@
     </div>
   </div>
 </div>
-<div id="add-river-bookmark" class="modal" data-category="river-bookmarks">
-  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
-    <div class="modal-header-bar">
-      <h4 data-i18n="ui.newBookmarkTitle">New River Bookmark</h4>
-      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+<div id="add-river-bookmark" data-modal data-category="river-bookmarks" class="hidden fixed inset-0 z-[1000] items-center justify-center bg-black/50 p-4">
+  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
+    <div class="mb-3 flex w-full items-center justify-between border-b border-slate-200 pb-3">
+      <h4 class="text-xl font-semibold" data-i18n="ui.newBookmarkTitle">New River Bookmark</h4>
+      <button data-modal-close class="icon-btn" aria-label="Close"><i data-heroicon="x-mark"></i></button>
     </div>
-    <table>
+    <table class="data-table">
       <thead>
       <tr>
         <th data-field="riverId"><label for="save-river-id" data-i18n="ui.riverIdHeader">River ID</label></th>
@@ -207,13 +196,13 @@
       <tbody>
       <tr>
         <td data-field="riverId">
-          <input id="save-river-id" type="number" contenteditable="true" onchange="this.value = this.value.slice(0, 9)" data-i18n-placeholder="ui.ph9DigitId" placeholder="9 Digit River ID">
+          <input id="save-river-id" class="field-input" type="number" contenteditable="true" onchange="this.value = this.value.slice(0, 9)" data-i18n-placeholder="ui.ph9DigitId" placeholder="9 Digit River ID">
         </td>
         <td data-field="riverName">
-          <input id="save-river-name" contenteditable="true" onchange="this.value = this.value.slice(0, 30)" data-i18n-placeholder="ui.phRiverName" placeholder="River name">
+          <input id="save-river-name" class="field-input" contenteditable="true" onchange="this.value = this.value.slice(0, 30)" data-i18n-placeholder="ui.phRiverName" placeholder="River name">
         </td>
         <td data-field="actions">
-          <button class="btn green" id="submit-new-bookmark" data-i18n="ui.addBookmark">Add Bookmark</button>
+          <button class="btn btn-success" id="submit-new-bookmark" data-i18n="ui.addBookmark">Add Bookmark</button>
         </td>
       </tr>
       </tbody>
@@ -222,45 +211,45 @@
 </div>
 
 <!-- Data presentation -->
-<div id="charts-modal" class="modal always-large-modal">
-  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
-    <div class="modal-header-bar">
-      <div class="header-group">
-        <a class="btn btn-flat modal-trigger waves-effect waves-teal tooltipped" data-i18n-tooltip="ui.searchRiverTooltip" data-tooltip="Search for a river" href="#enter-river-id-modal"><i class="material-icons" style="color: black">search</i></a>
-        <h4 id="selected-river-id" style="margin: 0" data-i18n="ui.selectRiver">Select a river</h4>
-        <button class="btn-flat" id="save-current-river"></button>
+<div id="charts-modal" data-modal class="hidden fixed inset-0 z-[1000] items-center justify-center bg-black/50 p-4">
+  <div class="relative flex h-[80vh] max-h-[90vh] w-[90%] max-w-[1400px] flex-col overflow-hidden rounded-xl bg-white p-3 shadow-2xl">
+    <div class="mb-2 flex w-full items-center justify-between border-b border-slate-200 pb-2">
+      <div class="flex items-center gap-2 font-bold">
+        <button class="icon-btn tooltip" data-modal-open="enter-river-id-modal" data-i18n-tooltip="ui.searchRiverTooltip" data-tooltip="Search for a river"><i data-heroicon="magnifying-glass"></i></button>
+        <h4 id="selected-river-id" class="text-xl font-semibold" data-i18n="ui.selectRiver">Select a river</h4>
+        <button class="icon-btn" id="save-current-river"></button>
       </div>
-      <div class="header-group">
+      <div class="flex items-center gap-2">
         <button id="showForecastCharts" class="btn status-btn active" onclick="showChartView('forecast')"><span data-i18n="ui.forecastBtn">Forecast</span><span id="forecast-load-icon"></span></button>
         <button id="showRetroCharts" class="btn status-btn" onclick="showChartView('retro')"><span data-i18n="ui.retroBtn">Retrospective</span><span id="retro-load-icon"></span></button>
-        <a class="btn btn-flat waves-effect waves-teal tooltipped dropdown-trigger" data-target="download-select" data-i18n-tooltip="ui.downloadCsvsTooltip" data-tooltip="Download CSVs"><i class="material-icons">download</i></a>
-        <ul id="download-select" class="dropdown-content">
-          <li style="display: flex; justify-content: center">
-            <button class="btn waves-effect waves-light" id="download-forecast-link" disabled data-i18n="ui.saveForecastCsv">Save Forecast Data (CSV)</button>
+        <button class="icon-btn tooltip" data-dropdown="download-select" data-i18n-tooltip="ui.downloadCsvsTooltip" data-tooltip="Download CSVs"><i data-heroicon="arrow-down-tray"></i></button>
+        <ul id="download-select" class="hidden fixed z-[1500] min-w-[16rem] rounded-md bg-white py-2 shadow-lg ring-1 ring-black/5">
+          <li class="flex justify-center px-2 py-1">
+            <button class="btn" id="download-forecast-link" disabled data-i18n="ui.saveForecastCsv">Save Forecast Data (CSV)</button>
           </li>
-          <li style="display: flex; justify-content: center">
-            <button class="btn waves-effect waves-light" id="download-retrospective-link" disabled data-i18n="ui.saveRetroCsv">Save Retrospective Data (CSV)</button>
+          <li class="flex justify-center px-2 py-1">
+            <button class="btn" id="download-retrospective-link" disabled data-i18n="ui.saveRetroCsv">Save Retrospective Data (CSV)</button>
           </li>
         </ul>
-        <button class="btn modal-close waves-effect waves-red btn-flat">X</button>
+        <button class="icon-btn" data-modal-close aria-label="Close"><i data-heroicon="x-mark"></i></button>
       </div>
     </div>
-    <div class="chart-spaces chart-category-container" style="position: relative; height: 100%">
+    <div class="chart-spaces chart-category-container">
       <div id="forecastChartSpace" class="chart-category-container">
-        <div id="forecast-date-controls">
-          <button id="datepicker-previous" class="btn btn-flat"><i class="material-icons">arrow_back</i></button>
+        <div id="forecast-date-controls" class="flex items-center justify-center gap-2 py-1">
+          <button id="datepicker-previous" class="icon-btn"><i data-heroicon="arrow-left"></i></button>
           <label for="forecast-date-calendar" data-i18n="ui.forecastDateControl">Forecast Date:</label>
-          <input type="date" id="forecast-date-calendar" onkeydown="return false">
-          <button id="datepicker-next" class="btn btn-flat" disabled><i class="material-icons">arrow_forward</i></button>
+          <input type="date" id="forecast-date-calendar" class="field-input w-[150px]" onkeydown="return false">
+          <button id="datepicker-next" class="icon-btn" disabled><i data-heroicon="arrow-right"></i></button>
         </div>
         <div id="forecastPlot" class="chart">
-          <h4 data-i18n="ui.emptyChartPrompt">Enter a River ID or use the map to click on a stream to view data</h4>
+          <h4 class="text-lg font-medium text-slate-500" data-i18n="ui.emptyChartPrompt">Enter a River ID or use the map to click on a stream to view data</h4>
         </div>
         <div id="forecastTable" class="chart"></div>
       </div>
       <div id="retroChartSpace" class="chart-category-container dissolve-backwards">
         <div id="retroPlot" class="chart">
-          <h4 data-i18n="ui.emptyChartPrompt">Enter a River ID or use the map to click on a stream to view data</h4>
+          <h4 class="text-lg font-medium text-slate-500" data-i18n="ui.emptyChartPrompt">Enter a River ID or use the map to click on a stream to view data</h4>
         </div>
         <div id="yearlyVolPlot" class="chart"></div>
         <div id="cumVolume" class="chart"></div>
@@ -272,72 +261,72 @@
     </div>
   </div>
 </div>
-<div id="enter-river-id-modal" class="modal" data-category="river-bookmarks">
-  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; height: 100%">
-    <div class="modal-header-bar">
-      <h4 data-i18n="ui.enterRiverIdTitle">Enter River ID</h4>
-      <a class="modal-close waves-effect waves-green btn-flat">X</a>
+<div id="enter-river-id-modal" data-modal data-category="river-bookmarks" class="hidden fixed inset-0 z-[1000] items-center justify-center bg-black/50 p-4">
+  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
+    <div class="mb-3 flex w-full items-center justify-between border-b border-slate-200 pb-3">
+      <h4 class="text-xl font-semibold" data-i18n="ui.enterRiverIdTitle">Enter River ID</h4>
+      <button data-modal-close class="icon-btn" aria-label="Close"><i data-heroicon="x-mark"></i></button>
     </div>
-    <div style="display: flex; flex-direction: row; align-items: center; gap: 5px; justify-content: center; width: 100%">
+    <div class="flex w-full flex-row items-center justify-center gap-2">
       <label for="river-id" data-i18n="ui.riverIdLabel">River ID</label>
-      <input type="number" id="river-id" data-i18n-placeholder="ui.phEnter9DigitId" placeholder="Enter 9 Digit River ID" onchange="this.value = this.value.slice(0, 9)" style="max-width: 200px"/>
-      <button class="waves-effect waves-light btn" onclick="setRiverIdFromInput()" data-i18n="ui.submitBtn">Submit</button>
+      <input type="number" id="river-id" class="field-input max-w-[200px]" data-i18n-placeholder="ui.phEnter9DigitId" placeholder="Enter 9 Digit River ID" onchange="this.value = this.value.slice(0, 9)"/>
+      <button class="btn" onclick="setRiverIdFromInput()" data-i18n="ui.submitBtn">Submit</button>
     </div>
   </div>
 </div>
 
 <!-- For the Map -->
-<div id="filter-modal" data-category="map" class="modal">
-  <div class="modal-content">
-    <h4 data-i18n="ui.filterTitle">Filter Streams on Map</h4>
-    <div data-i18n-html="ui.filterEsriLink"><a href="https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer/0">Visit the Esri Living Atlas</a> for all attribute options</div>
-    <div style="width: 100%">
+<div id="filter-modal" data-modal data-category="map" class="hidden fixed inset-0 z-[1000] items-center justify-center bg-black/50 p-4">
+  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
+    <h4 class="mb-2 text-xl font-semibold" data-i18n="ui.filterTitle">Filter Streams on Map</h4>
+    <div class="mb-3 [&_a]:text-sky-600 [&_a]:underline" data-i18n-html="ui.filterEsriLink"><a href="https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer/0">Visit the Esri Living Atlas</a> for all attribute options</div>
+    <div class="flex w-full flex-col gap-3">
       <div>
-        <label for="outletCountry" data-i18n="ui.outletCountryLabel">River Outlet Country</label>
-        <select id="outletCountry" class="browser default" multiple></select>
+        <label for="outletCountry" class="mb-1 block" data-i18n="ui.outletCountryLabel">River Outlet Country</label>
+        <select id="outletCountry" class="field-select" multiple></select>
       </div>
       <div>
-        <label for="riverCountry" data-i18n="ui.riverCountryLabel">River Country</label>
-        <select id="riverCountry" class="browser default" multiple></select>
+        <label for="riverCountry" class="mb-1 block" data-i18n="ui.riverCountryLabel">River Country</label>
+        <select id="riverCountry" class="field-select" multiple></select>
       </div>
       <div>
-        <label for="vpuSelect" data-i18n="ui.vpuLabel">VPU Number</label>
-        <select id="vpuSelect" class="browser default" multiple></select>
+        <label for="vpuSelect" class="mb-1 block" data-i18n="ui.vpuLabel">VPU Number</label>
+        <select id="vpuSelect" class="field-select" multiple></select>
       </div>
       <div>
-        <label for="definitionString" data-i18n="ui.customSqlLabel">Enter Custom SQL Filters</label>
-        <input type="text" id="definitionString" placeholder=""/>
+        <label for="definitionString" class="mb-1 block" data-i18n="ui.customSqlLabel">Enter Custom SQL Filters</label>
+        <input type="text" id="definitionString" class="field-input" placeholder=""/>
       </div>
       <div>
-        <label for="definition-expression" data-i18n="ui.currentDefinition">Definition Currently Displayed</label>
-        <input type="text" id="definition-expression" disabled/>
+        <label for="definition-expression" class="mb-1 block" data-i18n="ui.currentDefinition">Definition Currently Displayed</label>
+        <input type="text" id="definition-expression" class="field-input" disabled/>
       </div>
     </div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn" onclick="updateLayerDefinitions()" data-i18n="ui.applyFilters">Apply Filters</button>
-    <button class="btn btn-secondary" onclick="resetDefinitionExpression()" data-i18n="ui.clearFilters">Clear Filters</button>
-    <a class="modal-close waves-effect waves-green btn-flat" data-i18n="ui.closeBtn">Close</a>
+    <div class="mt-4 flex items-center justify-end gap-2">
+      <button class="btn" onclick="updateLayerDefinitions()" data-i18n="ui.applyFilters">Apply Filters</button>
+      <button class="btn btn-ghost" onclick="resetDefinitionExpression()" data-i18n="ui.clearFilters">Clear Filters</button>
+      <button class="btn btn-ghost" data-modal-close data-i18n="ui.closeBtn">Close</button>
+    </div>
   </div>
 </div>
 
 <div class="body-wrapper">
   <div class="nav-bar-wrapper">
-    <a class="back-to-portal" href="/" aria-label="GEOGloWS Portal">
-      <svg class="back-to-portal-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>
-      <span class="hide-on-small-only">GEOGLOWS Portal</span>
+    <a class="back-to-portal tooltip" href="/" data-tooltip="GEOGLOWS Portal" aria-label="GEOGLOWS Portal">
+      <img class="back-to-portal-logo" src="/img/geoglows-logo-nav.png" alt="GEOGLOWS" width="473" height="80">
     </a>
-    <h4 style="font-size: 2rem; font-weight: bolder">
-      <span class="hide-on-small-only">GEOGLOWS </span>R<span class="hide-on-small-only">iver </span>F<span class="hide-on-small-only">orecast </span>S<span class="hide-on-small-only">ystem</span>
+    <h4 class="app-title">
+      <span class="hide-on-small-only">River Forecast System</span>
+      <span class="show-on-small-only">RFS</span>
     </h4>
     <div class="nav-buttons">
-      <a data-i18n-tooltip="ui.navViewCharts" data-tooltip="View Charts" data-position="bottom" class="btn modal-trigger tooltipped" href="#charts-modal"><i class="material-icons">timeline</i></a>
-      <a data-i18n-tooltip="ui.navReports" data-tooltip="Generate Reports" data-position="bottom" class="btn modal-trigger tooltipped" href="#report-modal"><i class="material-icons">assignment</i></a>
-      <a data-i18n-tooltip="ui.navBookmarks" data-tooltip="Saved Rivers" data-category="river-bookmarks" data-position="bottom" class="btn modal-trigger tooltipped" href="#bookmarks-modal"><i class="material-icons">bookmark</i></a>
-      <a data-i18n-tooltip="ui.navAbout" data-tooltip="Learn More" data-position="bottom" class="btn modal-trigger tooltipped" href="#about-modal"><i class="material-icons">help</i></a>
-      <a data-i18n-tooltip="ui.navSettings" data-tooltip="Settings" data-position="bottom" class="btn modal-trigger tooltipped" href="#settings-modal"><i class="material-icons">settings</i></a>
-      <a data-i18n-tooltip="ui.navLanguage" data-tooltip="Language" data-position="bottom" class="btn dropdown-trigger tooltipped" href="#" data-target="language-select"><i class="material-icons">translate</i></a>
-      <ul id="language-select" class="dropdown-content">
+      <button data-i18n-tooltip="ui.navViewCharts" data-tooltip="View Charts" class="icon-btn tooltip" data-modal-open="charts-modal"><i data-heroicon="presentation-chart-line"></i></button>
+      <button data-i18n-tooltip="ui.navReports" data-tooltip="Generate Reports" class="icon-btn tooltip" data-modal-open="report-modal"><i data-heroicon="clipboard-document-list"></i></button>
+      <button data-i18n-tooltip="ui.navBookmarks" data-tooltip="Saved Rivers" data-category="river-bookmarks" class="icon-btn tooltip" data-modal-open="bookmarks-modal"><i data-heroicon="bookmark"></i></button>
+      <button data-i18n-tooltip="ui.navAbout" data-tooltip="Learn More" class="icon-btn tooltip" data-modal-open="about-modal"><i data-heroicon="question-mark-circle"></i></button>
+      <button data-i18n-tooltip="ui.navSettings" data-tooltip="Settings" class="icon-btn tooltip" data-modal-open="settings-modal"><i data-heroicon="cog-6-tooth"></i></button>
+      <button data-i18n-tooltip="ui.navLanguage" data-tooltip="Language" class="icon-btn tooltip" data-dropdown="language-select"><i data-heroicon="language"></i></button>
+      <ul id="language-select" class="hidden fixed z-[1500] min-w-[10rem] rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 [&_a]:block [&_a]:px-4 [&_a]:py-2 [&_a:hover]:bg-slate-100">
         <li><a href="#" data-lang="en">English</a></li>
         <li><a href="#" data-lang="es">Español</a></li>
         <li><a href="#" data-lang="fr">Français</a></li>

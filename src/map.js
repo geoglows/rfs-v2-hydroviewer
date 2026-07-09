@@ -20,6 +20,7 @@ import TimeSlider from "@arcgis/core/widgets/TimeSlider";
 import * as reactiveUtils from "@arcgis/core/core/reactiveUtils";
 import * as intl from "@arcgis/core/intl";
 
+import {openModal, closeModal, showToast} from "./components.js";
 import {buildFilterExpression, inputForecastDate, modalFilter, resetFilterForm, RFS_LAYER_URL, selectOutletCountry, selectRiverCountry, selectVPU, showChartView, updateHash,} from "./ui.js";
 import {Lang, LoadStatus, RiverId} from "./states/state.js";
 import riverCountries from "./json/riverCountries.json" with {type: "json"};
@@ -66,13 +67,13 @@ export default function main() {
         })
         .then(response => {
           if (!response.features.length) {
-            M.toast({html: translationDictionary.prompts.tryRiverAgain, classes: "red", displayDuration: 5000})
+            showToast(translationDictionary.prompts.tryRiverAgain, {type: "error", duration: 5000})
             return reject()
           }
           if (response.features[0].attributes.comid === "Null" || !response.features[0].attributes.comid) {
             RiverId.reset()
             LoadStatus.reset()
-            M.toast({html: translationDictionary.prompts.tryRiverAgain, classes: "red", displayDuration: 5000})
+            showToast(translationDictionary.prompts.tryRiverAgain, {type: "error", duration: 5000})
             console.error(error)
             return reject()
           }
@@ -87,7 +88,7 @@ export default function main() {
   const updateLayerDefinitions = string => {
     definitionExpression = string || buildFilterExpression()
     rfsLayer.findSublayerById(0).definitionExpression = definitionExpression
-    M.Modal.getInstance(modalFilter).close()
+    closeModal(modalFilter)
     updateHash({definition: definitionExpression})
   }
   const resetDefinitionExpression = () => {
@@ -211,7 +212,7 @@ export default function main() {
 
   view.on("click", event => {
     if (view.zoom < MIN_QUERY_ZOOM) return view.goTo({target: event.mapPoint, zoom: MIN_QUERY_ZOOM});
-    M.toast({html: translationDictionary.prompts.findingRiver, classes: "orange"})
+    showToast(translationDictionary.prompts.findingRiver, {type: "warning"})
     searchLayerByClickPromise(event)
       .then(response => {
         view.graphics.removeAll()
@@ -235,7 +236,7 @@ export default function main() {
 mapElement.addEventListener('arcgisViewReadyChange', () => main())
 
 filterButton.addEventListener('click', () => {
-  M.Modal.getInstance(modalFilter).open()
+  openModal(modalFilter)
 })
 timeSliderForecastButton.addEventListener('click', () => {
   timeSliderForecastDiv.classList.toggle('show-slider')
@@ -248,6 +249,3 @@ timeSliderHydroSOSButton.addEventListener('click', () => {
 selectRiverCountry.innerHTML += riverCountries.map(c => `<option value="${c}">${c}</option>`).join('')
 selectOutletCountry.innerHTML += outletCountries.map(c => `<option value="${c}">${c}</option>`).join('')
 selectVPU.innerHTML += vpuList.map(v => `<option value="${v}">${v}</option>`).join('')
-M.FormSelect.init(selectRiverCountry)
-M.FormSelect.init(selectOutletCountry)
-M.FormSelect.init(selectVPU)

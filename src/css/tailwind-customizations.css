@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ *
+ * Reusable component classes, composed from Tailwind utilities.
+ * These cover the interactive elements that repeat throughout the app
+ * (buttons, form controls, tables, tooltips) so the markup stays clean.
+ * ------------------------------------------------------------------ */
+@layer components {
+    .btn {
+        @apply inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md
+        bg-sky-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition
+        hover:bg-sky-700 focus-visible:outline-2 focus-visible:outline-offset-2
+        focus-visible:outline-sky-600 disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .btn-ghost {
+        @apply bg-transparent text-slate-700 shadow-none hover:bg-black/5;
+    }
+
+    .btn-danger {
+        @apply bg-red-600 hover:bg-red-700;
+    }
+
+    .btn-success {
+        @apply bg-green-600 hover:bg-green-700;
+    }
+
+    /* Square, icon-only button (nav bar + toolbars) */
+    .icon-btn {
+        @apply inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-md
+        text-slate-700 transition hover:bg-black/10;
+    }
+
+    .field-input,
+    .field-select {
+        @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800
+        transition focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/30;
+    }
+
+    .field-select[multiple] {
+        @apply h-auto py-1;
+    }
+
+    /* Data tables (bookmarks, forecast probability) */
+    .data-table {
+        @apply w-full border-collapse text-sm;
+    }
+
+    .data-table th {
+        @apply border-b border-slate-200 px-3 py-2 text-left font-semibold text-slate-600;
+    }
+
+    .data-table td {
+        @apply border-b border-slate-100 px-3 py-2 align-middle;
+    }
+
+    .data-table.striped tbody tr:nth-child(odd) {
+        @apply bg-slate-50;
+    }
+
+    .tooltip {
+        @apply relative;
+    }
+
+    .tooltip[data-tooltip]::after {
+        content: attr(data-tooltip);
+        @apply pointer-events-none absolute left-1/2 top-[calc(100%+6px)] z-50 -translate-x-1/2
+        scale-95 whitespace-nowrap rounded bg-slate-800 px-2 py-1 text-xs font-normal text-white
+        opacity-0 shadow-md transition;
+    }
+
+    .tooltip[data-tooltip]:hover::after {
+        @apply scale-100 opacity-100;
+    }
+}

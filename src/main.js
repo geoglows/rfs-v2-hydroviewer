@@ -1,15 +1,12 @@
-// Loaded FIRST so Supabase Auth's onAuthStateChange listener is registered
-// before any future top-level awaits. rfs's main.js has none today, but
-// the convention matches grace's auth-bootstrap and protects against
-// silent SSO breakage if top-level awaits get added later.
-import "./auth-bootstrap.js"
+import "./auth-bootstrap.js" // load first
 
 import "./css/main.css"
-import "./css/materialize.overrides.css"
+import "./css/tailwind-customizations.css"
 import "./css/report.print.css"
 
+import {closeModal, initComponents, openModal, showToast} from "./components.js";
 import {clearCharts, displayLoadingStatus, displayRiverNumber, divModalCharts, inputForecastDate, riverIdInput, updateDownloadLinks} from "./ui.js";
-import {translationDictionary, hydrateLanguageTags, loadLocale} from "./intl.js";
+import {hydrateLanguageTags, loadLocale, translationDictionary} from "./intl.js";
 import {getAndCacheForecast, getAndCacheRetrospective, getAndCacheReturnPeriods} from "./data/main.js";
 import {bookmarks} from "./bookmarks.js";
 import {Lang, LoadStatus, RiverId, UseBiasCorrected, UseShowExtraRetroGraphs, UseSimpleForecast} from "./states/state.js";
@@ -18,16 +15,11 @@ import "./map.js"
 import "./reports.js"
 
 //////////////////////////////////////////////////////////////////////// INITIAL LOAD
-M.AutoInit();
-M.Dropdown.init(document.querySelectorAll('.dropdown-trigger'), {
-  coverTrigger: false,
-  alignment: 'right',
-  constrainWidth: false
-});
-if (window.innerWidth < 800) M.toast({html: translationDictionary.prompts.mobile, classes: "blue custom-toast-placement", displayLength: 7500})
+initComponents();
+if (window.innerWidth < 800) showToast(translationDictionary.prompts.mobile, {type: "info", duration: 7500})
 
 const fetchData = ({riverId, display = true} = {}) => {
-  if (display) M.Modal.getInstance(divModalCharts).open()
+  if (display) openModal(divModalCharts)
   riverId = riverId || RiverId.get()
   if (!riverId) return
   const date = inputForecastDate.value.replaceAll("-", "")
@@ -121,7 +113,7 @@ window.setRiverIdFromInput = riverid => {
   let possibleId = riverid || riverIdInput.value
   if (/^\d{9}$/.test(possibleId)) RiverId.set(parseInt(possibleId))
   else alert(translationDictionary.prompts.invalidRiverID)
-  M.Modal.getInstance(document.getElementById('enter-river-id-modal')).close()
+  closeModal('enter-river-id-modal')
 }
 riverIdInput.addEventListener("keydown", event => {
   if (event.key === "Enter") setRiverIdFromInput()

@@ -14,9 +14,12 @@
     "@arcgis/map-components": "^4.34.9",
     "@esri/calcite-components": "^3.3.3",
     "plotly.js": "^3.3.1",
-    "zarrita": "^0.5.4"
+    "zarrita": "^0.5.4",
+    "@tailwindcss/vite": "^4.3.2",
+    "tailwindcss": "^4.3.2",
+    "heroicons": "^2.2.0"
   },
   "devDependencies": {
-    "vite": "^6.1.0"
+    "vite": "8.0.5"
   }
 }
