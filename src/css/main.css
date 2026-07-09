@@ -39,8 +39,7 @@ body {
 .nav-bar-wrapper .back-to-portal {
     display: flex;
     align-items: center;
-    padding: 6px 10px;
-    border-radius: 6px;
+    padding: 6px;
     transition: background 0.15s ease;
 }
 
@@ -51,10 +50,7 @@ body {
 }
 
 .nav-bar-wrapper .back-to-portal-logo {
-    /* Cap the width and let height follow the intrinsic 473x80 aspect ratio.
-       The width/height attributes on the <img> reserve the box, so this
-       doesn't shift layout while the image loads. */
-    max-width: 175px;
+    max-width: 150px;
     width: auto;
     height: auto;
     display: block;
@@ -68,7 +64,6 @@ body {
 }
 
 .nav-bar-wrapper .nav-buttons {
-    /* margin-left: auto pushes nav-buttons + nav-auth as a right cluster. */
     margin-left: auto;
     display: flex;
     align-items: center;
