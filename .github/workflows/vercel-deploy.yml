@@ -1,11 +1,4 @@
 name: Trigger Vercel deploy
-
-# Automatic Vercel Git deployments for `main` are disabled in vercel.json
-# (deploymentEnabled.main = false). Instead, every push to `main` fires the
-# project's Deploy Hook, which builds the latest commit regardless of the
-# commit author's Vercel team role. The hook URL is stored as the
-# VERCEL_DEPLOY_HOOK_URL repository secret.
-
 on:
   push:
     branches: [main]
