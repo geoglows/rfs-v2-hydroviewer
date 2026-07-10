@@ -1,0 +1,30 @@
+name: Trigger Vercel deploy
+
+# Automatic Vercel Git deployments for `main` are disabled in vercel.json
+# (deploymentEnabled.main = false). Instead, every push to `main` fires the
+# project's Deploy Hook, which builds the latest commit regardless of the
+# commit author's Vercel team role. The hook URL is stored as the
+# VERCEL_DEPLOY_HOOK_URL repository secret.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: vercel-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fire Vercel Deploy Hook
+        run: |
+          if [ -z "${VERCEL_DEPLOY_HOOK_URL}" ]; then
+            echo "VERCEL_DEPLOY_HOOK_URL secret is not set." >&2
+            exit 1
+          fi
+          curl -fsS -X POST "${VERCEL_DEPLOY_HOOK_URL}"
+        env:
+          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
