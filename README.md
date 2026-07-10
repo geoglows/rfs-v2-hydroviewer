@@ -1,4 +1,4 @@
-# GEOGLOWS Viewer
+# RFS Viewer
 
 This is the source code for https://hydroviewer.geoglows.org
 

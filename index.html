@@ -29,12 +29,12 @@
 <body class="text-slate-800">
 <!-- Settings-->
 <div id="about-modal" data-modal class="hidden fixed inset-0 z-[1000] items-center justify-center bg-black/50 p-4">
-  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
-    <div class="mb-3 flex w-full items-center justify-between border-b border-slate-200 pb-3">
+  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-xl bg-white p-6 shadow-2xl">
+    <div class="mb-3 flex w-full shrink-0 items-center justify-between border-b border-slate-200 pb-3">
       <h4 class="text-xl font-semibold" data-i18n="ui.aboutTitle">About</h4>
       <button data-modal-close class="icon-btn" aria-label="Close"><i data-heroicon="x-mark"></i></button>
     </div>
-    <div class="prose-sm w-full max-w-3xl [&_a]:text-sky-600 [&_a]:underline">
+    <div class="prose-sm w-full max-w-3xl overflow-y-auto [&_a]:text-sky-600 [&_a]:underline">
       <p data-i18n-html="ui.aboutParagraph">
         To learn more about the GEOGLOWS project, visit <a href="https://www.geoglows.org" target="_blank">geoglows.org</a>.
         For more information about the River Forecast System please visit <a href="https://training.geoglows.org" target="_blank">training.geoglows.org</a>.
@@ -52,12 +52,12 @@
   </div>
 </div>
 <div id="biascorrectionwarning-modal" data-modal class="hidden fixed inset-0 z-[1000] items-center justify-center bg-black/50 p-4">
-  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
-    <div class="mb-3 flex w-full items-center justify-between border-b border-slate-200 pb-3">
+  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-xl bg-white p-6 shadow-2xl">
+    <div class="mb-3 flex w-full shrink-0 items-center justify-between border-b border-slate-200 pb-3">
       <h4 class="text-xl font-semibold" data-i18n="ui.biasTitle">Enable Bias Corrected Data?</h4>
       <button data-modal-close class="icon-btn" aria-label="Close"><i data-heroicon="x-mark"></i></button>
     </div>
-    <div class="w-full max-w-3xl">
+    <div class="w-full max-w-3xl overflow-y-auto">
       <p data-i18n="ui.biasParagraph">
         Global bias correction is an experimental feature based on active research and data collection efforts. You might discover unexpected behaviors
         and incorrect data. These data are not recommended for operational guidance applications. Are you sure you want to use bias corrected data?
@@ -70,33 +70,35 @@
   </div>
 </div>
 <div id="settings-modal" data-modal class="hidden fixed inset-0 z-[1000] items-center justify-center bg-black/50 p-4">
-  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
-    <div class="mb-3 flex w-full items-center justify-between border-b border-slate-200 pb-3">
+  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-xl bg-white p-6 shadow-2xl">
+    <div class="mb-3 flex w-full shrink-0 items-center justify-between border-b border-slate-200 pb-3">
       <h4 class="text-xl font-semibold" data-i18n="ui.settingsTitle">Settings</h4>
       <button data-modal-close class="icon-btn" aria-label="Close"><i data-heroicon="x-mark"></i></button>
     </div>
-    <h5 class="mt-2 mb-2 text-lg font-semibold" data-i18n="ui.chartOptions">Chart Options</h5>
-    <label class="mb-2 flex items-center gap-2">
-      <input type="checkbox" class="h-4 w-4 accent-sky-600" id="settingsShowSimpleForecast" checked/>
-      <span data-i18n="ui.showSimpleForecast">Display simplified forecast stats</span>
-    </label>
-    <label class="mb-2 flex items-center gap-2">
-      <input type="checkbox" class="h-4 w-4 accent-sky-600" id="settingsShowExtraRetroGraphs" checked/>
-      <span data-i18n="ui.showExtraRetroGraphs">Show additional plots analyzing retrospective data</span>
-    </label>
-    <h5 class="mt-4 mb-2 text-lg font-semibold" data-i18n="ui.dataOptions">Data Options</h5>
-    <label class="mb-2 flex items-center gap-2">
-      <input type="checkbox" class="h-4 w-4 accent-sky-600" id="settingsUseBiasCorrected"/>
-      <span data-i18n="ui.useBiasCorrection">Use experimental bias correction</span>
-    </label>
-    <h5 class="mt-4 mb-2 text-lg font-semibold" data-i18n="ui.cacheOptions">Browser Cache Options</h5>
-    <div class="flex flex-wrap gap-2">
-      <button class="btn btn-danger clear-cache" data-i18n="ui.clearCache">Clear local cache of downloaded data</button>
-      <button class="btn btn-danger delete-all-bookmarks" data-i18n="ui.deleteAllBookmarks">Remove all bookmarked rivers</button>
+    <div class="flex flex-col overflow-y-auto">
+      <h5 class="mt-2 mb-2 text-lg font-semibold" data-i18n="ui.chartOptions">Chart Options</h5>
+      <label class="mb-2 flex items-center gap-2">
+        <input type="checkbox" class="h-4 w-4 accent-sky-600" id="settingsShowSimpleForecast" checked/>
+        <span data-i18n="ui.showSimpleForecast">Display simplified forecast stats</span>
+      </label>
+      <label class="mb-2 flex items-center gap-2">
+        <input type="checkbox" class="h-4 w-4 accent-sky-600" id="settingsShowExtraRetroGraphs" checked/>
+        <span data-i18n="ui.showExtraRetroGraphs">Show additional plots analyzing retrospective data</span>
+      </label>
+      <h5 class="mt-4 mb-2 text-lg font-semibold" data-i18n="ui.dataOptions">Data Options</h5>
+      <label class="mb-2 flex items-center gap-2">
+        <input type="checkbox" class="h-4 w-4 accent-sky-600" id="settingsUseBiasCorrected"/>
+        <span data-i18n="ui.useBiasCorrection">Use experimental bias correction</span>
+      </label>
+      <h5 class="mt-4 mb-2 text-lg font-semibold" data-i18n="ui.cacheOptions">Browser Cache Options</h5>
+      <div class="flex flex-wrap gap-2">
+        <button class="btn btn-danger clear-cache" data-i18n="ui.clearCache">Clear local cache of downloaded data</button>
+        <button class="btn btn-danger delete-all-bookmarks" data-i18n="ui.deleteAllBookmarks">Remove all bookmarked rivers</button>
+      </div>
+      <p class="mt-4 text-sm text-slate-500">
+        <span data-i18n="ui.appVersionLabel">App Version</span>: <span id="about-app-version-date">%APP_VERSION_DATE%</span>
+      </p>
     </div>
-    <p class="mt-4 text-sm text-slate-500">
-      <span data-i18n="ui.appVersionLabel">App Version</span>: <span id="about-app-version-date">%APP_VERSION_DATE%</span>
-    </p>
   </div>
 </div>
 
@@ -110,53 +112,55 @@
 </div>
 <div id="report-render-space" class="hidden-underneath"></div>
 <div id="report-modal" data-modal class="hidden fixed inset-0 z-[1000] items-center justify-center bg-black/50 p-4">
-  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
-    <div class="mb-3 flex w-full items-center justify-between border-b border-slate-200 pb-3">
+  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-xl bg-white p-6 shadow-2xl">
+    <div class="mb-3 flex w-full shrink-0 items-center justify-between border-b border-slate-200 pb-3">
       <h4 class="text-xl font-semibold" data-i18n="ui.reportsTitle">Generate Reports (Beta)</h4>
       <div class="flex items-center gap-2">
         <button id="new-report-button" data-i18n-tooltip="ui.newReportTooltip" data-tooltip="Start new report" class="icon-btn tooltip" disabled><i data-heroicon="plus"></i></button>
         <button data-modal-close class="icon-btn" aria-label="Close"><i data-heroicon="x-mark"></i></button>
       </div>
     </div>
-    <h5 class="mb-2 text-lg font-semibold" data-i18n="ui.reportsStep1">Select Report Type</h5>
-    <div class="mb-3 flex items-center justify-between gap-3">
-      <label for="report-type-select" id="report-type-select-label" data-i18n="ui.reportTypeLabel">Report Type:</label>
-      <select id="report-type-select" class="field-select max-w-[50%]" aria-labelledby="report-type-select-label">
-        <option value="riverForecasts" data-i18n="ui.reportTypeDaily">Daily Forecast Report</option>
-      </select>
-    </div>
-    <div class="mb-3 flex items-center justify-between gap-3">
-      <label for="report-date-calendar" data-i18n="ui.forecastDateLabel">Date of Forecast Data:</label>
-      <input type="date" id="report-date-calendar" class="field-input max-w-[50%]" onkeydown="if (!['Tab','Escape'].includes(event.key)) return false">
-    </div>
-    <div class="mb-3 flex items-center justify-between gap-3">
-      <label for="report-river-list-select" data-i18n="ui.selectRiverList">Select List of Rivers</label>
-      <select id="report-river-list-select" class="field-select max-w-[50%]">
-        <option value="allBookmarks" data-i18n="ui.allBookmarks">All Bookmarks</option>
-      </select>
-    </div>
-    <div class="flex w-full flex-wrap justify-center gap-2">
-      <button id="generate-report" class="btn" data-i18n="ui.prepareReport">Prepare Report</button>
-      <button id="cancel-report" class="btn btn-danger" disabled data-i18n="ui.cancelReport">Cancel</button>
-      <button id="preview-report" class="btn" disabled data-i18n="ui.previewReport">Preview Report</button>
-      <button id="download-report" class="btn" disabled data-i18n="ui.downloadReportPdf">Download Report (PDF)</button>
-    </div>
-    <h5 class="mt-4 mb-2 text-lg font-semibold" data-i18n="ui.reportsStep2">Report Generating Progress</h5>
-    <div data-i18n="ui.downloadData">Download Data:</div>
-    <div class="progress-with-label">
-      <progress id="report-data-progress" class="accent-sky-600" value="0" max="100"></progress>
-      <div id="report-data-label">0%</div>
-    </div>
-    <div data-i18n="ui.formattingReport">Formatting Report:</div>
-    <div class="progress-with-label">
-      <progress id="report-format-progress" class="accent-sky-600" value="0" max="100"></progress>
-      <div id="report-format-label">0%</div>
+    <div class="overflow-y-auto">
+      <h5 class="mb-2 text-lg font-semibold" data-i18n="ui.reportsStep1">Select Report Type</h5>
+      <div class="mb-3 flex items-center justify-between gap-3">
+        <label for="report-type-select" id="report-type-select-label" data-i18n="ui.reportTypeLabel">Report Type:</label>
+        <select id="report-type-select" class="field-select max-w-[50%]" aria-labelledby="report-type-select-label">
+          <option value="riverForecasts" data-i18n="ui.reportTypeDaily">Daily Forecast Report</option>
+        </select>
+      </div>
+      <div class="mb-3 flex items-center justify-between gap-3">
+        <label for="report-date-calendar" data-i18n="ui.forecastDateLabel">Date of Forecast Data:</label>
+        <input type="date" id="report-date-calendar" class="field-input max-w-[50%]" onkeydown="if (!['Tab','Escape'].includes(event.key)) return false">
+      </div>
+      <div class="mb-3 flex items-center justify-between gap-3">
+        <label for="report-river-list-select" data-i18n="ui.selectRiverList">Select List of Rivers</label>
+        <select id="report-river-list-select" class="field-select max-w-[50%]">
+          <option value="allBookmarks" data-i18n="ui.allBookmarks">All Bookmarks</option>
+        </select>
+      </div>
+      <div class="flex w-full flex-wrap justify-center gap-2">
+        <button id="generate-report" class="btn" data-i18n="ui.prepareReport">Prepare Report</button>
+        <button id="cancel-report" class="btn btn-danger" disabled data-i18n="ui.cancelReport">Cancel</button>
+        <button id="preview-report" class="btn" disabled data-i18n="ui.previewReport">Preview Report</button>
+        <button id="download-report" class="btn" disabled data-i18n="ui.downloadReportPdf">Download Report (PDF)</button>
+      </div>
+      <h5 class="mt-4 mb-2 text-lg font-semibold" data-i18n="ui.reportsStep2">Report Generating Progress</h5>
+      <div data-i18n="ui.downloadData">Download Data:</div>
+      <div class="progress-with-label">
+        <progress id="report-data-progress" class="accent-sky-600" value="0" max="100"></progress>
+        <div id="report-data-label">0%</div>
+      </div>
+      <div data-i18n="ui.formattingReport">Formatting Report:</div>
+      <div class="progress-with-label">
+        <progress id="report-format-progress" class="accent-sky-600" value="0" max="100"></progress>
+        <div id="report-format-label">0%</div>
+      </div>
     </div>
   </div>
 </div>
 <div id="bookmarks-modal" data-modal data-category="river-bookmarks" class="hidden fixed inset-0 z-[1000] items-center justify-center bg-black/50 p-4">
-  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
-    <div class="mb-3 flex w-full items-center gap-2 border-b border-slate-200 pb-3">
+  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-xl bg-white p-6 shadow-2xl">
+    <div class="mb-3 flex w-full shrink-0 items-center gap-2 border-b border-slate-200 pb-3">
       <h4 class="text-xl font-semibold" data-i18n="ui.savedRivers">Saved Rivers</h4>
       <div class="flex-grow"></div>
       <button data-i18n-tooltip="ui.saveRiverTooltip" data-tooltip="Save River" class="icon-btn tooltip" data-modal-open="add-river-bookmark"><i data-heroicon="plus"></i></button>
@@ -164,7 +168,7 @@
       <button data-i18n-tooltip="ui.deleteAllBookmarksTooltip" data-tooltip="Delete All Bookmarks" class="icon-btn tooltip delete-all-bookmarks"><i data-heroicon="trash"></i></button>
       <button data-modal-close class="icon-btn" aria-label="Close"><i data-heroicon="x-mark"></i></button>
     </div>
-    <div id="bookmarks-table" class="w-full">
+    <div id="bookmarks-table" class="w-full overflow-y-auto">
       <table class="data-table striped">
         <thead>
         <tr>
@@ -180,40 +184,42 @@
   </div>
 </div>
 <div id="add-river-bookmark" data-modal data-category="river-bookmarks" class="hidden fixed inset-0 z-[1000] items-center justify-center bg-black/50 p-4">
-  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
-    <div class="mb-3 flex w-full items-center justify-between border-b border-slate-200 pb-3">
+  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-xl bg-white p-6 shadow-2xl">
+    <div class="mb-3 flex w-full shrink-0 items-center justify-between border-b border-slate-200 pb-3">
       <h4 class="text-xl font-semibold" data-i18n="ui.newBookmarkTitle">New River Bookmark</h4>
       <button data-modal-close class="icon-btn" aria-label="Close"><i data-heroicon="x-mark"></i></button>
     </div>
-    <table class="data-table">
-      <thead>
-      <tr>
-        <th data-field="riverId"><label for="save-river-id" data-i18n="ui.riverIdHeader">River ID</label></th>
-        <th data-field="riverName"><label for="save-river-name" data-i18n="ui.riverNameHeader">River Name</label></th>
-        <th data-field="actions" data-i18n="ui.actionsHeader">Actions</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr>
-        <td data-field="riverId">
-          <input id="save-river-id" class="field-input" type="number" contenteditable="true" onchange="this.value = this.value.slice(0, 9)" data-i18n-placeholder="ui.ph9DigitId" placeholder="9 Digit River ID">
-        </td>
-        <td data-field="riverName">
-          <input id="save-river-name" class="field-input" contenteditable="true" onchange="this.value = this.value.slice(0, 30)" data-i18n-placeholder="ui.phRiverName" placeholder="River name">
-        </td>
-        <td data-field="actions">
-          <button class="btn btn-success" id="submit-new-bookmark" data-i18n="ui.addBookmark">Add Bookmark</button>
-        </td>
-      </tr>
-      </tbody>
-    </table>
+    <div class="overflow-y-auto">
+      <table class="data-table">
+        <thead>
+        <tr>
+          <th data-field="riverId"><label for="save-river-id" data-i18n="ui.riverIdHeader">River ID</label></th>
+          <th data-field="riverName"><label for="save-river-name" data-i18n="ui.riverNameHeader">River Name</label></th>
+          <th data-field="actions" data-i18n="ui.actionsHeader">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td data-field="riverId">
+            <input id="save-river-id" class="field-input" type="number" contenteditable="true" onchange="this.value = this.value.slice(0, 9)" data-i18n-placeholder="ui.ph9DigitId" placeholder="9 Digit River ID">
+          </td>
+          <td data-field="riverName">
+            <input id="save-river-name" class="field-input" contenteditable="true" onchange="this.value = this.value.slice(0, 30)" data-i18n-placeholder="ui.phRiverName" placeholder="River name">
+          </td>
+          <td data-field="actions">
+            <button class="btn btn-success" id="submit-new-bookmark" data-i18n="ui.addBookmark">Add Bookmark</button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
 <!-- Data presentation -->
 <div id="charts-modal" data-modal class="hidden fixed inset-0 z-[1000] items-center justify-center bg-black/50 p-4">
-  <div class="relative flex h-[80vh] max-h-[90vh] w-[90%] max-w-[1400px] flex-col overflow-hidden rounded-xl bg-white p-3 shadow-2xl">
-    <div class="mb-2 flex w-full items-center justify-between border-b border-slate-200 pb-2">
+  <div class="relative flex h-[80vh] max-h-[90vh] w-[90%] max-w-[1400px] flex-col rounded-xl bg-white p-3 shadow-2xl">
+    <div class="mb-2 flex w-full shrink-0 items-center justify-between border-b border-slate-200 pb-2">
       <div class="flex items-center gap-2 font-bold">
         <button class="icon-btn tooltip" data-modal-open="enter-river-id-modal" data-i18n-tooltip="ui.searchRiverTooltip" data-tooltip="Search for a river"><i data-heroicon="magnifying-glass"></i></button>
         <h4 id="selected-river-id" class="text-xl font-semibold" data-i18n="ui.selectRiver">Select a river</h4>
@@ -234,7 +240,7 @@
         <button class="icon-btn" data-modal-close aria-label="Close"><i data-heroicon="x-mark"></i></button>
       </div>
     </div>
-    <div class="chart-spaces chart-category-container">
+    <div class="chart-spaces chart-category-container min-h-0 flex-1">
       <div id="forecastChartSpace" class="chart-category-container">
         <div id="forecast-date-controls" class="flex items-center justify-center gap-2 py-1">
           <button id="datepicker-previous" class="icon-btn"><i data-heroicon="arrow-left"></i></button>
@@ -262,12 +268,12 @@
   </div>
 </div>
 <div id="enter-river-id-modal" data-modal data-category="river-bookmarks" class="hidden fixed inset-0 z-[1000] items-center justify-center bg-black/50 p-4">
-  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
-    <div class="mb-3 flex w-full items-center justify-between border-b border-slate-200 pb-3">
+  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-xl bg-white p-6 shadow-2xl">
+    <div class="mb-3 flex w-full shrink-0 items-center justify-between border-b border-slate-200 pb-3">
       <h4 class="text-xl font-semibold" data-i18n="ui.enterRiverIdTitle">Enter River ID</h4>
       <button data-modal-close class="icon-btn" aria-label="Close"><i data-heroicon="x-mark"></i></button>
     </div>
-    <div class="flex w-full flex-row items-center justify-center gap-2">
+    <div class="flex w-full flex-row items-center justify-center gap-2 overflow-y-auto">
       <label for="river-id" data-i18n="ui.riverIdLabel">River ID</label>
       <input type="number" id="river-id" class="field-input max-w-[200px]" data-i18n-placeholder="ui.phEnter9DigitId" placeholder="Enter 9 Digit River ID" onchange="this.value = this.value.slice(0, 9)"/>
       <button class="btn" onclick="setRiverIdFromInput()" data-i18n="ui.submitBtn">Submit</button>
@@ -277,21 +283,21 @@
 
 <!-- For the Map -->
 <div id="filter-modal" data-modal data-category="map" class="hidden fixed inset-0 z-[1000] items-center justify-center bg-black/50 p-4">
-  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
-    <h4 class="mb-2 text-xl font-semibold" data-i18n="ui.filterTitle">Filter Streams on Map</h4>
-    <div class="mb-3 [&_a]:text-sky-600 [&_a]:underline" data-i18n-html="ui.filterEsriLink"><a href="https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer/0">Visit the Esri Living Atlas</a> for all attribute options</div>
-    <div class="flex w-full flex-col gap-3">
+  <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-xl bg-white p-6 shadow-2xl">
+    <h4 class="mb-2 shrink-0 text-xl font-semibold" data-i18n="ui.filterTitle">Filter Streams on Map</h4>
+    <div class="mb-3 shrink-0 [&_a]:text-sky-600 [&_a]:underline" data-i18n-html="ui.filterEsriLink"><a href="https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer/0">Visit the Esri Living Atlas</a> for all attribute options</div>
+    <div class="flex w-full flex-col gap-3 overflow-y-auto">
       <div>
         <label for="outletCountry" class="mb-1 block" data-i18n="ui.outletCountryLabel">River Outlet Country</label>
-        <select id="outletCountry" class="field-select" multiple></select>
+        <select id="outletCountry" class="field-select" multiple data-multiselect></select>
       </div>
       <div>
         <label for="riverCountry" class="mb-1 block" data-i18n="ui.riverCountryLabel">River Country</label>
-        <select id="riverCountry" class="field-select" multiple></select>
+        <select id="riverCountry" class="field-select" multiple data-multiselect></select>
       </div>
       <div>
         <label for="vpuSelect" class="mb-1 block" data-i18n="ui.vpuLabel">VPU Number</label>
-        <select id="vpuSelect" class="field-select" multiple></select>
+        <select id="vpuSelect" class="field-select" multiple data-multiselect></select>
       </div>
       <div>
         <label for="definitionString" class="mb-1 block" data-i18n="ui.customSqlLabel">Enter Custom SQL Filters</label>
@@ -302,7 +308,7 @@
         <input type="text" id="definition-expression" class="field-input" disabled/>
       </div>
     </div>
-    <div class="mt-4 flex items-center justify-end gap-2">
+    <div class="mt-4 flex shrink-0 items-center justify-end gap-2">
       <button class="btn" onclick="updateLayerDefinitions()" data-i18n="ui.applyFilters">Apply Filters</button>
       <button class="btn btn-ghost" onclick="resetDefinitionExpression()" data-i18n="ui.clearFilters">Clear Filters</button>
       <button class="btn btn-ghost" data-modal-close data-i18n="ui.closeBtn">Close</button>
