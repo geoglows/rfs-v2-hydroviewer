@@ -19,8 +19,8 @@ import {
   createSupabaseAuthAdapter,
   mountSignInModal,
   renderAuthAction,
-} from "@aquaveo/geoglows-auth/core"
-import "@aquaveo/geoglows-auth/core/sign-in.css"
+} from "@geoglows/geoglows-auth/core"
+import "@geoglows/geoglows-auth/core/sign-in.css"
 
 const SIGN_IN_REQUESTED_EVENT = "geoglows:sign-in-requested"
 
@@ -119,7 +119,7 @@ const tabHasRecoveryUrl = (() => {
   }
   if (hasCode && hasRecovery) {
     console.error(
-      "PKCE recovery flow is not supported in @aquaveo/geoglows-auth 1.2.x.",
+      "PKCE recovery flow is not supported in @geoglows/geoglows-auth 1.2.x.",
     )
     signInModal.open({view: "recoveryError"})
     return true
