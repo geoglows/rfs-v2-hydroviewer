@@ -4,7 +4,11 @@ import {translationDictionary} from "./intl.js";
 import {openModal, closeModal} from "./components.js";
 
 const selectedValues = select => [...select.selectedOptions].map(o => o.value)
-const clearSelect = select => [...select.options].forEach(o => (o.selected = false))
+// the change event redraws the combobox chips that stand in for these selects
+const clearSelect = select => {
+  [...select.options].forEach(o => (o.selected = false))
+  select.dispatchEvent(new Event("change", {bubbles: true}))
+}
 
 export const RFS_LAYER_URL = 'https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer'
 

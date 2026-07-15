@@ -144,7 +144,7 @@ export default function main() {
     sublayers: [{id: 0, definitionExpression}]
   })
   let cogMonthlyStatusLayer = new ImageryTileLayer({
-    url: `https://d2sl0kux8qc7kl.cloudfront.net/hydrosos/cogs/${lastHydroSOSDate.getFullYear()}-${String(lastHydroSOSDate.getMonth() + 1).padStart(2, '0')}.tif`,
+    url: `https://d2grb3c773p1iz.cloudfront.net/hydrosos/cogs/${lastHydroSOSDate.getFullYear()}-${String(lastHydroSOSDate.getMonth() + 1).padStart(2, '0')}.tif`,
     title: "HydroSOS Monthly Status Indicators",
     visible: false,
   })
@@ -191,7 +191,7 @@ export default function main() {
     // todo: delete/recreate causes an error when changing dates quickly but you can't edit the url and trigger a re-load
     map.remove(cogMonthlyStatusLayer)
     cogMonthlyStatusLayer = new ImageryTileLayer({
-      url: `https://d2sl0kux8qc7kl.cloudfront.net/hydrosos/cogs/${year}-${month}.tif`,
+      url: `https://d2grb3c773p1iz.cloudfront.net/hydrosos/cogs/${year}-${month}.tif`,
       title: "HydroSOS Monthly Status Indicators",
       visible: layerWasVisible,
     })
