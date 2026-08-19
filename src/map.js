@@ -46,9 +46,9 @@ export default function main() {
   intl.setLocale(Lang.get())
 
   const now = new Date()  // the default date is 12 hours before UTC now, typical lag for computing forecasts each day
-  const firstHydroSOSDate = new Date(1990, 0, 1)  // July 2024
-  const lastHydroSOSDate = new Date(now.getFullYear(), now.getMonth() - (now.getDate() > 6 ? 1 : 2), 1)
-  now.setHours(now.getHours() - 12)
+  const firstHydroSOSDate = new Date(Date.UTC(1990, 0, 1))  // July 2024
+  const lastHydroSOSDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (now.getUTCDate() > 6 ? 1 : 2), 1))
+  now.setUTCHours(now.getUTCHours() - 12)
   inputForecastDate.value = now.toISOString().split("T")[0]
 
 //////////////////////////////////////////////////////////////////////// Data Search Promises
@@ -144,7 +144,7 @@ export default function main() {
     sublayers: [{id: 0, definitionExpression}]
   })
   let cogMonthlyStatusLayer = new ImageryTileLayer({
-    url: `https://d2grb3c773p1iz.cloudfront.net/hydrosos/cogs/${lastHydroSOSDate.getFullYear()}-${String(lastHydroSOSDate.getMonth() + 1).padStart(2, '0')}.tif`,
+    url: `https://d2grb3c773p1iz.cloudfront.net/hydrosos/cogs/${lastHydroSOSDate.getUTCFullYear()}-${String(lastHydroSOSDate.getUTCMonth() + 1).padStart(2, '0')}.tif`,
     title: "HydroSOS Monthly Status Indicators",
     visible: false,
   })

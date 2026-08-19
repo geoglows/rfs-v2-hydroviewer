@@ -1,17 +1,27 @@
 const CACHE_SIZE = 300
 const DB_NAME = 'hydroviewerDB'
+// IndexedDB versions must be integers, so the yyyy.mm.dd release date is encoded as yyyymmdd.
+// Bump this to today's date (yyyymmdd) any time previously-cached data must be invalidated
+// (e.g. after a bug fix changes how cached values are computed) — the version bump below
+// forces onupgradeneeded to run and wipe every existing store on the user's next visit.
+const DB_VERSION = 20260819
 
 const cacheDbStoreName = 'discharge'
 const riversDbStoreName = 'rivers'
 
 const openDb = () => {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1)
+    const request = indexedDB.open(DB_NAME, DB_VERSION)
     request.onupgradeneeded = event => {
       const db = event.target.result
+      const tx = event.target.transaction
       for (const name of [cacheDbStoreName, riversDbStoreName]) {
         if (!db.objectStoreNames.contains(name)) {
           db.createObjectStore(name, {keyPath: 'key'})
+        } else {
+          // Existing store from a prior DB version may hold stale/incorrect cached data
+          // (e.g. timezone-shifted datetimes) — clear it so it gets re-fetched fresh.
+          tx.objectStore(name).clear()
         }
       }
     }

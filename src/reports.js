@@ -153,7 +153,7 @@ const fetchReportData = async ({riverList, datasetList}) => {
 const plotReportData = async (data) => {
   let nFormatted = 0;
   const nRivers = data.length;
-  const todayDate = new Date().toLocaleDateString(Lang.get(), {year: 'numeric', month: 'long', day: 'numeric'});
+  const todayDate = new Date().toLocaleDateString(Lang.get(), {year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC'});
   const translations = translationDictionary.report;
 
   // Render each river page sequentially to avoid shared-div race conditions

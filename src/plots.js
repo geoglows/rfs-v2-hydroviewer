@@ -31,10 +31,10 @@ const returnPeriodColors = {
   '100': 'rgb(128, 0, 246)',
 }
 const months = Array.from({length: 12}).map((_, idx) => (idx + 1).toString().padStart(2, '0'))
-let monthNames = months.map(m => new Date(2021, parseInt(m, 10) - 1, 1).toLocaleString(Lang.get(), {month: 'short'}))
+let monthNames = months.map(m => new Date(Date.UTC(2021, parseInt(m, 10) - 1, 1)).toLocaleString(Lang.get(), {month: 'short', timeZone: 'UTC'}))
 
 Lang.addSubscriber(newLang => {
-  monthNames = months.map(m => new Date(2021, parseInt(m, 10) - 1, 1).toLocaleString(newLang, {month: 'short'}))
+  monthNames = months.map(m => new Date(Date.UTC(2021, parseInt(m, 10) - 1, 1)).toLocaleString(newLang, {month: 'short', timeZone: 'UTC'}))
   Plotly.setPlotConfig({'locale': newLang})
 })
 
@@ -86,12 +86,15 @@ const returnPeriodShapes = ({rp, x0, x1, maxFlow}) => {
 const plotForecast = ({forecast, rp, riverId, chartDiv}) => {
   chartDiv.innerHTML = ""
   const maxForecast = Math.max(...forecast.stats.median)
-  const returnPeriods = returnPeriodShapes({rp, x0: forecast.datetime[0], x1: forecast.datetime[forecast.datetime.length - 1], maxFlow: maxForecast})
+  // Plotly re-interprets JS Date objects using the browser's local timezone offset
+  // instead of their true UTC instant, so convert to UTC ISO strings before charting.
+  const datetime = forecast.datetime.map(d => d.toISOString())
+  const returnPeriods = returnPeriodShapes({rp, x0: datetime[0], x1: datetime[datetime.length - 1], maxFlow: maxForecast})
   Plotly.newPlot(
     chartDiv,
     [
       {
-        x: forecast.datetime.concat(forecast.datetime.slice().toReversed()),
+        x: datetime.concat(datetime.slice().toReversed()),
         y: forecast.stats.p20.concat(forecast.stats.p80.slice().toReversed()),
         name: `${translationDictionary.plots.fcLineUncertainty}`,
         fill: 'toself',
@@ -100,7 +103,7 @@ const plotForecast = ({forecast, rp, riverId, chartDiv}) => {
         legendgroup: 'forecast',
       },
       {
-        x: forecast.datetime,
+        x: datetime,
         y: forecast.stats.p20,
         line: {color: 'rgb(0,166,255)'},
         showlegend: false,
@@ -108,7 +111,7 @@ const plotForecast = ({forecast, rp, riverId, chartDiv}) => {
         legendgroup: 'forecast',
       },
       {
-        x: forecast.datetime,
+        x: datetime,
         y: forecast.stats.p80,
         line: {color: 'rgb(0,166,255)'},
         showlegend: false,
@@ -116,7 +119,7 @@ const plotForecast = ({forecast, rp, riverId, chartDiv}) => {
         legendgroup: 'forecast',
       },
       {
-        x: forecast.datetime,
+        x: datetime,
         y: forecast.stats.median,
         line: {color: 'black'},
         name: translationDictionary.plots.fcLineMedian,
@@ -124,7 +127,7 @@ const plotForecast = ({forecast, rp, riverId, chartDiv}) => {
       },
       ...(forecast.stats_original ? [
         {
-          x: forecast.datetime.concat(forecast.datetime.slice().toReversed()),
+          x: datetime.concat(datetime.slice().toReversed()),
           y: forecast.stats_original.p20.concat(forecast.stats_original.p80.slice().toReversed()),
           name: translationDictionary.plots.fcLineUncertaintyOriginal,
           fill: 'toself',
@@ -134,7 +137,7 @@ const plotForecast = ({forecast, rp, riverId, chartDiv}) => {
           legendgroup: 'forecastOriginal',
         },
         {
-          x: forecast.datetime,
+          x: datetime,
           y: forecast.stats_original.p20,
           name: '',
           line: {color: 'rgb(255,236,0)'},
@@ -143,7 +146,7 @@ const plotForecast = ({forecast, rp, riverId, chartDiv}) => {
           legendgroup: 'forecastOriginal',
         },
         {
-          x: forecast.datetime,
+          x: datetime,
           y: forecast.stats_original.p80,
           name: '',
           line: {color: 'rgb(255,236,0)'},
@@ -152,7 +155,7 @@ const plotForecast = ({forecast, rp, riverId, chartDiv}) => {
           legendgroup: 'forecastOriginal',
         },
         {
-          x: forecast.datetime,
+          x: datetime,
           y: forecast.stats_original.median,
           name: translationDictionary.plots.fcLineMedianOriginal,
           line: {color: 'blue'},
@@ -175,11 +178,14 @@ const plotForecast = ({forecast, rp, riverId, chartDiv}) => {
 }
 const plotForecastMembers = ({forecast, rp, riverId, chartDiv}) => {
   chartDiv.innerHTML = ""
+  // Plotly re-interprets JS Date objects using the browser's local timezone offset
+  // instead of their true UTC instant, so convert to UTC ISO strings before charting.
+  const datetime = forecast.datetime.map(d => d.toISOString())
   const memberTraces = forecast.discharge
     .map((memberArray, memberIdx) => {
       const memberNumber = memberIdx + 1
       return {
-        x: forecast.datetime,
+        x: datetime,
         y: memberArray,
         name: translationDictionary.words.ensMembers,
         showlegend: memberNumber === 1,
@@ -192,7 +198,7 @@ const plotForecastMembers = ({forecast, rp, riverId, chartDiv}) => {
   const originalTraces = (forecast.discharge_original || []).map((memberArray, memberIdx) => {
     const memberNumber = memberIdx + 1
     return {
-      x: forecast.datetime,
+      x: datetime,
       y: memberArray,
       name: translationDictionary.words.ensMembersOriginal,
       showlegend: memberNumber === 1,
@@ -202,7 +208,7 @@ const plotForecastMembers = ({forecast, rp, riverId, chartDiv}) => {
     }
   })
   const maxForecast = Math.max(...memberTraces.map(trace => Math.max(...trace.y)))
-  const returnPeriods = returnPeriodShapes({rp, x0: forecast.datetime[0], x1: forecast.datetime[forecast.datetime.length - 1], maxFlow: maxForecast})
+  const returnPeriods = returnPeriodShapes({rp, x0: datetime[0], x1: datetime[datetime.length - 1], maxFlow: maxForecast})
   Plotly.newPlot(
     chartDiv,
     [...memberTraces, ...originalTraces, ...returnPeriods,],
@@ -279,11 +285,14 @@ const forecastProbabilityTable = ({forecast, rp}) => {
 
 const plotRetrospective = ({daily, monthly, riverId, chartDiv, biasCorrected}) => {
   chartDiv.innerHTML = ""
+  // Plotly re-interprets JS Date objects using the browser's local timezone offset
+  // instead of their true UTC instant, so convert to UTC ISO strings before charting.
+  const dailyDatetime = daily.datetime.map(d => d.toISOString())
   Plotly.newPlot(
     chartDiv,
     [
       {
-        x: daily.datetime,
+        x: dailyDatetime,
         y: daily.discharge,
         type: 'scatter',
         name: `${translationDictionary.words.dailyAverage}`,
@@ -297,7 +306,7 @@ const plotRetrospective = ({daily, monthly, riverId, chartDiv, biasCorrected}) =
         visible: 'legendonly'
       },
       ...(biasCorrected ? [{
-        x: daily.datetime,
+        x: dailyDatetime,
         y: daily.discharge_original,
         type: 'scatter',
         name: `${translationDictionary.words.dailyAverageOriginal}`,
@@ -501,7 +510,7 @@ const plotFdc = ({fdc, monthlyFdc, riverId, chartDiv, biasCorrected}) => {
 const plotYearlyPeaks = ({yearlyPeaks, riverId, chartDiv, biasCorrected}) => {
   chartDiv.innerHTML = "";
 
-  const currentYear = new Date().getFullYear();
+  const currentYear = new Date().getUTCFullYear();
   yearlyPeaks = yearlyPeaks.filter(p => p.year < currentYear).sort((a, b) => a.year - b.year);
 
   const formatVal = val => {
@@ -568,9 +577,10 @@ const plotYearlyPeaks = ({yearlyPeaks, riverId, chartDiv, biasCorrected}) => {
         type: "scatter",
         marker: {size: 9, color: viridis[i], line: {width: 0}},
         text: allPoints.map(
-          p => `${translationDictionary.words.year}: ${p.year}<br>${translationDictionary.words.date}: ${p.date.toLocaleDateString(undefined, {
+          p => `${translationDictionary.words.year}: ${p.year}<br>${translationDictionary.words.date}: ${p.date.toLocaleDateString(Lang.get(), {
             "month": "short",
-            "day": "numeric"
+            "day": "numeric",
+            "timeZone": "UTC"
           })}<br>${translationDictionary.words.discharge}: ${formatVal(p.peak)} m³/s`
         ),
         hoverinfo: "text",
@@ -873,7 +883,7 @@ const plotAllRetro = ({retro, riverId}) => {
 
   // Calculate yearly discharge peaks.
   const dateToDoy = date => {
-    const start = new Date(date.getUTCFullYear(), 0, 0)
+    const start = Date.UTC(date.getUTCFullYear(), 0, 0)
     const diff = date - start
     return Math.floor(diff / 86400000)
   }

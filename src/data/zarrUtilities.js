@@ -24,7 +24,10 @@ const fetchTimeCoordinate = async (zarrUrl) => {
 
   const tUnits = tNode.attrs.units;
   const tArray = await get(tNode, [null]);
-  const originTime = new Date(tUnits.split("since")[1].trim());
+  // CF convention units look like "hours since 1940-01-01 00:00:00" with no timezone,
+  // and are always UTC by convention. Force UTC parsing here or `new Date(...)` would
+  // interpret this space-separated string in the browser's local timezone.
+  const originTime = new Date(`${tUnits.split("since")[1].trim().replace(" ", "T")}Z`);
   const conversionFactor = {
     seconds: 1,
     minutes: 60,
