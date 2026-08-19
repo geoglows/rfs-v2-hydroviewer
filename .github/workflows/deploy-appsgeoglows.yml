@@ -1,0 +1,26 @@
+name: Deploy
+
+# Builds this app and publishes it to apps.geoglows
+# Needs variables S3_BUCKET_NAME, CLOUDFRONT_DISTRIBUTION_ID
+# Needs secrets AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch or tag to deploy (default: main)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    uses: geoglows/apps.geoglows/.github/workflows/deploy-app.yml@main
+    with:
+      app_path: /rfs
+      ref: ${{ inputs.ref }}
+    secrets: inherit
