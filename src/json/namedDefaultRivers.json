@@ -1,19 +1,98 @@
 [
-  {"id": 760021611, "name": "Mississippi, USA"},
-  {"id": 160064246, "name": "Nile, East Africa"},
-  {"id": 710431167, "name": "Colorado, Mexico"},
-  {"id": 441057380, "name": "Ganges, India"},
-  {"id": 430157411, "name": "Mekong, Vietnam"},
-  {"id": 210406913, "name": "Tiber, Italy"},
-  {"id": 621010293, "name": "Amazon, Brazil"},
-  {"id": 130747391, "name": "Congo, D.R. Congo"},
-  {"id": 640255644, "name": "Parana, Argentina"},
-  {"id": 540514417, "name": "Murray, Australia"},
-  {"id": 441077984, "name": "Indus, India"},
-  {"id": 280302448, "name": "Volga, Russia"},
-  {"id": 220463113, "name": "Danube, Romania"},
-  {"id": 230452055, "name": "Seine, France"},
-  {"id": 640255644, "name": "Paraná, Argentina"},
-  {"id": 410641150, "name": "Amur, China/Russia"},
-  {"id": 140049491, "name": "Niger, Nigeria"}
+  {
+    "id": 760021611,
+    "name": "Mississippi, USA",
+    "lat": 29.14654,
+    "lon": -89.25272
+  },
+  {
+    "id": 160064246,
+    "name": "Nile, East Africa",
+    "lat": 31.45267,
+    "lon": 30.37677
+  },
+  {
+    "id": 710431167,
+    "name": "Colorado, Mexico",
+    "lat": 31.78389,
+    "lon": -114.73523
+  },
+  {
+    "id": 441057380,
+    "name": "Ganges, India",
+    "lat": 23.204,
+    "lon": 90.62444
+  },
+  {
+    "id": 430157411,
+    "name": "Mekong, Vietnam",
+    "lat": 10.19467,
+    "lon": 106.742
+  },
+  {
+    "id": 210406913,
+    "name": "Tiber, Italy",
+    "lat": 41.74689,
+    "lon": 12.25845
+  },
+  {
+    "id": 621010293,
+    "name": "Amazon, Brazil",
+    "lat": -0.49144,
+    "lon": -51.43655
+  },
+  {
+    "id": 130747391,
+    "name": "Congo, D.R. Congo",
+    "lat": -6.05922,
+    "lon": 12.36878
+  },
+  {
+    "id": 640255644,
+    "name": "Parana, Argentina",
+    "lat": -33.90455,
+    "lon": -58.49923
+  },
+  {
+    "id": 540514417,
+    "name": "Murray, Australia",
+    "lat": -35.35856,
+    "lon": 139.37622
+  },
+  {
+    "id": 441077984,
+    "name": "Indus, India",
+    "lat": 24.01678,
+    "lon": 67.47222
+  },
+  {
+    "id": 280302448,
+    "name": "Volga, Russia",
+    "lat": 46.64054,
+    "lon": 49.31995
+  },
+  {
+    "id": 220463113,
+    "name": "Danube, Romania",
+    "lat": 45.15753,
+    "lon": 29.6667
+  },
+  {
+    "id": 230452055,
+    "name": "Seine, France",
+    "lat": 49.43578,
+    "lon": 0.3263
+  },
+  {
+    "id": 410641150,
+    "name": "Amur, China/Russia",
+    "lat": 53.12011,
+    "lon": 140.47599
+  },
+  {
+    "id": 140049491,
+    "name": "Niger, Nigeria",
+    "lat": 4.35944,
+    "lon": 6.07666
+  }
 ]

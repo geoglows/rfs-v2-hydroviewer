@@ -179,7 +179,15 @@
     "cacheCleared": "¡Caché borrado!",
     "reportError": "Ocurrió un error al generar el informe. Por favor intente de nuevo.",
     "reportDateRequired": "Por favor seleccione una fecha de pronóstico.",
-    "cancelReport": "Cancelar"
+    "cancelReport": "Cancelar",
+    "bookmarkNameTooLong": "El nombre del marcador debe tener 100 caracteres o menos.",
+    "bookmarksPendingSync": "{n} cambio(s) de marcadores aún no guardados en su perfil.",
+    "bookmarksRetrySync": "Reintentar ahora",
+    "bookmarksSignInToSave": "Inicie sesión para guardar los marcadores en su perfil.",
+    "bookmarksSignIn": "Iniciar sesión",
+    "bookmarkSyncFailed": "Guardado en este dispositivo pero no se pudo guardar en su perfil. Se reintentará automáticamente.",
+    "bookmarkLimitReached": "Su perfil puede contener hasta 100 marcadores. Elimine uno antes de añadir más.",
+    "bookmarksMergePrompt": "Este dispositivo tiene marcadores de otra cuenta. ¿Desea añadirlos también a su perfil?"
   },
   "report": {
     "pageTitle": "Informe de Pronóstico de Ríos",

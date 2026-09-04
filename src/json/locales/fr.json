@@ -179,7 +179,15 @@
     "cacheCleared": "Cache effacé !",
     "reportError": "Une erreur est survenue lors de la génération du rapport. Veuillez réessayer.",
     "reportDateRequired": "Veuillez sélectionner une date de prévision.",
-    "cancelReport": "Annuler"
+    "cancelReport": "Annuler",
+    "bookmarkNameTooLong": "Le nom du favori doit comporter 100 caractères ou moins.",
+    "bookmarksPendingSync": "{n} modification(s) de favoris pas encore enregistrée(s) dans votre profil.",
+    "bookmarksRetrySync": "Réessayer maintenant",
+    "bookmarksSignInToSave": "Connectez-vous pour enregistrer les favoris dans votre profil.",
+    "bookmarksSignIn": "Se connecter",
+    "bookmarkSyncFailed": "Enregistré sur cet appareil mais impossible de l'enregistrer dans votre profil. Nouvelle tentative automatique.",
+    "bookmarkLimitReached": "Votre profil peut contenir jusqu'à 100 favoris. Supprimez-en un avant d'en ajouter.",
+    "bookmarksMergePrompt": "Cet appareil contient des favoris d'un autre compte. Les ajouter aussi à votre profil ?"
   },
   "report": {
     "pageTitle": "Rapport de Prévision des Rivières",

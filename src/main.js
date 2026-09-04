@@ -1,13 +1,4 @@
-// Auth initializes first: registers the onAuthStateChange listener and
-// captures the recovery-URL snapshot before any top-level awaits / Supabase.
-import {bootstrapAuth} from "@geoglows/geoglows-auth/bootstrap"
-import "@geoglows/geoglows-auth/core/sign-in.css"
-
-bootstrapAuth({
-  supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
-  supabasePublishableKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-  portalUrl: import.meta.env.VITE_PORTAL_URL,
-})
+import "./auth.js"  // must be first: registers the auth listener before anything else runs
 
 import "./css/main.css"
 import "./css/tailwind-customizations.css"

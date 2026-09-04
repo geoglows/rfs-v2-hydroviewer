@@ -93,7 +93,7 @@ generateReportButton.addEventListener('click', async () => {
 
   try {
     const reportType = reportTypeSelect.value;
-    const riverList = bookmarks.list().map(b => b.id);
+    const riverList = bookmarks.list().map(b => b.river_id);
     const datasetList = reportTypes.find(r => r.type === reportType).datasets;
     const data = await fetchReportData({riverList, datasetList});
     if (cancelled) return;
@@ -161,8 +161,8 @@ const plotReportData = async (data) => {
   for (const [index, riverData] of data.entries()) {
     if (cancelled) return;
 
-    const bookmark = bookmarks.list().find(r => r.id === riverData.riverId);
-    const riverName = bookmark ? bookmark.name : `River ${riverData.riverId}`;
+    const bookmark = bookmarks.list().find(r => r.river_id === riverData.riverId);
+    const riverName = bookmark ? bookmark.river_name : `River ${riverData.riverId}`;
     const pageTitle = `${riverName} (ID: ${riverData.riverId})`;
 
     let pageHTML = '';

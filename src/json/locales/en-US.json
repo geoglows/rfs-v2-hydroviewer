@@ -179,7 +179,15 @@
     "cacheCleared": "Cache cleared!",
     "reportError": "An error occurred while generating the report. Please try again.",
     "reportDateRequired": "Please select a forecast date.",
-    "cancelReport": "Cancel"
+    "cancelReport": "Cancel",
+    "bookmarkNameTooLong": "Bookmark names must be 100 characters or fewer.",
+    "bookmarksPendingSync": "{n} bookmark change(s) not yet saved to your profile.",
+    "bookmarksRetrySync": "Retry now",
+    "bookmarksSignInToSave": "Sign in to save bookmarks to your profile.",
+    "bookmarksSignIn": "Sign in",
+    "bookmarkSyncFailed": "Saved on this device but couldn't save to your profile. It will retry automatically.",
+    "bookmarkLimitReached": "Your profile can hold up to 100 bookmarks. Remove one before adding more.",
+    "bookmarksMergePrompt": "This device has bookmarks from a different account. Add them to your profile too?"
   },
   "report": {
     "pageTitle": "River Forecast Report",
