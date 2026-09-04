@@ -84,8 +84,38 @@ arcgis-map {
     height: calc(100% - var(--nav-height));
 }
 
+/* Match the calcite-action map buttons to the esri zoom/locate buttons:
+   32x32 square, white, flat corners, same shadow and hover/active colors. */
 arcgis-map calcite-action {
+    --calcite-internal-action-height: 32px;
+    --calcite-internal-action-min-height: 32px;
+    --calcite-internal-action-padding-block: 0;
+    --calcite-internal-action-padding-inline: 0;
+    --calcite-internal-action-font-size: 14px;
+    --calcite-action-corner-radius: 0;
+    --calcite-action-background-color: #fff;
+    --calcite-action-background-color-hover: #f3f3f3;
+    --calcite-action-background-color-press: #e2f1fb;
+    --calcite-action-text-color: #6e6e6e;
+    --calcite-action-text-color-press: #2e2e2e;
+    width: 32px;
+    height: 32px;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Uniform vertical spacing for the map controls in the top corners (arcgis-zoom
+   and arcgis-locate included, not just the calcite-actions). The map component
+   defaults these to 10px via ::slotted, which light DOM rules override. */
+arcgis-map > [slot="top-left"],
+arcgis-map > [slot="top-right"] {
+    margin-bottom: 12px;
+}
+
+/* Text-only actions (e.g. SOS) need to fit inside the 32px square */
+arcgis-map calcite-action span {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
 }
 
 .legend {
